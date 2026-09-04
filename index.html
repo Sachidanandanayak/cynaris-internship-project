@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Cynaris Solutions - Modern enterprise cloud infrastructure, cybersecurity, and AI-driven telemetry. High-performance, scalable, and responsive architecture.">
+    <meta name="keywords" content="Cynaris Solutions, Cloud Architecture, Cybersecurity, AI Infrastructure, Responsive Design, Web Development">
+    <meta name="author" content="Cynaris Solutions Full Stack Development Team">
+    
+    <!-- Google Fonts for Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    
+    <title>Cynaris Solutions | Enterprise Cloud &amp; AI Infrastructure</title>
+    
+    <!-- External Stylesheet (Mobile-First CSS) -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- =====================================================================
+         Site Header & Flexbox Navigation
+         ===================================================================== -->
+    <header class="site-header">
+        <div class="container nav-container">
+            <a href="#hero" class="brand-logo" aria-label="Cynaris Solutions Home">
+                <span class="brand-logo-icon" aria-hidden="true">◆</span>
+                <span>Cynaris<span class="brand-logo-highlight">Solutions</span></span>
+            </a>
+
+            <!-- Mobile Navigation Toggle Button -->
+            <button class="nav-toggle" type="button" aria-controls="primary-navigation" aria-expanded="false" aria-label="Toggle navigation menu">
+                <span class="nav-toggle-bar"></span>
+                <span class="nav-toggle-bar"></span>
+                <span class="nav-toggle-bar"></span>
+            </button>
+
+            <!-- Navigation Menu using Flexbox -->
+            <nav id="primary-navigation" class="nav-menu" aria-label="Main navigation">
+                <ul class="nav-list">
+                    <li><a href="#hero" class="nav-link">Home</a></li>
+                    <li><a href="#features" class="nav-link">Features</a></li>
+                    <li><a href="#services" class="nav-link">Services</a></li>
+                    <li><a href="#testimonials" class="nav-link">Testimonials</a></li>
+                    <li><a href="#contact" class="nav-link">Contact</a></li>
+                </ul>
+                <div class="nav-actions">
+                    <a href="#contact" class="btn btn-primary">Get Started</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <!-- =================================================================
+             1. Hero Section
+             ================================================================= -->
+        <section class="hero" id="hero" aria-labelledby="hero-title">
+            <div class="container">
+                <div class="hero-content">
+                    <div class="hero-badge">
+                        <span class="hero-badge-pulse" aria-hidden="true"></span>
+                        <span>Next-Gen Cloud &amp; AI Infrastructure</span>
+                    </div>
+
+                    <h1 id="hero-title" class="hero-title">
+                        Engineered for High-Velocity <span class="hero-title-gradient">Digital Scale</span>
+                    </h1>
+
+                    <p class="hero-description">
+                        Empowering global enterprises with resilient multi-cloud architecture, zero-trust cybersecurity, and real-time automated telemetry built for unmatched performance.
+                    </p>
+
+                    <div class="hero-cta-group">
+                        <a href="#features" class="btn btn-primary">Explore Platform</a>
+                        <a href="#contact" class="btn btn-secondary">Request Consultation</a>
+                    </div>
+
+                    <!-- Metric Stats Ribbon -->
+                    <div class="hero-stats" role="region" aria-label="Platform Highlights">
+                        <div class="hero-stat-item">
+                            <span class="hero-stat-number">99.99%</span>
+                            <span class="hero-stat-label">Uptime SLA Guarantee</span>
+                        </div>
+                        <div class="hero-stat-item">
+                            <span class="hero-stat-number">&lt; 15ms</span>
+                            <span class="hero-stat-label">Global Edge Latency</span>
+                        </div>
+                        <div class="hero-stat-item">
+                            <span class="hero-stat-number">4.8x</span>
+                            <span class="hero-stat-label">Deployment Velocity</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================
+             2. Features Section (CSS Grid)
+             ================================================================= -->
+        <section class="features section" id="features" aria-labelledby="features-title">
+            <div class="container">
+                <header class="section-header">
+                    <span class="section-tag">Core Capabilities</span>
+                    <h2 id="features-title" class="section-title">Built for Performance, Security, and Agility</h2>
+                    <p class="section-subtitle">
+                        Discover end-to-end cloud engineering designed to eliminate bottlenecks and accelerate digital transformation.
+                    </p>
+                </header>
+
+                <div class="features-grid">
+                    <!-- Feature Card 1 -->
+                    <article class="feature-card">
+                        <div class="feature-icon-wrapper" aria-hidden="true">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+                            </svg>
+                        </div>
+                        <h3 class="feature-card-title">Multi-Cloud Orchestration</h3>
+                        <p class="feature-card-description">
+                            Seamlessly deploy, monitor, and manage containerized microservices across AWS, Azure, and Google Cloud with unified governance.
+                        </p>
+                        <span class="feature-card-tag">Cloud Native</span>
+                    </article>
+
+                    <!-- Feature Card 2 -->
+                    <article class="feature-card">
+                        <div class="feature-icon-wrapper" aria-hidden="true">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                        </div>
+                        <h3 class="feature-card-title">Zero-Trust Cybersecurity</h3>
+                        <p class="feature-card-description">
+                            End-to-end automated threat defense, strict identity verification, and SOC2/HIPAA compliance guardrails at every layer.
+                        </p>
+                        <span class="feature-card-tag">Security First</span>
+                    </article>
+
+                    <!-- Feature Card 3 -->
+                    <article class="feature-card">
+                        <div class="feature-icon-wrapper" aria-hidden="true">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                            </svg>
+                        </div>
+                        <h3 class="feature-card-title">Automated CI/CD Pipelines</h3>
+                        <p class="feature-card-description">
+                            Accelerate delivery cycles with GitOps-driven zero-downtime blue/green deployments and integrated security scanning.
+                        </p>
+                        <span class="feature-card-tag">DevOps</span>
+                    </article>
+
+                    <!-- Feature Card 4 -->
+                    <article class="feature-card">
+                        <div class="feature-icon-wrapper" aria-hidden="true">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 3v18h18"/>
+                                <path d="m19 9-5 5-4-4-3 3"/>
+                            </svg>
+                        </div>
+                        <h3 class="feature-card-title">Real-Time Telemetry &amp; AI</h3>
+                        <p class="feature-card-description">
+                            Intelligent log analytics and predictive metric alerting that automatically remediate anomalies before downtime occurs.
+                        </p>
+                        <span class="feature-card-tag">AI Observability</span>
+                    </article>
+
+                    <!-- Feature Card 5 -->
+                    <article class="feature-card">
+                        <div class="feature-icon-wrapper" aria-hidden="true">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="2" y1="12" x2="22" y2="12"/>
+                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                            </svg>
+                        </div>
+                        <h3 class="feature-card-title">Global Edge CDN Network</h3>
+                        <p class="feature-card-description">
+                            Deliver lightning-fast dynamic content with geo-distributed edge caching nodes operating in over 120 global regions.
+                        </p>
+                        <span class="feature-card-tag">Edge Computing</span>
+                    </article>
+
+                    <!-- Feature Card 6 -->
+                    <article class="feature-card">
+                        <div class="feature-icon-wrapper" aria-hidden="true">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect width="18" height="18" x="3" y="3" rx="2"/>
+                                <path d="M7 7h10"/>
+                                <path d="M7 12h10"/>
+                                <path d="M7 17h10"/>
+                            </svg>
+                        </div>
+                        <h3 class="feature-card-title">Adaptive Elastic Autoscaling</h3>
+                        <p class="feature-card-description">
+                            Dynamic compute provisioning that instantly reacts to unexpected traffic spikes while eliminating idle infrastructure costs.
+                        </p>
+                        <span class="feature-card-tag">Cost Efficiency</span>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================
+             2.5. Interactive Services Explorer (ES6+ Module)
+             ================================================================= -->
+        <section class="services-explorer section" id="services" aria-labelledby="services-title">
+            <div class="container">
+                <header class="section-header">
+                    <span class="section-tag">Interactive ES6+ Catalog</span>
+                    <h2 id="services-title" class="section-title">Enterprise Cloud Service Explorer &amp; Cost Optimizer</h2>
+                    <p class="section-subtitle">
+                        Filter architectures, calculate real-time monthly budget allocations with <code>reduce()</code>, and dynamically provision infrastructure components.
+                    </p>
+                </header>
+
+                <!-- Metric Summary Ribbon (Calculated via reduce()) -->
+                <div class="metrics-summary-ribbon" role="region" aria-label="Cloud Resource Metrics">
+                    <div class="metric-summary-card">
+                        <div class="metric-icon-box" aria-hidden="true">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect width="20" height="14" x="2" y="5" rx="2"/>
+                                <line x1="2" x2="22" y1="10" y2="10"/>
+                            </svg>
+                        </div>
+                        <div class="metric-details">
+                            <span class="metric-card-val" id="stat-total-services">6</span>
+                            <span class="metric-card-label">Matching Services</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-summary-card">
+                        <div class="metric-icon-box" aria-hidden="true">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                        </div>
+                        <div class="metric-details">
+                            <span class="metric-card-val" id="stat-monthly-spend">$837</span>
+                            <span class="metric-card-label">Active Allocation</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-summary-card">
+                        <div class="metric-icon-box" aria-hidden="true">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                <polyline points="22 4 12 14.01 9 11.01"/>
+                            </svg>
+                        </div>
+                        <div class="metric-details">
+                            <span class="metric-card-val" id="stat-provisioned-count">3</span>
+                            <span class="metric-card-label">Nodes Provisioned</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-summary-card">
+                        <div class="metric-icon-box" aria-hidden="true">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                            </svg>
+                        </div>
+                        <div class="metric-details">
+                            <span class="metric-card-val" id="stat-avg-uptime">99.95%</span>
+                            <span class="metric-card-label">Average SLA Uptime</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Explorer Controls (Search, Filter Pills, Sort Dropdown, Viva Modal Trigger) -->
+                <div class="services-controls-wrapper">
+                    <div class="controls-top-row">
+                        <div class="search-input-wrapper">
+                            <span class="search-input-icon" aria-hidden="true">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8"/>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                                </svg>
+                            </span>
+                            <input type="search" id="service-search" class="service-search-input" placeholder="Search services, keywords, or specifications..." aria-label="Search cloud services">
+                        </div>
+
+                        <button type="button" class="btn-viva-trigger" id="btn-show-viva-demo">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="16 18 22 12 16 6"/>
+                                <polyline points="8 6 2 12 8 18"/>
+                            </svg>
+                            <span>ES6+ Viva Inspector</span>
+                        </button>
+                    </div>
+
+                    <div class="controls-secondary-row">
+                        <!-- Dynamic Filter Category Pills -->
+                        <div class="filter-pills-container" id="category-filters" role="group" aria-label="Filter services by category">
+                            <!-- Populated dynamically via JS map() -->
+                        </div>
+
+                        <div class="controls-actions-group">
+                            <div class="sort-select-wrapper">
+                                <label for="service-sort" class="sr-only">Sort services by</label>
+                                <select id="service-sort" class="service-sort-select">
+                                    <option value="default">Sort: Default Featured</option>
+                                    <option value="price-asc">Price: Low to High</option>
+                                    <option value="price-desc">Price: High to Low</option>
+                                    <option value="rating">Rating: Highest Rated</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Services Grid (Rendered via map() and Template Literals) -->
+                <div class="services-grid" id="services-grid" aria-live="polite">
+                    <!-- Populated dynamically via js/script.js -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ES6+ Viva Demonstration Modal -->
+        <div class="viva-modal" id="viva-modal" role="dialog" aria-modal="true" aria-labelledby="viva-modal-title" aria-hidden="true">
+            <div class="viva-modal-dialog">
+                <div class="viva-modal-header">
+                    <h3 id="viva-modal-title" class="viva-modal-title">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                            <polyline points="2 17 12 22 22 17"/>
+                            <polyline points="2 12 12 17 22 12"/>
+                        </svg>
+                        ES5 vs ES6+ Modernization Viva Reference
+                    </h3>
+                    <button type="button" class="viva-modal-close" id="btn-close-viva" aria-label="Close inspector modal">&times;</button>
+                </div>
+
+                <div class="viva-modal-body">
+                    <div class="viva-comparison-grid">
+                        <div class="viva-code-block">
+                            <div class="viva-code-header is-legacy">❌ Legacy ES5 (Problematic)</div>
+                            <pre class="viva-code-body"><code>// ES5: var hoisting, manual this binding, loops
+var ServiceCalc = function(items) {
+    var self = this;
+    this.items = items || [];
+    this.getTotal = function(tax) {
+        var rate = tax !== undefined ? tax : 0.18;
+        var subtotal = 0;
+        for (var i = 0; i &lt; self.items.length; i++) {
+            subtotal = subtotal + self.items[i].monthlyPrice;
+        }
+        return "Total: $" + (subtotal * (1 + rate)).toFixed(2);
+    };
+};</code></pre>
+                        </div>
+
+                        <div class="viva-code-block">
+                            <div class="viva-code-header is-modern">✓ Modern ES6+ (Clean &amp; Modular)</div>
+                            <pre class="viva-code-body"><code>// ES6+: const/let, arrow funcs, destructuring, reduce, template literals
+const createServiceCalc = (items = []) => ({
+    items: [...items],
+    getTotal(taxRate = 0.18) {
+        const subtotal = this.items.reduce(
+            (acc, { monthlyPrice = 0 }) => acc + monthlyPrice, 0
+        );
+        return `Total: $${(subtotal * (1 + taxRate)).toFixed(2)}`;
+    }
+});</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="viva-feature-list">
+                        <div class="viva-feature-item">
+                            <strong>1. const / let:</strong> Block-scoped variables preventing unintentional window leaks and hoisting bugs.
+                        </div>
+                        <div class="viva-feature-item">
+                            <strong>2. Arrow Functions:</strong> Concise syntax with lexical <code>this</code> context binding.
+                        </div>
+                        <div class="viva-feature-item">
+                            <strong>3. Template Literals:</strong> Multi-line string formatting with direct expression interpolation <code>${expr}</code>.
+                        </div>
+                        <div class="viva-feature-item">
+                            <strong>4. Destructuring:</strong> Direct object/array property extraction <code>const { name, monthlyPrice } = service;</code>.
+                        </div>
+                        <div class="viva-feature-item">
+                            <strong>5. filter(), map(), reduce():</strong> Declarative, pure functional data pipelines replacing imperative loops.
+                        </div>
+                        <div class="viva-feature-item">
+                            <strong>6. Event Listeners:</strong> Clean event delegation for real-time search, sorting, filtering, and provisioning.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- =================================================================
+             3. Testimonials Section
+             ================================================================= -->
+        <section class="testimonials section" id="testimonials" aria-labelledby="testimonials-title">
+            <div class="container">
+                <header class="section-header">
+                    <span class="section-tag">Client Feedback</span>
+                    <h2 id="testimonials-title" class="section-title">Trusted by Modern Engineering Teams</h2>
+                    <p class="section-subtitle">
+                        See how top technology leaders scale their systems with Cynaris Solutions.
+                    </p>
+                </header>
+
+                <div class="testimonials-grid">
+                    <!-- Testimonial 1 -->
+                    <article class="testimonial-card">
+                        <div class="testimonial-rating" aria-label="5 out of 5 stars rating">
+                            <span aria-hidden="true">★</span>
+                            <span aria-hidden="true">★</span>
+                            <span aria-hidden="true">★</span>
+                            <span aria-hidden="true">★</span>
+                            <span aria-hidden="true">★</span>
+                        </div>
+                        <blockquote class="testimonial-quote">
+                            "Migrating our core architecture to Cynaris cut our deployment times from 45 minutes to under 5 minutes. The reliability and responsiveness are unmatched."
+                        </blockquote>
+                        <div class="testimonial-author">
+                            <div class="author-avatar" aria-hidden="true">AR</div>
+                            <div class="author-info">
+                                <cite class="author-name">Ananya Rao</cite>
+                                <span class="author-role">Chief Technology Officer, FinTech Nexus</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Testimonial 2 -->
+                    <article class="testimonial-card">
+                        <div class="testimonial-rating" aria-label="5 out of 5 stars rating">
+                            <span aria-hidden="true">★</span>
+                            <span aria-hidden="true">★</span>
+                            <span aria-hidden="true">★</span>
+                            <span aria-hidden="true">★</span>
+                            <span aria-hidden="true">★</span>
+                        </div>
+                        <blockquote class="testimonial-quote">
+                            "The zero-trust security framework and automated compliance monitoring gave our team complete confidence during our annual SOC2 audit."
+                        </blockquote>
+                        <div class="testimonial-author">
+                            <div class="author-avatar" aria-hidden="true">MK</div>
+                            <div class="author-info">
+                                <cite class="author-name">Marcus Keller</cite>
+                                <span class="author-role">VP of Security &amp; Infrastructure, DataStream</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Testimonial 3 -->
+                    <article class="testimonial-card">
+                        <div class="testimonial-rating" aria-label="5 out of 5 stars rating">
+                            <span aria-hidden="true">★</span>
+                            <span aria-hidden="true">★</span>
+                            <span aria-hidden="true">★</span>
+                            <span aria-hidden="true">★</span>
+                            <span aria-hidden="true">★</span>
+                        </div>
+                        <blockquote class="testimonial-quote">
+                            "Their responsive engineering team and predictive telemetry saved us from several critical outages during Black Friday traffic surges."
+                        </blockquote>
+                        <div class="testimonial-author">
+                            <div class="author-avatar" aria-hidden="true">SV</div>
+                            <div class="author-info">
+                                <cite class="author-name">Siddharth Verma</cite>
+                                <span class="author-role">Head of Cloud Engineering, OmniRetail Global</span>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- =====================================================================
+         4. Footer Section
+         ===================================================================== -->
+    <footer class="site-footer" id="contact" aria-labelledby="footer-heading">
+        <h2 id="footer-heading" class="sr-only">Footer Information and Navigation</h2>
+        <div class="container">
+            <div class="footer-top">
+                <div class="footer-brand">
+                    <a href="#hero" class="brand-logo" aria-label="Cynaris Solutions Home">
+                        <span class="brand-logo-icon" aria-hidden="true">◆</span>
+                        <span>Cynaris<span class="brand-logo-highlight">Solutions</span></span>
+                    </a>
+                    <p class="footer-description">
+                        Pioneering enterprise cloud modernization, distributed resilience, and intelligence-driven infrastructure solutions.
+                    </p>
+                </div>
+
+                <div class="footer-links-grid">
+                    <div class="footer-column">
+                        <h3 class="footer-column-title">Platform</h3>
+                        <ul class="footer-links">
+                            <li><a href="#features" class="footer-link">Cloud Native</a></li>
+                            <li><a href="#features" class="footer-link">Security &amp; IAM</a></li>
+                            <li><a href="#features" class="footer-link">Edge Networking</a></li>
+                            <li><a href="#features" class="footer-link">AI Telemetry</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="footer-column">
+                        <h3 class="footer-column-title">Company</h3>
+                        <ul class="footer-links">
+                            <li><a href="#hero" class="footer-link">About Us</a></li>
+                            <li><a href="#testimonials" class="footer-link">Case Studies</a></li>
+                            <li><a href="#contact" class="footer-link">Careers</a></li>
+                            <li><a href="#contact" class="footer-link">Contact Support</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="footer-column">
+                        <h3 class="footer-column-title">Stay Updated</h3>
+                        <div class="footer-newsletter">
+                            <p class="footer-description">Subscribe to our engineering newsletter for architecture deep dives.</p>
+                            <form class="newsletter-form" action="#" method="POST" onsubmit="event.preventDefault(); alert('Thank you for subscribing to Cynaris Solutions updates!');">
+                                <label for="newsletter-email" class="sr-only">Email address for newsletter</label>
+                                <input type="email" id="newsletter-email" class="newsletter-input" placeholder="Enter your work email" required>
+                                <button type="submit" class="btn btn-primary">Subscribe</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p class="footer-copyright">
+                    &copy; 2026 Cynaris Solutions Internship Program. All rights reserved.
+                </p>
+                <div class="footer-socials" aria-label="Social media channels">
+                    <a href="https://github.com" class="social-link" aria-label="Cynaris on GitHub" target="_blank" rel="noopener noreferrer">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/>
+                            <path d="M9 18c-4.51 2-5-2-7-2"/>
+                        </svg>
+                    </a>
+                    <a href="https://linkedin.com" class="social-link" aria-label="Cynaris on LinkedIn" target="_blank" rel="noopener noreferrer">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+                            <rect width="4" height="12" x="2" y="9"/>
+                            <circle cx="4" cy="4" r="2"/>
+                        </svg>
+                    </a>
+                    <a href="https://twitter.com" class="social-link" aria-label="Cynaris on X" target="_blank" rel="noopener noreferrer">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Interactive Navigation Script -->
+    <script src="js/main.js"></script>
+    <!-- ES6+ Interactive Services Explorer & Logic Script -->
+    <script src="js/script.js"></script>
+</body>
+
+</html>
