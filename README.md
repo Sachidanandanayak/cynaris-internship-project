@@ -11,6 +11,60 @@ This repository contains tasks, projects, and learning modules for the **Cynaris
 | **Week 1 – Day 1** | HTML5 Structure & Semantics | `feature/week-1-day-1` |
 | **Week 1 – Day 2** | Responsive Design & Mobile-First Landing Page | `feature/week-1-day-2` |
 | **Week 1 – Day 3** | JavaScript ES6+ Basics & Interactive Explorer | `feature/week-1-day-3` |
+| **Week 1 – Day 4** | Responsive Design & Media Queries | `feature/week-1-day-4` |
+
+---
+
+## 📱 Week 1 – Day 4: Responsive Design & Media Queries
+
+### Project Overview
+An enterprise-grade, mobile-first responsive design architecture implemented for the **Cynaris Solutions Cloud & AI Platform**. Fully optimized across mobile (`320px`), tablet (`768px`), and desktop (`1200px`) devices using modern CSS media queries, scalable relative units (`rem`, `em`, `%`, `vw`/`vh`, `clamp()`), WCAG-compliant touch targets, zero horizontal overflow, and accessible mobile drawer navigation while preserving all Week 1 Day 3 JavaScript ES6+ interactive features.
+
+### 🌟 Key Responsive Features & Architecture
+
+1. **Mobile-First CSS Architecture**:
+   - **Base Styles (Default)**: Written for small screen mobile viewports (starting at `320px`) outside any media queries.
+   - **Progressive Enhancement**: Uses `min-width` media queries to layer layout complexity as the screen expands.
+   - **No Desktop Overrides Needed**: Mobile devices download and evaluate the lightweight base rules without overriding desktop styles.
+
+2. **Responsive Breakpoints Hierarchy**:
+
+   | Breakpoint | Target Devices | Key Layout Behaviors |
+   |---|---|---|
+   | **Base (`>= 320px`)** | Small Smartphones | 1-column cards, full-width touch buttons, collapsible drawer navigation, stacked metric cards |
+   | **`min-width: 30rem` (`480px`)** | Large Smartphones & Phablets | 2-column metrics summary ribbon, inline CTA buttons, auto-width inspector trigger |
+   | **`min-width: 48rem` (`768px`)** | Tablets & Small Screens | 2-column features/services/testimonials grid, 4-column metric ribbon, 3-column stats ribbon, 3-column footer links |
+   | **`min-width: 64rem` (`1024px`)** | Laptops & Small Desktops | Navigation transitions from hamburger drawer to horizontal flex navbar; hamburger hidden (`display: none`) |
+   | **`min-width: 75rem` (`1200px`)** | Standard Desktop Displays | 3-column features, services, and testimonials grid; 2-column parent footer layout (brand + links grid); expanded container padding |
+   | **`min-width: 90rem` (`1440px`)** | Large & Ultrawide Displays | Max container width constraint (`80rem` / `1280px`), enhanced padding, and high-DPI scaling |
+
+3. **Relative & Scalable Units Strategy**:
+   - **`rem` (Root EM)**: Used for typography, margins, paddings, border radii, and touch targets (`min-height: 2.75rem` / 44px) so elements respect user browser accessibility font-size preferences.
+   - **`em`**: Used for contextual component spacing (badge padding, tag margins, icon spacing) scaling relative to the element's local font size.
+   - **`%`**: Used for fluid grid columns (`1fr`, `repeat(2, 1fr)`, `repeat(3, 1fr)`), flexible image widths, and container scaling.
+   - **`vw` / `vh`**: Viewport units used for modal maximum dimensions (`max-height: 88vh`, `max-width: min(94vw, 56.25rem)`) and backdrop filters.
+   - **`clamp(min, preferred, max)`**: Fluid typography and fluid spacing allowing smooth continuous scaling without rigid jumps:
+     - Hero title: `clamp(1.85rem, 5.5vw + 0.5rem, 3.5rem)`
+     - Section titles: `clamp(1.5rem, 3.5vw + 0.5rem, 2.25rem)`
+     - Container gutters: `clamp(1rem, 4vw, 2rem)`
+
+4. **Zero Horizontal Overflow at 320px**:
+   - Universal `box-sizing: border-box`.
+   - Card headers, tags, and footers implement `flex-wrap: wrap`.
+   - Grid and flex items enforce `min-width: 0` to prevent text expansion overflows.
+   - `overflow-wrap: break-word` and `word-break: break-word` applied to long headings and URLs.
+   - Code preview snippets utilize `overflow-x: auto; max-width: 100%;`.
+   - Viewport meta tag properly configured: `<meta name="viewport" content="width=device-width, initial-scale=1.0">`.
+
+5. **Accessible Mobile Navigation (`js/main.js`)**:
+   - Animated hamburger button with accessible ARIA attributes (`aria-controls`, `aria-expanded`).
+   - Smooth slide-down drawer menu on mobile viewports (< `1024px`).
+   - Closes automatically on `Escape` key press (WCAG 2.1), backdrop/outside click, and navigation link click.
+   - Auto-resets on window resize when crossing into desktop breakpoint.
+
+6. **Preserved JavaScript ES6+ Components**:
+   - Real-time service search, category pills, dynamic sorting, and provisioning calculations (`reduce()`) remain 100% operational on all screen sizes.
+   - ES6+ Viva Inspector Modal is fully responsive with scrollable dual-column comparison on tablet/desktop and single-column on mobile.
 
 ---
 
@@ -54,9 +108,9 @@ An enterprise-grade JavaScript ES6+ implementation powering the **Cynaris Soluti
 Cynaris-Internship/
 ├── index.html          # Semantic Landing Page + Interactive ES6+ Services Explorer
 ├── css/
-│   └── style.css       # Mobile-first stylesheet (Flexbox, Grid, Modal, Toast, Cards)
+│   └── style.css       # Mobile-first stylesheet (Flexbox, Grid, Breakpoints, Relative Units)
 ├── js/
-│   ├── main.js         # Accessible mobile navigation toggle & interactions
+│   ├── main.js         # Accessible mobile navigation toggle & window resize handler
 │   └── script.js       # Week 1 Day 3 ES6+ implementation, array pipelines, & event listeners
 └── README.md           # Project documentation and specifications
 ```
@@ -65,47 +119,34 @@ Cynaris-Internship/
 
 ## 🧪 Testing & Verification Guide
 
-1. **Browser Test**:
-   - Open `index.html` in any modern web browser (e.g., Chrome, Edge, Firefox).
-2. **Interactive Search & Filtering**:
-   - Type `"Kubernetes"` or `"Edge"` in the search input to observe instantaneous card filtering.
-   - Click on category filter pills (`Cloud Native`, `Security`, `AI Observability`, etc.) to filter services.
-   - Use the **Sort** dropdown to sort by price or rating.
-3. **Dynamic Calculations (`reduce`)**:
-   - Click **"Provision Service"** on any card.
-   - Notice the **Active Allocation ($)**, **Nodes Provisioned**, and **Card Status** update dynamically.
-   - An animated confirmation toast will appear in the bottom-right corner.
-4. **Viva Reference Modal**:
-   - Click the **"ES6+ Viva Inspector"** button in the explorer controls to view side-by-side ES5 vs ES6+ code examples.
-5. **Console Inspection**:
+1. **Responsive Viewport Testing (Chrome DevTools)**:
+   - **320px (Mobile Portrait)**:
+     - Verify layout stacks into a single column with zero horizontal scrolling (`scrollWidth === clientWidth`).
+     - Click the mobile hamburger menu button to confirm the drawer opens, locks body scroll, and toggles `aria-expanded="true"`.
+     - Click a navigation link or press `Escape` to confirm the menu closes smoothly.
+     - Type in the search input and click category pills; verify cards filter dynamically.
+     - Click **"Provision Service"** on any card; verify the toast notification displays and metric counters update.
+   - **768px (Tablet Viewport)**:
+     - Verify features, services, and testimonials display in a balanced 2-column grid.
+     - Verify the metric ribbon displays 4 columns and the hero stats ribbon displays 3 columns.
+     - Confirm search input and sort dropdown align horizontally.
+   - **1200px (Desktop Viewport)**:
+     - Verify the mobile hamburger button is completely hidden (`display: none`).
+     - Verify horizontal flexbox navigation bar is visible with styled hover states.
+     - Confirm features, services, and testimonials display in 3 columns.
+     - Click **"ES6+ Viva Inspector"** to verify the dual-column comparison modal.
+
+2. **Console Inspection**:
    - Open Developer Tools (`F12` or `Ctrl + Shift + I` -> **Console**).
-   - Observe the clean, formatted ES6+ console logs showing demonstration outputs for `reduce()`, `filter()`, `map()`, and destructuring with zero errors or warnings.
+   - Verify zero errors, zero 404s, and clean initialization logs for both Day 4 Responsive Navigation and Day 3 ES6+ explorer.
 
 ---
 
-## 💻 Git Workflow & Submission Steps
+## 🎓 Viva-Ready Responsive Design Concepts
 
-To commit and push your completed Week 1 Day 3 task to GitHub:
-
-1. **Create and switch to the task branch**:
-   ```bash
-   git checkout -b feature/week-1-day-3
-   ```
-
-2. **Stage the changes**:
-   ```bash
-   git add .
-   ```
-
-3. **Commit with a descriptive message**:
-   ```bash
-   git commit -m "feat(javascript-es6): implement modern ES6+ services explorer, array methods, and interactive event controller"
-   ```
-
-4. **Push to your remote repository**:
-   ```bash
-   git push -u origin feature/week-1-day-3
-   ```
-
-5. **Create a Pull Request (PR)** on GitHub targeting the `main` or develop branch.
-
+1. **Why is Mobile-First CSS preferred over Desktop-First?**
+   - Writing mobile styles first ensures constrained devices download and parse only what they need without overriding bulky multi-column desktop rules. It enforces content prioritization and cleaner, scalable CSS using `min-width` queries.
+2. **Why use `rem` instead of `px`?**
+   - `px` is an absolute unit that ignores user accessibility settings in their browser or operating system. `rem` scales proportionally with the root font size, ensuring full accessibility and consistency across responsive layouts.
+3. **What causes horizontal overflow at 320px and how do you prevent it?**
+   - Caused by fixed widths (e.g. `width: 500px`), unconstrained images/SVGs, padding without `box-sizing: border-box`, or long unbroken words. Prevented with `box-sizing: border-box`, `max-width: 100%`, `min-width: 0` on flex items, and `overflow-wrap: break-word`.
