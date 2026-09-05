@@ -174,15 +174,17 @@ const appState = {
  */
 const filterServices = (services, { category, searchQuery }) => {
     return services.filter(service => {
-        // Destructure properties from the current service item
-        const { name, category: serviceCategory, description } = service;
+        // Destructure properties from the current service item including specs & tags
+        const { name, category: serviceCategory, description, tags = [], specs = {} } = service;
         
         const matchesCategory = category === 'All' || serviceCategory.toLowerCase() === category.toLowerCase();
         
         const query = searchQuery.trim().toLowerCase();
         const matchesQuery = query === '' || 
             name.toLowerCase().includes(query) || 
-            description.toLowerCase().includes(query);
+            description.toLowerCase().includes(query) ||
+            tags.some(tag => tag.toLowerCase().includes(query)) ||
+            Object.values(specs).some(val => String(val).toLowerCase().includes(query));
             
         return matchesCategory && matchesQuery;
     });
@@ -536,6 +538,7 @@ const initEventListeners = () => {
             vivaModal.classList.add('is-open');
             vivaModal.setAttribute('aria-hidden', 'false');
             document.body.classList.add('modal-open');
+            if (vivaCloseBtn) vivaCloseBtn.focus();
         });
     }
 
@@ -544,6 +547,7 @@ const initEventListeners = () => {
         vivaModal.classList.remove('is-open');
         vivaModal.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('modal-open');
+        if (vivaDemoBtn) vivaDemoBtn.focus();
     };
 
     if (vivaCloseBtn) {
@@ -563,6 +567,20 @@ const initEventListeners = () => {
             closeModal();
         }
     });
+
+    // 6. Newsletter Subscription Handler
+    const newsletterForm = document.querySelector('.newsletter-form');
+    if (newsletterForm) {
+        newsletterForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const emailInput = newsletterForm.querySelector('#newsletter-email');
+            const emailVal = emailInput ? emailInput.value.trim() : '';
+            if (emailVal) {
+                showToast(`Thank you for subscribing (${emailVal}) to Cynaris Solutions updates!`, 'success');
+                newsletterForm.reset();
+            }
+        });
+    }
 };
 
 /* ============================================================================
