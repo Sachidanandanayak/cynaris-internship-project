@@ -18,12 +18,14 @@
     
     <!-- External Stylesheet (Mobile-First CSS) -->
     <link rel="stylesheet" href="css/style.css">
+    <!-- Week 2 Day 1: Advanced CSS (Themes, Animations, Pseudo-elements, Sticky Nav) -->
+    <link rel="stylesheet" href="css/advanced_styles.css">
 </head>
 
 <body>
 
     <!-- =====================================================================
-         Site Header & Flexbox Navigation
+         Site Header & Flexbox Navigation (with CSS-Only Sticky & Theme Toggle)
          ===================================================================== -->
     <header class="site-header">
         <div class="container nav-container">
@@ -32,12 +34,24 @@
                 <span>Cynaris<span class="brand-logo-highlight">Solutions</span></span>
             </a>
 
-            <!-- Mobile Navigation Toggle Button -->
-            <button class="nav-toggle" type="button" aria-controls="primary-navigation" aria-expanded="false" aria-label="Toggle navigation menu">
-                <span class="nav-toggle-bar"></span>
-                <span class="nav-toggle-bar"></span>
-                <span class="nav-toggle-bar"></span>
-            </button>
+            <!-- Header Controls: Theme Switcher & Mobile Hamburger Toggle -->
+            <div class="header-controls" style="display: flex; align-items: center; gap: 0.75rem;">
+                <div class="theme-switcher-container">
+                    <input type="checkbox" id="theme-toggle" class="theme-toggle-input" aria-label="Toggle dark and light theme">
+                    <label for="theme-toggle" class="theme-toggle-label" title="Toggle dark/light theme">
+                        <span class="theme-toggle-icon sun" aria-hidden="true">☀️</span>
+                        <span class="theme-toggle-icon moon" aria-hidden="true">🌙</span>
+                        <span class="theme-toggle-thumb" aria-hidden="true"></span>
+                    </label>
+                </div>
+
+                <!-- Mobile Navigation Toggle Button -->
+                <button class="nav-toggle" type="button" aria-controls="primary-navigation" aria-expanded="false" aria-label="Toggle navigation menu">
+                    <span class="nav-toggle-bar"></span>
+                    <span class="nav-toggle-bar"></span>
+                    <span class="nav-toggle-bar"></span>
+                </button>
+            </div>
 
             <!-- Navigation Menu using Flexbox -->
             <nav id="primary-navigation" class="nav-menu" aria-label="Main navigation">
@@ -45,6 +59,7 @@
                     <li><a href="#hero" class="nav-link">Home</a></li>
                     <li><a href="#features" class="nav-link">Features</a></li>
                     <li><a href="#services" class="nav-link">Services</a></li>
+                    <li><a href="#telemetry" class="nav-link">Telemetry</a></li>
                     <li><a href="#testimonials" class="nav-link">Testimonials</a></li>
                     <li><a href="#contact" class="nav-link">Contact</a></li>
                 </ul>
@@ -52,6 +67,11 @@
                     <a href="#contact" class="btn btn-primary">Get Started</a>
                 </div>
             </nav>
+        </div>
+
+        <!-- CSS-Only Reading & Telemetry Sticky Scroll Bar -->
+        <div class="sticky-scroll-progress" aria-hidden="true">
+            <div class="sticky-scroll-progress-bar"></div>
         </div>
     </header>
 
@@ -395,6 +415,133 @@ const createServiceCalc = (items = []) => ({
         </div>
 
         <!-- =================================================================
+             2.8. Advanced CSS: Live Cloud Telemetry & System Diagnostics
+             ================================================================= -->
+        <section class="diagnostics-section section" id="telemetry" aria-labelledby="telemetry-title">
+            <div class="container">
+                <header class="section-header">
+                    <span class="section-tag">System Health &amp; Pipeline</span>
+                    <h2 id="telemetry-title" class="section-title">Live Cloud Telemetry &amp; Diagnostics Engine</h2>
+                    <p class="section-subtitle">
+                        High-frequency observability with zero JavaScript runtime overhead powered exclusively by CSS-only keyframe animations.
+                    </p>
+                </header>
+
+                <div class="diagnostics-grid">
+                    <!-- Diagnostic 1: CSS-Only Concentric Dual-Ring Loading Spinner -->
+                    <article class="diagnostics-card">
+                        <div class="diagnostics-card-header">
+                            <h3 class="diagnostics-card-title">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                                </svg>
+                                Concentric Dual Spinner
+                            </h3>
+                            <span class="diagnostics-status-pill active">
+                                <span class="telemetry-indicator-dot active" aria-hidden="true"></span>
+                                Streaming
+                            </span>
+                        </div>
+                        <div class="diagnostics-card-body">
+                            <div class="css-spinner-container" role="progressbar" aria-label="Streaming telemetry data" aria-valuetext="Loading">
+                                <div class="css-spinner-ring-outer"></div>
+                                <div class="css-spinner-ring-inner"></div>
+                                <div class="css-spinner-core"></div>
+                            </div>
+                        </div>
+                        <div class="diagnostics-card-footer">
+                            <span>Dual-ring CSS keyframes</span>
+                            <strong style="color: var(--color-accent);">120 FPS Native</strong>
+                        </div>
+                    </article>
+
+                    <!-- Diagnostic 2: CSS-Only Animated Striped Progress Bar -->
+                    <article class="diagnostics-card">
+                        <div class="diagnostics-card-header">
+                            <h3 class="diagnostics-card-title">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
+                                    <path d="M12 12v9"/>
+                                    <path d="m8 17 4 4 4-4"/>
+                                </svg>
+                                Cluster Ingestion Sync
+                            </h3>
+                            <span class="diagnostics-status-pill">
+                                <span class="telemetry-indicator-dot done" aria-hidden="true"></span>
+                                Healthy
+                            </span>
+                        </div>
+                        <div class="diagnostics-card-body">
+                            <div class="progress-track-wrapper">
+                                <div class="progress-track-labels">
+                                    <span>Sync Pipeline (Shard 04)</span>
+                                    <span class="progress-percent-display">82% Ingested</span>
+                                </div>
+                                <div class="css-progress-track" role="progressbar" aria-valuenow="82" aria-valuemin="0" aria-valuemax="100">
+                                    <div class="css-progress-fill-striped"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="diagnostics-card-footer">
+                            <span>Dynamic diagonal gradients</span>
+                            <strong style="color: var(--color-success);">24.8 GB / 30 GB</strong>
+                        </div>
+                    </article>
+
+                    <!-- Diagnostic 3: CSS-Only Indeterminate Telemetry Scanner -->
+                    <article class="diagnostics-card">
+                        <div class="diagnostics-card-header">
+                            <h3 class="diagnostics-card-title">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <rect width="20" height="8" x="2" y="2" rx="2" ry="2"/>
+                                    <rect width="20" height="8" x="2" y="14" rx="2" ry="2"/>
+                                    <line x1="6" x2="6.01" y1="6" y2="6"/>
+                                    <line x1="6" x2="6.01" y1="18" y2="18"/>
+                                </svg>
+                                Edge Threat Telemetry
+                            </h3>
+                            <span class="diagnostics-status-pill active">
+                                <span class="telemetry-indicator-dot active" aria-hidden="true"></span>
+                                Scanning
+                            </span>
+                        </div>
+                        <div class="diagnostics-card-body">
+                            <div class="progress-track-wrapper">
+                                <div class="progress-track-labels">
+                                    <span>Zero-Trust Packet Scanner</span>
+                                    <span class="progress-percent-display">Active</span>
+                                </div>
+                                <div class="css-progress-track">
+                                    <div class="css-progress-indeterminate"></div>
+                                </div>
+                            </div>
+                            <div class="telemetry-steps-list">
+                                <div class="telemetry-step-item">
+                                    <span class="telemetry-step-name">
+                                        <span class="telemetry-indicator-dot done"></span>
+                                        TLS 1.3 Handshake Verification
+                                    </span>
+                                    <span>Passed</span>
+                                </div>
+                                <div class="telemetry-step-item">
+                                    <span class="telemetry-step-name">
+                                        <span class="telemetry-indicator-dot active"></span>
+                                        WAF Anomaly Detection
+                                    </span>
+                                    <span style="color: var(--color-accent);">Scanning</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="diagnostics-card-footer">
+                            <span>Continuous ping-pong beam</span>
+                            <strong style="color: var(--color-accent);">Zero Overhead</strong>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================
              3. Testimonials Section
              ================================================================= -->
         <section class="testimonials section" id="testimonials" aria-labelledby="testimonials-title">
@@ -559,6 +706,25 @@ const createServiceCalc = (items = []) => ({
     <script src="js/main.js"></script>
     <!-- ES6+ Interactive Services Explorer & Logic Script -->
     <script src="js/script.js"></script>
+    <!-- Theme Switcher Persistence (Progressive Enhancement) -->
+    <script>
+        (() => {
+            const themeToggle = document.getElementById('theme-toggle');
+            if (!themeToggle) return;
+            // Restore saved theme preference
+            const savedTheme = localStorage.getItem('cynaris-theme');
+            if (savedTheme === 'light') {
+                themeToggle.checked = true;
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+            // Listen for theme changes and persist preference
+            themeToggle.addEventListener('change', () => {
+                const theme = themeToggle.checked ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('cynaris-theme', theme);
+            });
+        })();
+    </script>
 </body>
 
 </html>

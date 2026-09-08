@@ -12,12 +12,39 @@ This repository contains tasks, projects, and learning modules for the **Cynaris
 | **Week 1 – Day 2** | Responsive Design & Mobile-First Landing Page | `feature/week-1-day-2` |
 | **Week 1 – Day 3** | JavaScript ES6+ Basics & Interactive Explorer | `feature/week-1-day-3` |
 | **Week 1 – Day 4** | Responsive Design & Media Queries | `feature/week-1-day-4` |
+| **Week 2 – Day 1** | CSS Advanced (Themes, Animations, Pseudo-Elements, Sticky Nav) | `feature/week-2-day-1` |
 
 ---
 
-## 📱 Week 1 – Day 4: Responsive Design & Media Queries
+## 🎨 Week 2 – Day 1: CSS Advanced
 
 ### Project Overview
+Advanced CSS architecture implementing enterprise visual and interactive polish for the **Cynaris Solutions Cloud & AI Infrastructure Platform** through `css/advanced_styles.css`. Demonstrates custom property theme tokens, pure CSS `:has()` theme switching, zero-overhead CSS keyframe animations (spinners & progress bars), multi-layered decorative pseudo-elements (`::before` / `::after`), smooth scroll anchor offsetting, and sticky glassmorphic navigation.
+
+### 🌟 Key Advanced CSS Features
+
+1. **Dark/Light Theme Switcher using CSS Custom Properties**:
+   - Implemented using token overrides under `:root:has(#theme-toggle:checked)`, `[data-theme="light"]`, and `body.light-theme`.
+   - Smooth CSS transitions (`background-color`, `color`, `border-color`, `box-shadow`) applied across all cards, dialogs, inputs, and buttons.
+   - Accessible toggle switch positioned right in the sticky navigation header with animated sliding thumb and sun/moon iconography.
+   - 100% functional via pure CSS `:has()`, with progressive `localStorage` persistence for preference retention across page refreshes.
+
+2. **CSS-Only Animated Loading Spinner & Multi-Stage Progress Bar**:
+   - **Concentric Dual-Ring Spinner**: Engineered with `@keyframes spinnerClockwise` and `@keyframes spinnerCounterClockwise` with gradient trails and a glowing pulsating core (`@keyframes spinnerPulse`) running at a silky 120 FPS native frame rate without JavaScript.
+   - **Barber-Pole Striped Progress Bar**: Multi-gradient striped progression track (`@keyframes progressStripesMove`) with dynamic ambient pulse (`@keyframes progressPulseGlow`).
+   - **Zero-Trust Scanner Beam**: Indeterminate continuous ping-pong telemetry scanner (`@keyframes indeterminateScan`).
+   - **Sticky Nav Scroll Progress Bar**: Sleek telemetry reading progress indicator pinned to the bottom of the sticky header.
+
+3. **Decorative UI using `::before` & `::after` Pseudo-Elements**:
+   - **Section Headers**: Radiant ambient glow behind section tags (`::before`) and dynamic gradient accent underline bars (`::after`) that expand on hover.
+   - **Feature & Service Cards**: Top glowing gradient border beam on hover (`::before`) and ambient radial corner aura (`::after`).
+   - **Primary Buttons**: High-velocity diagonal light shimmer sweep across the button surface on hover (`::before`).
+   - **Testimonial Cards**: Oversized typographic quotation mark watermark (`::before`) and gradient bottom accent divider (`::after`).
+   - **Navigation Links**: Center-out expanding underline on hover and focus (`::after`).
+
+4. **Smooth Scrolling & Sticky Navigation (CSS Only)**:
+   - Sticky navbar pinned with `position: sticky; top: 0; z-index: 1000;` and frosted glassmorphism (`backdrop-filter: blur(12px)`).
+   - Anchor jump clipping prevention using `scroll-padding-top: calc(var(--header-height) + 1.25rem);` on `html` so smooth scrolls to `#features`, `#services`, `#telemetry`, `#testimonials`, and `#contact` land perfectly below the sticky header.
 An enterprise-grade, mobile-first responsive design architecture implemented for the **Cynaris Solutions Cloud & AI Platform**. Fully optimized across mobile (`320px`), tablet (`768px`), and desktop (`1200px`) devices using modern CSS media queries, scalable relative units (`rem`, `em`, `%`, `vw`/`vh`, `clamp()`), WCAG-compliant touch targets, zero horizontal overflow, and accessible mobile drawer navigation while preserving all Week 1 Day 3 JavaScript ES6+ interactive features.
 
 ### 🌟 Key Responsive Features & Architecture
@@ -108,7 +135,8 @@ An enterprise-grade JavaScript ES6+ implementation powering the **Cynaris Soluti
 Cynaris-Internship/
 ├── index.html          # Semantic Landing Page + Interactive ES6+ Services Explorer
 ├── css/
-│   └── style.css       # Mobile-first stylesheet (Flexbox, Grid, Breakpoints, Relative Units)
+│   ├── style.css             # Week 1 mobile-first stylesheet (Flexbox, Grid, Media Queries)
+│   └── advanced_styles.css   # Week 2 Day 1: Themes, Keyframe Animations, Pseudo-Elements, Sticky Nav
 ├── js/
 │   ├── main.js         # Accessible mobile navigation toggle & window resize handler
 │   └── script.js       # Week 1 Day 3 ES6+ implementation, array pipelines, & event listeners
