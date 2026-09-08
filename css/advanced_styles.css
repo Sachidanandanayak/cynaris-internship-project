@@ -1,0 +1,869 @@
+/* ==========================================================================
+   Cynaris Solutions - Enterprise Cloud & AI Infrastructure
+   Week 2 Day 1: Advanced CSS Deliverable (advanced_styles.css)
+   Features:
+     1. Dark / Light Theme Switcher via CSS Custom Properties (:has(), data-theme)
+     2. CSS-Only Animated Loading Spinner & Multi-Stage Progress Bar
+     3. Decorative UI using ::before and ::after Pseudo-Elements
+     4. CSS-Only Smooth Scrolling Anchor Offsets & Enhanced Sticky Navigation
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. CSS-Only Smooth Scrolling & Sticky Navigation Enhancements
+   -------------------------------------------------------------------------- */
+html {
+    scroll-behavior: smooth;
+    /* Prevent sticky header from obscuring section titles on anchor jump */
+    scroll-padding-top: calc(var(--header-height, 4.5rem) + 1.25rem);
+}
+
+/* Enhanced Sticky Header Glassmorphism & Transition */
+.site-header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Pure CSS Reading / Telemetry Scroll Progress Bar attached to sticky navbar */
+.sticky-scroll-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: transparent;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.sticky-scroll-progress-bar {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, var(--color-primary, #2563eb), var(--color-accent, #06b6d4), #8b5cf6, var(--color-accent, #06b6d4));
+    background-size: 200% 100%;
+    animation: stickyProgressShimmer 3s linear infinite;
+    transform-origin: left;
+}
+
+@keyframes stickyProgressShimmer {
+    0% {
+        background-position: 100% 0;
+    }
+    100% {
+        background-position: -100% 0;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   2. Dark / Light Theme Switcher (CSS Custom Properties & Pure CSS :has)
+   -------------------------------------------------------------------------- */
+
+/* Light Theme Variables applied when theme toggle checkbox is checked OR data-theme="light" */
+:root:has(#theme-toggle:checked),
+[data-theme="light"],
+body.light-theme {
+    /* Main Background & Surfaces */
+    --color-bg-main: #f8fafc;
+    --color-bg-surface: #ffffff;
+    --color-bg-surface-elevated: #f1f5f9;
+    --color-bg-card: rgba(255, 255, 255, 0.92);
+    --color-bg-glass: rgba(15, 23, 42, 0.04);
+
+    /* Borders */
+    --color-border: rgba(15, 23, 42, 0.12);
+    --color-border-hover: rgba(37, 99, 235, 0.6);
+
+    /* Text Colors */
+    --color-text-primary: #0f172a;
+    --color-text-secondary: #475569;
+    --color-text-muted: #64748b;
+    --color-text-inverse: #ffffff;
+
+    /* Light Theme Shadows */
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+    --shadow-glow: 0 0 1.5rem rgba(37, 99, 235, 0.15);
+
+    /* Elevated Component Surfaces */
+    --theme-header-bg: rgba(255, 255, 255, 0.88);
+    --theme-code-bg: #0f172a;
+}
+
+/* Default Dark Theme Component Overrides */
+:root {
+    --theme-header-bg: rgba(11, 15, 25, 0.9);
+    --theme-code-bg: #0d1117;
+    --theme-transition-base: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Global body styling updates for light mode with smooth transition */
+body {
+    transition: var(--theme-transition-base);
+}
+
+:root:has(#theme-toggle:checked) body,
+[data-theme="light"] body,
+body.light-theme {
+    background-color: var(--color-bg-main);
+    background-image:
+        radial-gradient(circle at 15% 15%, rgba(37, 99, 235, 0.08) 0%, transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(6, 182, 212, 0.06) 0%, transparent 45%);
+    color: var(--color-text-primary);
+}
+
+:root:has(#theme-toggle:checked) .site-header,
+[data-theme="light"] .site-header,
+body.light-theme .site-header {
+    background-color: var(--theme-header-bg);
+    border-bottom-color: var(--color-border);
+}
+
+/* Smooth transitions for all cards, headers, inputs across theme switches */
+.feature-card,
+.service-card,
+.metric-summary-card,
+.testimonial-card,
+.viva-modal-dialog,
+.service-search-input,
+.service-sort-select,
+.nav-menu,
+.site-footer,
+.diagnostics-card {
+    transition: var(--theme-transition-base);
+}
+
+/* Light Theme tweaks for specific cards to maintain high contrast & readability */
+:root:has(#theme-toggle:checked) .feature-card,
+[data-theme="light"] .feature-card,
+body.light-theme .feature-card,
+:root:has(#theme-toggle:checked) .service-card,
+[data-theme="light"] .service-card,
+body.light-theme .service-card,
+:root:has(#theme-toggle:checked) .metric-summary-card,
+[data-theme="light"] .metric-summary-card,
+body.light-theme .metric-summary-card,
+:root:has(#theme-toggle:checked) .testimonial-card,
+[data-theme="light"] .testimonial-card,
+body.light-theme .testimonial-card {
+    background: var(--color-bg-card);
+    border-color: var(--color-border);
+    box-shadow: var(--shadow-sm);
+}
+
+:root:has(#theme-toggle:checked) .service-search-input,
+[data-theme="light"] .service-search-input,
+body.light-theme .service-search-input,
+:root:has(#theme-toggle:checked) .service-sort-select,
+[data-theme="light"] .service-sort-select,
+body.light-theme .service-sort-select {
+    background-color: var(--color-bg-surface);
+    color: var(--color-text-primary);
+    border-color: var(--color-border);
+}
+
+:root:has(#theme-toggle:checked) .btn-secondary,
+[data-theme="light"] .btn-secondary,
+body.light-theme .btn-secondary {
+    background: #e2e8f0;
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+
+:root:has(#theme-toggle:checked) .btn-secondary:hover,
+[data-theme="light"] .btn-secondary:hover,
+body.light-theme .btn-secondary:hover {
+    background: #cbd5e1;
+}
+
+:root:has(#theme-toggle:checked) .nav-toggle,
+[data-theme="light"] .nav-toggle,
+body.light-theme .nav-toggle {
+    background: var(--color-bg-surface);
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
+}
+
+:root:has(#theme-toggle:checked) .nav-toggle-bar,
+[data-theme="light"] .nav-toggle-bar,
+body.light-theme .nav-toggle-bar {
+    background-color: var(--color-text-primary);
+}
+
+/* Light Theme for ES6 Viva Comparison Code Area */
+:root:has(#theme-toggle:checked) .viva-code-body,
+[data-theme="light"] .viva-code-body,
+body.light-theme .viva-code-body {
+    background-color: var(--theme-code-bg);
+    color: #f8fafc;
+}
+
+/* --------------------------------------------------------------------------
+   3. Accessible Theme Switcher Component (Pure CSS Toggle Switch)
+   -------------------------------------------------------------------------- */
+.theme-switcher-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+}
+
+/* Hide native checkbox visually while keeping keyboard accessibility */
+.theme-toggle-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+/* Toggle Track */
+.theme-toggle-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    width: 3.5rem;   /* 56px */
+    height: 2rem;    /* 32px */
+    padding: 0 0.35rem;
+    background-color: var(--color-bg-surface-elevated, #1f2937);
+    border: 1px solid var(--color-border, rgba(255, 255, 255, 0.15));
+    border-radius: 9999px;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.theme-toggle-label:hover {
+    border-color: var(--color-accent, #06b6d4);
+}
+
+/* Focus ring for keyboard navigation */
+.theme-toggle-input:focus-visible + .theme-toggle-label {
+    outline: 2px solid var(--color-accent, #06b6d4);
+    outline-offset: 3px;
+}
+
+/* Icons inside the switch track */
+.theme-toggle-icon {
+    font-size: 0.85rem;
+    line-height: 1;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.theme-toggle-icon.sun {
+    color: #f59e0b;
+    opacity: 0.4;
+    transform: scale(0.85);
+}
+
+.theme-toggle-icon.moon {
+    color: #38bdf8;
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Sliding Thumb Element */
+.theme-toggle-thumb {
+    position: absolute;
+    top: 0.1875rem; /* 3px */
+    left: 0.25rem;  /* 4px */
+    width: 1.5rem;  /* 24px */
+    height: 1.5rem; /* 24px */
+    background: linear-gradient(135deg, var(--color-primary, #2563eb), var(--color-accent, #06b6d4));
+    border-radius: 50%;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    z-index: 2;
+}
+
+/* Checked (Light Mode) State */
+.theme-toggle-input:checked + .theme-toggle-label {
+    background-color: #e2e8f0;
+    border-color: #cbd5e1;
+}
+
+.theme-toggle-input:checked + .theme-toggle-label .theme-toggle-thumb {
+    transform: translateX(1.5rem);
+    background: linear-gradient(135deg, #f59e0b, #ea580c);
+}
+
+.theme-toggle-input:checked + .theme-toggle-label .theme-toggle-icon.sun {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.theme-toggle-input:checked + .theme-toggle-label .theme-toggle-icon.moon {
+    opacity: 0.3;
+    transform: scale(0.85);
+}
+
+/* --------------------------------------------------------------------------
+   4. Decorative UI using ::before and ::after Pseudo-Elements
+   -------------------------------------------------------------------------- */
+
+/* A. Navigation Links: Animated Center-Out Underline via ::after */
+.nav-link {
+    position: relative;
+    padding-bottom: 0.25rem;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--color-primary, #2563eb), var(--color-accent, #06b6d4));
+    border-radius: 2px;
+    transform: translateX(-50%);
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-link:hover::after,
+.nav-link:focus-visible::after {
+    width: 100%;
+}
+
+/* B. Section Titles: Decorative Gradient Accent Bar via ::after & Halo via ::before */
+.section-header {
+    position: relative;
+}
+
+.section-title {
+    position: relative;
+    display: inline-block;
+}
+
+.section-title::after {
+    content: '';
+    display: block;
+    width: 4rem; /* 64px */
+    height: 4px;
+    margin: 0.75rem auto 0 auto;
+    background: linear-gradient(90deg, var(--color-primary, #2563eb), var(--color-accent, #06b6d4));
+    border-radius: 9999px;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.section-header:hover .section-title::after {
+    width: 6.5rem;
+}
+
+/* Subtle radiant halo behind section tags */
+.section-tag::before {
+    content: '⚡';
+    font-size: 0.75rem;
+    margin-right: 0.15rem;
+    display: inline-block;
+    animation: iconBounce 2s ease-in-out infinite;
+}
+
+@keyframes iconBounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-2px);
+    }
+}
+
+/* C. Feature & Service Cards: Top Glowing Border via ::before, Corner Aura via ::after */
+.feature-card,
+.service-card {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+/* Gradient Beam along the top border */
+.feature-card::before,
+.service-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--color-accent, #06b6d4), var(--color-primary, #2563eb), transparent);
+    opacity: 0;
+    transform: scaleX(0.2);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    z-index: 2;
+}
+
+.feature-card:hover::before,
+.service-card:hover::before {
+    opacity: 1;
+    transform: scaleX(1);
+}
+
+/* Ambient Radial Glow corner aura */
+.feature-card::after,
+.service-card::after {
+    content: '';
+    position: absolute;
+    top: -4rem;
+    right: -4rem;
+    width: 8rem;
+    height: 8rem;
+    background: radial-gradient(circle, var(--color-accent-glow, rgba(6, 182, 212, 0.25)) 0%, transparent 70%);
+    opacity: 0;
+    border-radius: 50%;
+    pointer-events: none;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    z-index: 1;
+}
+
+.feature-card:hover::after,
+.service-card:hover::after {
+    opacity: 0.7;
+    transform: scale(1.3);
+}
+
+/* D. Primary CTA Buttons: Shimmer Light Beam via ::before */
+.btn-primary {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.35),
+        transparent
+    );
+    transform: skewX(-25deg);
+    transition: none;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.btn-primary:hover::before {
+    left: 200%;
+    transition: left 0.75s ease-in-out;
+}
+
+/* E. Testimonials: Giant Decorative Quotation Mark via ::before & Accent Line via ::after */
+.testimonial-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.testimonial-card::before {
+    content: '“';
+    position: absolute;
+    top: -0.5rem;
+    right: 1.25rem;
+    font-family: Georgia, serif;
+    font-size: 5.5rem;
+    line-height: 1;
+    color: var(--color-accent, #06b6d4);
+    opacity: 0.12;
+    pointer-events: none;
+    user-select: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.testimonial-card:hover::before {
+    opacity: 0.22;
+    transform: translateY(-4px) rotate(4deg);
+}
+
+.testimonial-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 2rem;
+    right: 2rem;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.4), transparent);
+    opacity: 0.5;
+}
+
+/* F. Hero Badge: Pulsing Indicator Ring via ::before and ::after */
+.hero-badge {
+    position: relative;
+}
+
+.hero-badge::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, var(--color-primary, #2563eb), var(--color-accent, #06b6d4), var(--color-primary, #2563eb));
+    background-size: 200% 100%;
+    animation: stickyProgressShimmer 4s linear infinite;
+    z-index: -1;
+    opacity: 0.4;
+}
+
+/* --------------------------------------------------------------------------
+   5. CSS-Only Animated Loading Spinner & Progress Bar Showcase Section
+   -------------------------------------------------------------------------- */
+
+.diagnostics-section {
+    position: relative;
+    background: linear-gradient(180deg, transparent 0%, var(--color-bg-surface, #111827) 50%, transparent 100%);
+}
+
+.diagnostics-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+@media (min-width: 48rem) {
+    .diagnostics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 75rem) {
+    .diagnostics-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Diagnostics Card Container */
+.diagnostics-card {
+    background: var(--color-bg-card, rgba(17, 24, 39, 0.75));
+    border: 1px solid var(--color-border, rgba(255, 255, 255, 0.08));
+    border-radius: var(--radius-lg, 1rem);
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    backdrop-filter: blur(12px);
+    position: relative;
+    overflow: hidden;
+}
+
+.diagnostics-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+}
+
+.diagnostics-card-title {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.diagnostics-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--color-success, #10b981);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.diagnostics-status-pill.active {
+    background: rgba(6, 182, 212, 0.12);
+    color: var(--color-accent, #06b6d4);
+    border-color: rgba(6, 182, 212, 0.3);
+}
+
+.diagnostics-card-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 0;
+    min-height: 10rem;
+}
+
+.diagnostics-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border, rgba(255, 255, 255, 0.08));
+    font-size: 0.8125rem;
+    color: var(--color-text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   5A. CSS-Only Concentric Loading Spinners
+   -------------------------------------------------------------------------- */
+
+/* Dual-Ring Outer & Inner Spinner (Pure CSS Keyframe Animation) */
+.css-spinner-container {
+    position: relative;
+    width: 5rem;
+    height: 5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Outer Ring: Clockwise rotation with gradient border */
+.css-spinner-ring-outer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top-color: var(--color-accent, #06b6d4);
+    border-right-color: var(--color-primary, #2563eb);
+    animation: spinnerClockwise 1.4s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+    filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.4));
+}
+
+/* Inner Ring: Counter-clockwise rotation with accent border */
+.css-spinner-ring-inner {
+    position: absolute;
+    width: 70%;
+    height: 70%;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-bottom-color: #8b5cf6;
+    border-left-color: var(--color-accent, #06b6d4);
+    animation: spinnerCounterClockwise 1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+/* Center Glowing Core */
+.css-spinner-core {
+    position: absolute;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    background: var(--color-accent, #06b6d4);
+    box-shadow: 0 0 12px var(--color-accent, #06b6d4);
+    animation: spinnerPulse 1.4s ease-in-out infinite alternate;
+}
+
+/* Keyframe Animations for Spinner */
+@keyframes spinnerClockwise {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes spinnerCounterClockwise {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(-360deg);
+    }
+}
+
+@keyframes spinnerPulse {
+    0% {
+        transform: scale(0.7);
+        opacity: 0.5;
+        box-shadow: 0 0 6px var(--color-accent, #06b6d4);
+    }
+    100% {
+        transform: scale(1.15);
+        opacity: 1;
+        box-shadow: 0 0 16px var(--color-accent, #06b6d4);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   5B. CSS-Only Multi-Stage Animated Progress Bars
+   -------------------------------------------------------------------------- */
+
+.progress-track-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.progress-track-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+}
+
+.progress-percent-display {
+    font-weight: 600;
+    color: var(--color-accent, #06b6d4);
+    font-family: var(--font-family-heading);
+}
+
+/* The Base Progress Track */
+.css-progress-track {
+    width: 100%;
+    height: 0.75rem; /* 12px */
+    background: var(--color-bg-surface-elevated, #1f2937);
+    border: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
+    border-radius: 9999px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+/* Striped Animated Bar (Diagonal barber-pole effect) */
+.css-progress-fill-striped {
+    height: 100%;
+    width: 82%;
+    border-radius: 9999px;
+    background-color: var(--color-primary, #2563eb);
+    background-image: linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.2) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0.2) 75%,
+        transparent 75%,
+        transparent
+    );
+    background-size: 1.5rem 1.5rem;
+    animation:
+        progressStripesMove 1s linear infinite,
+        progressPulseGlow 3s ease-in-out infinite;
+    position: relative;
+}
+
+/* Continuous diagonal stripe movement */
+@keyframes progressStripesMove {
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: 1.5rem 0;
+    }
+}
+
+@keyframes progressPulseGlow {
+    0%, 100% {
+        filter: drop-shadow(0 0 2px rgba(37, 99, 235, 0.4));
+    }
+    50% {
+        filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.8));
+    }
+}
+
+/* Secondary Indeterminate Scanner Beam (Infinite ping-pong scan) */
+.css-progress-indeterminate {
+    height: 100%;
+    width: 100%;
+    position: relative;
+    border-radius: 9999px;
+    background: var(--color-bg-surface-elevated, #1f2937);
+    overflow: hidden;
+}
+
+.css-progress-indeterminate::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -40%;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, var(--color-accent, #06b6d4), #8b5cf6, transparent);
+    border-radius: 9999px;
+    animation: indeterminateScan 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes indeterminateScan {
+    0% {
+        left: -40%;
+        width: 30%;
+    }
+    50% {
+        left: 40%;
+        width: 50%;
+    }
+    100% {
+        left: 110%;
+        width: 30%;
+    }
+}
+
+/* Multi-Step Telemetry Stages */
+.telemetry-steps-list {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    margin-top: 0.5rem;
+}
+
+.telemetry-step-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+}
+
+.telemetry-step-name {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.telemetry-indicator-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--color-border);
+}
+
+.telemetry-indicator-dot.done {
+    background: var(--color-success, #10b981);
+    box-shadow: 0 0 6px var(--color-success, #10b981);
+}
+
+.telemetry-indicator-dot.active {
+    background: var(--color-accent, #06b6d4);
+    box-shadow: 0 0 8px var(--color-accent, #06b6d4);
+    animation: spinnerPulse 1s infinite alternate;
+}
+
+/* --------------------------------------------------------------------------
+   6. Mobile Navigation Theme Switcher Alignment & Responsive Refinements
+   -------------------------------------------------------------------------- */
+@media (max-width: 63.9375rem) { /* < 1024px */
+    .nav-container {
+        gap: 0.75rem;
+    }
+
+    .theme-switcher-container {
+        margin-right: 0.25rem;
+    }
+
+    /* Place theme switcher inside drawer or top header */
+    .site-header .theme-switcher-container {
+        display: inline-flex;
+    }
+}
