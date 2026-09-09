@@ -12,7 +12,121 @@ This repository contains tasks, projects, and learning modules for the **Cynaris
 | **Week 1 – Day 2** | Responsive Design & Mobile-First Landing Page | `feature/week-1-day-2` |
 | **Week 1 – Day 3** | JavaScript ES6+ Basics & Interactive Explorer | `feature/week-1-day-3` |
 | **Week 1 – Day 4** | Responsive Design & Media Queries | `feature/week-1-day-4` |
+| **Week 1 – Day 5** | Git Workflow (Branching, Rebasing, Squashing) | `feature/week-1-day-5` |
 | **Week 2 – Day 1** | CSS Advanced (Themes, Animations, Pseudo-Elements, Sticky Nav) | `feature/week-2-day-1` |
+| **Week 2 – Day 2** | Responsive Design (4-Section Landing Page, Grid & Flexbox, 320/768/1024/1440px) | `feature/week-2-day-2` |
+
+---
+
+## 🚀 Week 2 – Day 2: Responsive Design & Mobile-First Landing Page
+
+### Project Overview
+An enterprise-grade, mobile-first responsive architecture implemented for the **Cynaris Solutions Cloud & AI Infrastructure Platform**. Built in strict adherence to Cynaris curriculum specifications across mobile (`320px`), tablet (`768px`), desktop (`1024px`), and ultrawide (`1440px`) display tiers using pure CSS Grid for multi-dimensional layouts, Flexbox for one-dimensional components, fluid clamp typography, WCAG 2.1 AA accessible touch targets, and zero horizontal scrolling at any viewport.
+
+All previously completed **Week 1 Day 3** ES6+ interactive features, **Week 1 Day 4** media queries, and **Week 2 Day 1** CSS advanced themes and keyframe animations remain fully preserved and operational.
+
+---
+
+### 🌟 4 Core Semantic Landing Page Sections
+
+The landing page is architected around four primary semantic sections encapsulated within an accessible `<header>`, `<main id="main-content">`, and `<footer>`:
+
+1. **Section 1: Hero Section (`#hero`)**
+   - **Semantic Tag**: `<section class="hero" id="hero" aria-labelledby="hero-title">`
+   - **Value Proposition**: Fluid heading (`clamp(1.85rem, 5.5vw + 0.5rem, 3.5rem)`) with glowing cyan accent text and enterprise platform badge.
+   - **CTA Button Group**: Built using **Flexbox** (`display: flex; gap: var(--spacing-4);`). Stacks vertically as full-width touch buttons on mobile (< 480px) and seamlessly aligns horizontally on tablets and desktops.
+   - **Metrics Highlights Ribbon**: 3-statistic key performance indicator bar (`99.99% Uptime`, `< 15ms Latency`, `4.8x Velocity`) that transitions from single-column mobile stack to balanced 3-column tablet/desktop grid.
+
+2. **Section 2: Features Section (`#features`)**
+   - **Semantic Tag**: `<section class="features section" id="features" aria-labelledby="features-title">`
+   - **CSS Grid Layout**: Built using pure **CSS Grid** (`.features-grid`):
+     - `320px` (Mobile): `grid-template-columns: 1fr;`
+     - `768px` (Tablet): `grid-template-columns: repeat(2, 1fr); gap: var(--spacing-6);`
+     - `1024px` & `1440px` (Desktop/Ultrawide): `grid-template-columns: repeat(3, 1fr); gap: var(--spacing-8);`
+   - **6 Capability Cards**:
+     1. *Multi-Cloud Orchestration* (Cloud Native)
+     2. *Zero-Trust Cybersecurity* (Security First)
+     3. *Automated CI/CD Pipelines* (DevOps)
+     4. *Real-Time Telemetry & AI* (AI Observability)
+     5. *Global Edge CDN Network* (Edge Computing)
+     6. *Adaptive Elastic Autoscaling* (Cost Efficiency)
+   - **Card Design**: Includes accessible SVG iconography, header tags, glowing hover borders (`::before`), and subtle radial corner aura (`::after`).
+
+3. **Section 3: Testimonials Section (`#testimonials`)**
+   - **Semantic Tag**: `<section class="testimonials section" id="testimonials" aria-labelledby="testimonials-title">`
+   - **CSS Grid Layout**: Built using pure **CSS Grid** (`.testimonials-grid`):
+     - `320px` (Mobile): `grid-template-columns: 1fr;`
+     - `768px` (Tablet): `grid-template-columns: repeat(2, 1fr);`
+     - `1024px` & `1440px` (Desktop/Ultrawide): `grid-template-columns: repeat(3, 1fr);`
+   - **Client Cards**: Verified reviews with accessible 5-star rating (`aria-label="5 out of 5 stars rating"`), decorative quotation marks (`::before`), client blockquotes, and author avatar cards.
+
+4. **Section 4: Semantic Footer (`#contact`)**
+   - **Semantic Tag**: `<footer class="site-footer" id="contact" aria-labelledby="footer-heading">`
+   - **Hybrid Layout (Grid + Flexbox)**:
+     - **Top Section (`.footer-top`)**: CSS Grid with brand mission statement on the left and 3 navigation columns (Platform, Company, Stay Updated) on the right.
+     - **Newsletter Form**: Flexbox row with work email input (`flex-grow: 1`) and accessible "Subscribe" button.
+     - **Bottom Bar (`.footer-bottom`)**: Flexbox alignment distributing copyright and social media links with accessible SVG icons.
+
+> [!NOTE]
+> **Preserved Modules**: The **Interactive ES6+ Service Explorer** (Section 2.5) and **CSS Keyframe Telemetry Diagnostics** (Section 2.6) remain intact between Features and Testimonials, ensuring complete continuity across all internship learning modules.
+
+---
+
+### 📐 Flexbox vs CSS Grid Architectural Separation
+
+| Component | Technology | Rationale & Layout Behavior |
+|---|---|---|
+| **Site Navigation (`.nav-container`, `.nav-list`)** | **Flexbox** | One-dimensional item flow, dynamic space distribution (`justify-content: space-between`), and drawer transformation on mobile. |
+| **Hero CTA Group (`.hero-cta-group`)** | **Flexbox** | Direction switching (`column` on mobile -> `row` on tablet/desktop) with consistent gap spacing. |
+| **Features Section (`.features-grid`)** | **CSS Grid** | Two-dimensional rigid alignment ensuring equal height cards across 1, 2, and 3 columns. |
+| **Testimonials Section (`.testimonials-grid`)** | **CSS Grid** | Multi-card grid distributing client quote cards uniformly without JavaScript masonry. |
+| **Hero Stats Ribbon (`.hero-stats`)** | **CSS Grid** | Uniform proportional column allocation (`repeat(3, 1fr)`) with glassmorphic backing. |
+| **Footer Navigation (`.footer-links-grid`)** | **CSS Grid** | Clean 2-to-3 column distribution for footer links across viewports. |
+| **Footer Bottom Bar (`.footer-bottom`)** | **Flexbox** | One-dimensional row spacing copyright on the left and social media links on the right. |
+
+---
+
+### 📱 Responsive Breakpoints Hierarchy Matrix
+
+| Breakpoint | Viewport Width | Target Devices | Key Layout & Structural Adjustments |
+|---|---|---|---|
+| **Base Default** | `< 320px` | Ultra-Compact Handhelds | Single-column cards, collapsible mobile hamburger menu, fluid padding (`1rem`). |
+| **Mobile S** | `320px` (`@media (min-width: 20rem)`) | Small Smartphones (iPhone SE, Galaxy Fold) | Refined fluid heading scale (`clamp()`), safe gutters, zero horizontal overflow (`scrollWidth === clientWidth`). |
+| **Large Mobile** | `480px` (`@media (min-width: 30rem)`) | Large Smartphones & Phablets | 2-column metrics ribbon, horizontal CTA button group, auto-width inspector trigger. |
+| **Tablet** | `768px` (`@media (min-width: 48rem)`) | Tablets (iPad Portrait, Tablets) | **2-column Features Grid**, **2-column Testimonials Grid**, 3-column Hero Stats, horizontal search & sort controls. |
+| **Desktop / Laptop** | `1024px` (`@media (min-width: 64rem)`) | Laptops & Desktop Displays | **Navigation transitions from drawer to horizontal Flex navbar**; hamburger hidden (`display: none`); **3-column Features Grid**; **3-column Testimonials Grid**. |
+| **Standard Desktop** | `1200px` (`@media (min-width: 75rem)`) | Full HD Monitors | Max-width constraint (`75rem` / `1200px`), expanded gutters (`var(--spacing-8)`), 2-column parent footer layout. |
+| **Ultrawide / 4K** | `1440px` (`@media (min-width: 90rem)`) | Ultrawide & High-DPI Displays | Max container width constraint (`80rem` / `1280px` centered), generous card padding (`var(--spacing-8)`), high-resolution asset fidelity. |
+
+---
+
+### 🧪 Automated Chrome DevTools Testing & Audit Results
+
+Automated headless Chrome DevTools audit executed via Chrome DevTools Protocol (CDP) with device metric overrides confirms 100% responsive compliance:
+
+| Emulated Viewport | Viewport Width | `scrollWidth` | `clientWidth` | Horizontal Overflow? | Features Grid | Nav Toggle Visible? |
+|---|---|---|---|---|---|---|
+| **320px (Mobile S)** | `320px` | `320px` | `320px` | **NO (False)** | 1 Column | **YES (True)** |
+| **768px (Tablet)** | `768px` | `768px` | `768px` | **NO (False)** | 2 Columns | **YES (True)** |
+| **1024px (Laptop)** | `1024px` | `1007px` | `1007px` | **NO (False)** | 3 Columns | **NO (Hidden)** |
+| **1440px (Ultrawide)** | `1440px` | `1423px` | `1423px` | **NO (False)** | 3 Columns | **NO (Hidden)** |
+
+*Audit JSON artifact recorded in `screenshots/audit_results.json`.*
+
+---
+
+### 📸 Screenshot Evidence Directory
+
+All responsive verification screenshots are captured and cataloged under the `screenshots/` directory:
+
+1. **`screenshots/320px_mobile.png`**: Mobile S baseline view showing fluid single-column hero and stats.
+2. **`screenshots/320px_mobile_drawer_open.png`**: Mobile navigation drawer active with animated hamburger close icon, vertical link stack, theme switcher, and full-width CTA.
+3. **`screenshots/768px_tablet.png`**: Tablet layout showing horizontal CTA buttons, 3-column stats, and 2-column features grid.
+4. **`screenshots/1024px_desktop.png`**: Desktop layout showing horizontal Flexbox navbar, theme toggle, and hero.
+5. **`screenshots/features_grid_3col.png`**: Features section demonstrating 3-column CSS Grid with 6 capability cards.
+6. **`screenshots/testimonials_grid_3col.png`**: Testimonials section demonstrating 3-column CSS Grid with star ratings and quotes.
+7. **`screenshots/footer_responsive.png`**: Semantic footer displaying multi-column grid, newsletter input, and social links.
+8. **`screenshots/1440px_ultrawide.png`**: Ultrawide viewport showcasing centered container constraints and balanced margins.
 
 ---
 
@@ -22,7 +136,6 @@ This repository contains tasks, projects, and learning modules for the **Cynaris
 Advanced CSS architecture implementing enterprise visual and interactive polish for the **Cynaris Solutions Cloud & AI Infrastructure Platform** through `css/advanced_styles.css`. Demonstrates custom property theme tokens, pure CSS `:has()` theme switching, zero-overhead CSS keyframe animations (spinners & progress bars), multi-layered decorative pseudo-elements (`::before` / `::after`), smooth scroll anchor offsetting, and sticky glassmorphic navigation.
 
 ### 🌟 Key Advanced CSS Features
-
 1. **Dark/Light Theme Switcher using CSS Custom Properties**:
    - Implemented using token overrides under `:root:has(#theme-toggle:checked)`, `[data-theme="light"]`, and `body.light-theme`.
    - Smooth CSS transitions (`background-color`, `color`, `border-color`, `box-shadow`) applied across all cards, dialogs, inputs, and buttons.
@@ -45,53 +158,6 @@ Advanced CSS architecture implementing enterprise visual and interactive polish 
 4. **Smooth Scrolling & Sticky Navigation (CSS Only)**:
    - Sticky navbar pinned with `position: sticky; top: 0; z-index: 1000;` and frosted glassmorphism (`backdrop-filter: blur(12px)`).
    - Anchor jump clipping prevention using `scroll-padding-top: calc(var(--header-height) + 1.25rem);` on `html` so smooth scrolls to `#features`, `#services`, `#telemetry`, `#testimonials`, and `#contact` land perfectly below the sticky header.
-An enterprise-grade, mobile-first responsive design architecture implemented for the **Cynaris Solutions Cloud & AI Platform**. Fully optimized across mobile (`320px`), tablet (`768px`), and desktop (`1200px`) devices using modern CSS media queries, scalable relative units (`rem`, `em`, `%`, `vw`/`vh`, `clamp()`), WCAG-compliant touch targets, zero horizontal overflow, and accessible mobile drawer navigation while preserving all Week 1 Day 3 JavaScript ES6+ interactive features.
-
-### 🌟 Key Responsive Features & Architecture
-
-1. **Mobile-First CSS Architecture**:
-   - **Base Styles (Default)**: Written for small screen mobile viewports (starting at `320px`) outside any media queries.
-   - **Progressive Enhancement**: Uses `min-width` media queries to layer layout complexity as the screen expands.
-   - **No Desktop Overrides Needed**: Mobile devices download and evaluate the lightweight base rules without overriding desktop styles.
-
-2. **Responsive Breakpoints Hierarchy**:
-
-   | Breakpoint | Target Devices | Key Layout Behaviors |
-   |---|---|---|
-   | **Base (`>= 320px`)** | Small Smartphones | 1-column cards, full-width touch buttons, collapsible drawer navigation, stacked metric cards |
-   | **`min-width: 30rem` (`480px`)** | Large Smartphones & Phablets | 2-column metrics summary ribbon, inline CTA buttons, auto-width inspector trigger |
-   | **`min-width: 48rem` (`768px`)** | Tablets & Small Screens | 2-column features/services/testimonials grid, 4-column metric ribbon, 3-column stats ribbon, 3-column footer links |
-   | **`min-width: 64rem` (`1024px`)** | Laptops & Small Desktops | Navigation transitions from hamburger drawer to horizontal flex navbar; hamburger hidden (`display: none`) |
-   | **`min-width: 75rem` (`1200px`)** | Standard Desktop Displays | 3-column features, services, and testimonials grid; 2-column parent footer layout (brand + links grid); expanded container padding |
-   | **`min-width: 90rem` (`1440px`)** | Large & Ultrawide Displays | Max container width constraint (`80rem` / `1280px`), enhanced padding, and high-DPI scaling |
-
-3. **Relative & Scalable Units Strategy**:
-   - **`rem` (Root EM)**: Used for typography, margins, paddings, border radii, and touch targets (`min-height: 2.75rem` / 44px) so elements respect user browser accessibility font-size preferences.
-   - **`em`**: Used for contextual component spacing (badge padding, tag margins, icon spacing) scaling relative to the element's local font size.
-   - **`%`**: Used for fluid grid columns (`1fr`, `repeat(2, 1fr)`, `repeat(3, 1fr)`), flexible image widths, and container scaling.
-   - **`vw` / `vh`**: Viewport units used for modal maximum dimensions (`max-height: 88vh`, `max-width: min(94vw, 56.25rem)`) and backdrop filters.
-   - **`clamp(min, preferred, max)`**: Fluid typography and fluid spacing allowing smooth continuous scaling without rigid jumps:
-     - Hero title: `clamp(1.85rem, 5.5vw + 0.5rem, 3.5rem)`
-     - Section titles: `clamp(1.5rem, 3.5vw + 0.5rem, 2.25rem)`
-     - Container gutters: `clamp(1rem, 4vw, 2rem)`
-
-4. **Zero Horizontal Overflow at 320px**:
-   - Universal `box-sizing: border-box`.
-   - Card headers, tags, and footers implement `flex-wrap: wrap`.
-   - Grid and flex items enforce `min-width: 0` to prevent text expansion overflows.
-   - `overflow-wrap: break-word` and `word-break: break-word` applied to long headings and URLs.
-   - Code preview snippets utilize `overflow-x: auto; max-width: 100%;`.
-   - Viewport meta tag properly configured: `<meta name="viewport" content="width=device-width, initial-scale=1.0">`.
-
-5. **Accessible Mobile Navigation (`js/main.js`)**:
-   - Animated hamburger button with accessible ARIA attributes (`aria-controls`, `aria-expanded`).
-   - Smooth slide-down drawer menu on mobile viewports (< `1024px`).
-   - Closes automatically on `Escape` key press (WCAG 2.1), backdrop/outside click, and navigation link click.
-   - Auto-resets on window resize when crossing into desktop breakpoint.
-
-6. **Preserved JavaScript ES6+ Components**:
-   - Real-time service search, category pills, dynamic sorting, and provisioning calculations (`reduce()`) remain 100% operational on all screen sizes.
-   - ES6+ Viva Inspector Modal is fully responsive with scrollable dual-column comparison on tablet/desktop and single-column on mobile.
 
 ---
 
@@ -110,7 +176,7 @@ An enterprise-grade JavaScript ES6+ implementation powering the **Cynaris Soluti
    - Integrated live **ES6+ Viva Inspector Modal** directly into the UI for before/after comparison.
 
 2. **Array Methods on Realistic Dataset (`SERVICES_DATA`)**:
-   - **`filter()`**: Dynamic real-time search matching name/description and category filtering (All, Cloud Native, Security, AI Observability, DevOps, Edge Computing).
+   - **`filter()`**: Dynamic real-time search matching name/description and category filtering.
    - **`map()`**: Transforms data into accessible HTML card markup and generates unique category filter buttons with `new Set()`.
    - **`reduce()`**: Computes multi-metric aggregates in a single pass (total matching services, provisioned node count, active monthly budget spend, average SLA uptime %).
 
@@ -120,61 +186,54 @@ An enterprise-grade JavaScript ES6+ implementation powering the **Cynaris Soluti
    - **Array Destructuring**: `const [firstHighlight, ...rest] = tags;`
    - **Spread Operator**: `[...SERVICES_DATA]` for immutable sorting and state updates.
 
-4. **Interactive UI Component & Event Listeners**:
-   - **Real-Time Search Bar**: Triggers dynamic filtering on the `input` event.
-   - **Category Filter Pills**: Interactive category filtering via event delegation.
-   - **Sort Dropdown**: Sort by featured, price (asc/desc), or customer rating on `change` event.
-   - **Dynamic Provisioning Toggle**: Allows interactive node provisioning/deprovisioning on each card with animated toast feedback and instantaneous metric recalculation.
-   - **Zero Console Errors**: Clean, modular, strict-mode (`'use strict'`) architecture.
-
 ---
 
 ## 📁 Repository Structure
 
 ```text
 Cynaris-Internship/
-├── index.html          # Semantic Landing Page + Interactive ES6+ Services Explorer
+├── index.html                   # Semantic Landing Page (4 Core Sections + ES6+ Explorer + Telemetry)
 ├── css/
-│   ├── style.css             # Week 1 mobile-first stylesheet (Flexbox, Grid, Media Queries)
-│   └── advanced_styles.css   # Week 2 Day 1: Themes, Keyframe Animations, Pseudo-Elements, Sticky Nav
+│   ├── style.css                # Mobile-first stylesheet (Flexbox, CSS Grid, 320/768/1024/1440px Breakpoints)
+│   └── advanced_styles.css      # Week 2 Day 1: Themes, Keyframe Animations, Pseudo-Elements, Sticky Nav
 ├── js/
-│   ├── main.js         # Accessible mobile navigation toggle & window resize handler
-│   └── script.js       # Week 1 Day 3 ES6+ implementation, array pipelines, & event listeners
-└── README.md           # Project documentation and specifications
+│   ├── main.js                  # Accessible mobile navigation toggle & window resize handler
+│   └── script.js                # Week 1 Day 3 ES6+ implementation, array pipelines, & event listeners
+├── screenshots/                 # Automated DevTools verification screenshots & audit report
+│   ├── 320px_mobile.png
+│   ├── 320px_mobile_drawer_open.png
+│   ├── 768px_tablet.png
+│   ├── 1024px_desktop.png
+│   ├── 1440px_ultrawide.png
+│   ├── features_grid_3col.png
+│   ├── testimonials_grid_3col.png
+│   ├── footer_responsive.png
+│   └── audit_results.json
+├── scripts/
+│   └── capture_screenshots.py  # Headless Chrome DevTools Protocol automation & testing suite
+└── README.md                    # Comprehensive internship documentation & specification
 ```
-
----
-
-## 🧪 Testing & Verification Guide
-
-1. **Responsive Viewport Testing (Chrome DevTools)**:
-   - **320px (Mobile Portrait)**:
-     - Verify layout stacks into a single column with zero horizontal scrolling (`scrollWidth === clientWidth`).
-     - Click the mobile hamburger menu button to confirm the drawer opens, locks body scroll, and toggles `aria-expanded="true"`.
-     - Click a navigation link or press `Escape` to confirm the menu closes smoothly.
-     - Type in the search input and click category pills; verify cards filter dynamically.
-     - Click **"Provision Service"** on any card; verify the toast notification displays and metric counters update.
-   - **768px (Tablet Viewport)**:
-     - Verify features, services, and testimonials display in a balanced 2-column grid.
-     - Verify the metric ribbon displays 4 columns and the hero stats ribbon displays 3 columns.
-     - Confirm search input and sort dropdown align horizontally.
-   - **1200px (Desktop Viewport)**:
-     - Verify the mobile hamburger button is completely hidden (`display: none`).
-     - Verify horizontal flexbox navigation bar is visible with styled hover states.
-     - Confirm features, services, and testimonials display in 3 columns.
-     - Click **"ES6+ Viva Inspector"** to verify the dual-column comparison modal.
-
-2. **Console Inspection**:
-   - Open Developer Tools (`F12` or `Ctrl + Shift + I` -> **Console**).
-   - Verify zero errors, zero 404s, and clean initialization logs for both Day 4 Responsive Navigation and Day 3 ES6+ explorer.
 
 ---
 
 ## 🎓 Viva-Ready Responsive Design Concepts
 
 1. **Why is Mobile-First CSS preferred over Desktop-First?**
-   - Writing mobile styles first ensures constrained devices download and parse only what they need without overriding bulky multi-column desktop rules. It enforces content prioritization and cleaner, scalable CSS using `min-width` queries.
-2. **Why use `rem` instead of `px`?**
-   - `px` is an absolute unit that ignores user accessibility settings in their browser or operating system. `rem` scales proportionally with the root font size, ensuring full accessibility and consistency across responsive layouts.
-3. **What causes horizontal overflow at 320px and how do you prevent it?**
-   - Caused by fixed widths (e.g. `width: 500px`), unconstrained images/SVGs, padding without `box-sizing: border-box`, or long unbroken words. Prevented with `box-sizing: border-box`, `max-width: 100%`, `min-width: 0` on flex items, and `overflow-wrap: break-word`.
+   - Mobile-first architecture writes lightweight, baseline CSS for constrained devices first, then progressively layers layout complexity using `min-width` media queries. Constrained mobile browsers avoid downloading and parsing complex multi-column overrides, leading to faster First Contentful Paint (FCP) and superior performance.
+
+2. **When should you choose Flexbox vs CSS Grid?**
+   - **Flexbox** is designed for **one-dimensional** layouts (either a row OR a column). It excels at content-driven sizing, distributing space along a single axis, and component-level layouts such as navigation bars, form input groups, and button clusters.
+   - **CSS Grid** is designed for **two-dimensional** layouts (rows AND columns simultaneously). It excels at page-level scaffolding, uniform card grids (like Features and Testimonials), and strict grid track alignments.
+
+3. **What causes horizontal overflow at 320px and how is it prevented?**
+   - Horizontal overflow occurs when elements exceed the viewport width, caused by fixed pixel widths (e.g. `width: 500px`), unconstrained media elements, box model padding without `box-sizing: border-box`, or long unbroken strings.
+   - It is eliminated by:
+     1. Applying universal `box-sizing: border-box` to all elements.
+     2. Setting `max-width: 100%` and fluid column rules (`1fr`, `repeat(auto-fit, minmax(...))`).
+     3. Using `overflow-wrap: break-word` and `word-break: break-word` on headings and URLs.
+     4. Enforcing `min-width: 0` on flex and grid children.
+     5. Correctly configuring `<meta name="viewport" content="width=device-width, initial-scale=1.0">`.
+
+4. **Why use relative units (`rem`, `clamp()`) instead of absolute units (`px`)?**
+   - Absolute `px` values do not respect user operating system or browser font size preferences (e.g. users requiring 20px root text for accessibility).
+   - `rem` scales proportionally relative to the root font size, guaranteeing accessibility. `clamp(min, preferred, max)` enables smooth, continuous fluid typography and gutter scaling without sudden layout shifts at breakpoint boundaries.

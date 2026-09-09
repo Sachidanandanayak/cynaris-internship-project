@@ -1,7 +1,8 @@
 /* ==========================================================================
    Cynaris Solutions - Enterprise Cloud & AI Infrastructure
-   Week 1 Day 4: Responsive Design & Media Queries
-   Mobile-First Architecture: 320px (Mobile), 768px (Tablet), 1200px (Desktop)
+   Week 2 Day 2: Responsive Design & Mobile-First Architecture
+   Mobile-First Breakpoints: 320px (Mobile), 768px (Tablet), 1024px (Desktop), 1440px (Large/Ultrawide)
+   CSS Grid for Features & Testimonials | Flexbox for Navigation & Header Layout
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
@@ -1639,10 +1640,40 @@ select:focus-visible {
 
 /* ==========================================================================
    11. RESPONSIVE MEDIA QUERIES (Mobile-First Upward Progression)
+   Target Breakpoints: 320px (Mobile), 768px (Tablet), 1024px (Desktop), 1440px (Ultrawide)
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   Breakpoint: Phablets / Large Mobile Devices (>= 480px)
+   Breakpoint: Small Mobile Devices (>= 320px / 20rem)
+   -------------------------------------------------------------------------- */
+@media (min-width: 20rem) { /* 320px */
+    .container {
+        padding-left: var(--spacing-4);
+        padding-right: var(--spacing-4);
+    }
+
+    .hero-title {
+        font-size: clamp(1.85rem, 5.5vw + 0.5rem, 3.5rem);
+    }
+
+    .hero-stats {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-4);
+    }
+
+    .features-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-6);
+    }
+
+    .testimonials-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-6);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Breakpoint: Phablets / Large Mobile Devices (>= 480px / 30rem)
    -------------------------------------------------------------------------- */
 @media (min-width: 30rem) { /* 480px */
     .hero-cta-group {
@@ -1674,7 +1705,7 @@ select:focus-visible {
 }
 
 /* --------------------------------------------------------------------------
-   Breakpoint: Tablet Devices (>= 768px)
+   Breakpoint: Tablet Devices (>= 768px / 48rem)
    -------------------------------------------------------------------------- */
 @media (min-width: 48rem) { /* 768px */
     .container {
@@ -1769,7 +1800,7 @@ select:focus-visible {
 }
 
 /* --------------------------------------------------------------------------
-   Breakpoint: Small Desktop & Laptops - Navigation Switch (>= 1024px)
+   Breakpoint: Small Desktop & Laptops - Navigation Switch & 3-Col Grids (>= 1024px / 64rem)
    -------------------------------------------------------------------------- */
 @media (min-width: 64rem) { /* 1024px */
     .container {
@@ -1821,11 +1852,34 @@ select:focus-visible {
         padding-top: var(--spacing-20);
         padding-bottom: var(--spacing-24);
     }
+
+    /* Features Grid: 3 Columns on Desktop (>= 1024px) */
+    .features-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--spacing-6);
+    }
+
+    /* Services Grid: 3 Columns on Desktop (>= 1024px) */
+    .services-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--spacing-6);
+    }
+
+    /* Testimonials Grid: 3 Columns on Desktop (>= 1024px) */
+    .testimonials-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--spacing-6);
+    }
+
+    /* Footer: 2-Column Parent Grid (Brand on Left, Links Grid on Right) */
+    .footer-top {
+        grid-template-columns: 1.2fr 2.8fr;
+        gap: var(--spacing-10);
+    }
 }
 
 /* --------------------------------------------------------------------------
-   Breakpoint: Standard Desktop (>= 1200px)
-   Explicitly addresses Requirement 2 (1200px Desktop Breakpoint)
+   Breakpoint: Standard Desktop (>= 1200px / 75rem)
    -------------------------------------------------------------------------- */
 @media (min-width: 75rem) { /* 1200px */
     .container {
@@ -1834,33 +1888,25 @@ select:focus-visible {
         padding-right: var(--spacing-8);
     }
 
-    /* Features Grid: 3 Columns on Desktop */
     .features-grid {
-        grid-template-columns: repeat(3, 1fr);
         gap: var(--spacing-8);
     }
 
-    /* Services Grid: 3 Columns on Desktop */
     .services-grid {
-        grid-template-columns: repeat(3, 1fr);
         gap: var(--spacing-8);
     }
 
-    /* Testimonials Grid: 3 Columns on Desktop */
     .testimonials-grid {
-        grid-template-columns: repeat(3, 1fr);
         gap: var(--spacing-8);
     }
 
-    /* Footer: 2-Column Parent Grid (Brand on Left, Links Grid on Right) */
     .footer-top {
-        grid-template-columns: 1.2fr 2.8fr;
         gap: var(--spacing-12);
     }
 }
 
 /* --------------------------------------------------------------------------
-   Breakpoint: Large Screens & High-Resolution Displays (>= 1440px)
+   Breakpoint: Large Screens & High-Resolution Displays (>= 1440px / 90rem)
    -------------------------------------------------------------------------- */
 @media (min-width: 90rem) { /* 1440px */
     .container {

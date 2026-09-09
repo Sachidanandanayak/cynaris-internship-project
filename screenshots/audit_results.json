@@ -1,0 +1,38 @@
+{
+  "320px": {
+    "viewportWidth": 320,
+    "scrollWidth": 320,
+    "clientWidth": 320,
+    "hasHorizontalOverflow": false,
+    "featuresCols": 1,
+    "testimonialsCols": 1,
+    "navToggleVisible": true
+  },
+  "768px": {
+    "viewportWidth": 768,
+    "scrollWidth": 768,
+    "clientWidth": 768,
+    "hasHorizontalOverflow": false,
+    "featuresCols": 2,
+    "testimonialsCols": 2,
+    "navToggleVisible": true
+  },
+  "1024px": {
+    "viewportWidth": 1024,
+    "scrollWidth": 1007,
+    "clientWidth": 1007,
+    "hasHorizontalOverflow": false,
+    "featuresCols": 3,
+    "testimonialsCols": 3,
+    "navToggleVisible": false
+  },
+  "1440px": {
+    "viewportWidth": 1440,
+    "scrollWidth": 1423,
+    "clientWidth": 1423,
+    "hasHorizontalOverflow": false,
+    "featuresCols": 3,
+    "testimonialsCols": 3,
+    "navToggleVisible": false
+  }
+}
