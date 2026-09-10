@@ -15,6 +15,132 @@ This repository contains tasks, projects, and learning modules for the **Cynaris
 | **Week 1 – Day 5** | Git Workflow (Branching, Rebasing, Squashing) | `feature/week-1-day-5` |
 | **Week 2 – Day 1** | CSS Advanced (Themes, Animations, Pseudo-Elements, Sticky Nav) | `feature/week-2-day-1` |
 | **Week 2 – Day 2** | Responsive Design (4-Section Landing Page, Grid & Flexbox, 320/768/1024/1440px) | `feature/week-2-day-2` |
+| **Week 2 – Day 3** | JavaScript Fundamentals (ES6+, Promises, Async/Await, Fetch, Error Handling) | `feature/week-2-day-3` |
+
+---
+
+## ⚡ Week 2 – Day 3: JavaScript Fundamentals (ES6+, Promises, Async/Await, Fetch)
+
+### Project Overview
+An isomorphic, production-grade JavaScript architecture implemented for the **Cynaris Solutions Cloud & AI Infrastructure Platform** through `js_fundamentals.js`. Built in strict adherence to Cynaris Day 3 curriculum specifications, demonstrating modern ES6+ functional primitives (arrow functions, default parameters, rest parameters, spread operators, nested destructuring), asynchronous flow control (classic Promises with `.then()`/`.catch()` and modern `async`/`await`), live public REST API integration with `fetch()` targeting JSONPlaceholder, and defensive error handling via `try`/`catch`/`finally`.
+
+The module is engineered to run seamlessly across both execution environments:
+1. **Command-Line Interface (Node.js v18+)**: Execute directly via `node js_fundamentals.js` or run the automated test suite `node test_suite.js`.
+2. **Interactive Browser UI**: Fully integrated into `index.html` under Section 2.9 (`#fundamentals`), equipped with a live telemetry console, status pills, and interactive test buttons.
+
+---
+
+### 🌟 10 Core ES6+ Functions & Concept Breakdown
+
+| # | Function Name | ES6+ Concepts Demonstrated | Description & Implementation Logic |
+|---|---|---|---|
+| **01** | `formatServerNode(hostname, ip, status)` | **Arrow Functions & Default Parameters** | Concise arrow syntax with lexical scope. Evaluates defaults (`ip = '127.0.0.1'`, `status = 'active'`) when arguments are omitted, eliminating bug-prone `\|\|` checks. |
+| **02** | `calculateClusterCost(baseRate, discountRate, taxRate)` | **Template Literals & Arithmetic** | Multi-line string interpolation (`${expression}`) and arithmetic computation preventing `NaN` and formatting currency strings cleanly. |
+| **03** | `aggregateResourceMetrics(...metricValues)` | **Rest Parameters (`...args`) & `reduce()`** | Gathers variable-length arguments into a authentic JavaScript Array. Safely computes count, sum, average, min, and max using `reduce()` and array spread. |
+| **04** | `mergeConfigurationProfiles(baseConfig, ...overrideLayers)` | **Object Spread Operator (`{ ...obj }`)** | Immutably merges base server configuration with multiple override layers without mutating inputs. |
+| **05** | `cloneAndExtendClusterNodes(primaryNodes, additionalNodes, defaultTags)` | **Array Spread Operator (`[...arr]`)** | Combines node collections immutably and utilizes object spread to inject unique default tags via `new Set()`. |
+| **06** | `extractTelemetrySummary(telemetryPacket)` | **Nested Destructuring, Defaults & Aliasing** | Extracts nested properties (`region: datacenterRegion = 'us-east-1'`, `metrics: { cpuLoad = 0 }`) directly into local variables with safe defaults. |
+| **07** | `filterAndTransformServices(services, minRating, category)` | **Higher-Order Arrow Functions & Chaining** | Pure functional data pipeline chaining `.filter()`, `.map()`, and `.sort()` with parameter destructuring directly inside the callback signature. |
+| **08** | `simulateAsyncHealthPing(endpoint, shouldSucceed, delayMs)` | **Promise Creation & Flow Control** | Instantiates `new Promise((resolve, reject) => ...)` with latency simulation. Demonstrates transition between pending, fulfilled, and rejected states. |
+| **09** | `fetchJSONPlaceholderPost(postId)` | **`async` / `await` with Native `fetch()`** | Calls JSONPlaceholder REST API (`https://jsonplaceholder.typicode.com/posts/{id}`). Validates `response.ok` before JSON parsing to handle HTTP 4xx/5xx errors properly. |
+| **10** | `fetchSafeApiData(endpointPath, fallback)` | **Defensive Error Handling (`try` / `catch`)** | Wraps async network calls in `try/catch/finally`. Gracefully handles 404s and network dropouts, returning normalized `{ success, data, error, status }` without crashing the application. |
+
+---
+
+### 🔄 Asynchronous Flow: Promises vs. Async/Await
+
+The architecture showcases both asynchronous paradigms side-by-side:
+
+```javascript
+// 1. Classic Promise Chain (.then / .catch)
+simulateAsyncHealthPing('edge.cynaris.cloud/healthz', true, 150)
+    .then((result) => console.log('[Resolved]:', result))
+    .catch((error) => console.error('[Caught]:', error.message))
+    .finally(() => console.log('Ping operation settled.'));
+
+// 2. Modern async / await with Promise.all (Concurrency)
+const [userRes, postsRes] = await Promise.all([
+    fetch('https://jsonplaceholder.typicode.com/users/1'),
+    fetch('https://jsonplaceholder.typicode.com/posts?userId=1')
+]);
+const user = await userRes.json();
+const posts = await postsRes.json();
+```
+
+---
+
+### 🛡️ Graceful Error Handling Pattern
+
+Native `fetch()` only rejects on network failures (not on HTTP 404 or 500 status codes). To ensure robust error handling, `fetchSafeApiData()` implements defensive isolation:
+
+```javascript
+try {
+    const response = await fetch(targetUrl);
+    if (!response.ok) {
+        throw new Error(`Endpoint returned status ${response.status} (${response.statusText})`);
+    }
+    const data = await response.json();
+    return { success: true, data, error: null, status: response.status };
+} catch (err) {
+    // Return predictable fallback structure without throwing unhandled exceptions
+    return { success: false, data: fallback, error: err.message, status: response?.status ?? null };
+}
+```
+
+---
+
+### 🧪 Verification & Testing Guide
+
+#### 1. CLI Execution (Node.js v18+)
+Run the standalone runner or the complete assertion test suite in terminal:
+
+```bash
+# Run the built-in CLI test suite
+node js_fundamentals.js
+
+# Run the 17-test automated unit assertion suite
+node test_suite.js
+```
+
+**Audit Output:**
+```text
+==============================================================================
+ CYNARIS SOLUTIONS - WEEK 2 DAY 3: JAVASCRIPT FUNDAMENTALS
+ ES6+, Promises, async/await, JSONPlaceholder Fetch & Error Handling
+==============================================================================
+[✔ PASS] Function #1: formatServerNode
+[✔ PASS] Function #2: calculateClusterCost
+[✔ PASS] Function #3: aggregateResourceMetrics
+[✔ PASS] Function #4: mergeConfigurationProfiles
+[✔ PASS] Function #5: cloneAndExtendClusterNodes
+[✔ PASS] Function #6: extractTelemetrySummary
+[✔ PASS] Function #7: filterAndTransformServices
+[✔ PASS] Function #8: simulateAsyncHealthPing
+[✔ PASS] Function #9: fetchJSONPlaceholderPost
+[✔ PASS] Function #10: fetchSafeApiData
+
+>> Demonstrating Promise Flow (.then / .catch):
+   [Promise Resolved]: edge.cynaris.cloud/healthz is HEALTHY_200_OK in 150ms
+   [Promise Caught]: Gracefully handled -> Ping timeout or connection refused
+
+>> Demonstrating async/await with JSONPlaceholder API:
+   Fetched Post #1 Title: "sunt aut facere repellat provident occaecati excepturi optio reprehenderit"
+
+>> Demonstrating Graceful try/catch Error Handling:
+   Handled 404 Status: 404 | Caught: "Endpoint returned status 404 (Not Found)" | Fallback: "Safe Fallback Data"
+
+==============================================================================
+ SUMMARY: 10/10 Functions Passed. Status: ALL TESTS PASSED
+==============================================================================
+```
+
+#### 2. Interactive Browser Testing
+Open `index.html` in any modern browser or local server and navigate to `#fundamentals`:
+- **"Run All 10 ES6+ Functions"**: Evaluates all 10 functions and streams structured JSON directly to the in-page terminal.
+- **"Test Promise (.then / .catch)"**: Tests resolved and caught paths with latency simulation.
+- **"Fetch JSONPlaceholder Post"**: Retrieves dynamic REST post data and displays it inside the live preview card.
+- **"Fetch User (Concurrency)"**: Fetches user profile and linked posts concurrently via `Promise.all`.
+- **"Trigger Error (Graceful try/catch)"**: Simulates a 404 route, verifies that the application captures the error gracefully and displays the fallback state.
 
 ---
 
@@ -192,11 +318,14 @@ An enterprise-grade JavaScript ES6+ implementation powering the **Cynaris Soluti
 
 ```text
 Cynaris-Internship/
-├── index.html                   # Semantic Landing Page (4 Core Sections + ES6+ Explorer + Telemetry)
+├── index.html                   # Semantic Landing Page (4 Core Sections + Telemetry + JS Fundamentals)
+├── js_fundamentals.js           # Week 2 Day 3: 10 ES6+ Functions, Promises, Async/Await, Fetch, CLI Runner
+├── test_suite.js                # Week 2 Day 3: Automated 17-Test Assertion & Integration Suite
 ├── css/
 │   ├── style.css                # Mobile-first stylesheet (Flexbox, CSS Grid, 320/768/1024/1440px Breakpoints)
 │   └── advanced_styles.css      # Week 2 Day 1: Themes, Keyframe Animations, Pseudo-Elements, Sticky Nav
 ├── js/
+│   ├── js_fundamentals.js       # Module mirror / re-export for js/ directory compatibility
 │   ├── main.js                  # Accessible mobile navigation toggle & window resize handler
 │   └── script.js                # Week 1 Day 3 ES6+ implementation, array pipelines, & event listeners
 ├── screenshots/                 # Automated DevTools verification screenshots & audit report

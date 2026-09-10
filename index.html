@@ -60,6 +60,7 @@
                     <li><a href="#features" class="nav-link">Features</a></li>
                     <li><a href="#services" class="nav-link">Services</a></li>
                     <li><a href="#telemetry" class="nav-link">Telemetry</a></li>
+                    <li><a href="#fundamentals" class="nav-link">JS Fundamentals</a></li>
                     <li><a href="#testimonials" class="nav-link">Testimonials</a></li>
                     <li><a href="#contact" class="nav-link">Contact</a></li>
                 </ul>
@@ -542,6 +543,164 @@ const createServiceCalc = (items = []) => ({
         </section>
 
         <!-- =================================================================
+             2.9. Week 2 Day 3: JavaScript Fundamentals (ES6+, Promises, Fetch)
+             ================================================================= -->
+        <section class="fundamentals-section section" id="fundamentals" aria-labelledby="fundamentals-title">
+            <div class="container">
+                <header class="section-header">
+                    <span class="section-tag">Week 2 Day 3 Deliverable</span>
+                    <h2 id="fundamentals-title" class="section-title">JavaScript Fundamentals &amp; Asynchronous Architecture</h2>
+                    <p class="section-subtitle">
+                        Interactive testing suite demonstrating 10 core ES6+ functions, Promise flow (<code>.then()</code>/<code>.catch()</code>), <code>async/await</code>, JSONPlaceholder API <code>fetch()</code>, and graceful <code>try/catch</code> error handling.
+                    </p>
+                </header>
+
+                <div class="fundamentals-grid">
+                    <!-- Control Panel Card -->
+                    <div class="fundamentals-control-card">
+                        <div class="fundamentals-card-header">
+                            <h3 class="fundamentals-card-title">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polygon points="5 3 19 12 5 21 5 3"/>
+                                </svg>
+                                Interactive Test Runner
+                            </h3>
+                            <span id="fundamentals-status-pill" class="fundamentals-status-pill ready">Ready</span>
+                        </div>
+                        <p class="fundamentals-description">
+                            Execute ES6+ functions and asynchronous network calls in real time. Inspect outputs in the live telemetry console.
+                        </p>
+                        <div class="fundamentals-btn-grid">
+                            <button id="btn-run-all-fundamentals" type="button" class="btn btn-primary btn-sm">
+                                <span class="btn-icon">⚡</span> Run All 10 ES6+ Functions
+                            </button>
+                            <button id="btn-test-promise-flow" type="button" class="btn btn-secondary btn-sm">
+                                <span class="btn-icon">🔄</span> Test Promise (.then / .catch)
+                            </button>
+                            <button id="btn-fetch-post" type="button" class="btn btn-secondary btn-sm">
+                                <span class="btn-icon">🌐</span> Fetch JSONPlaceholder Post
+                            </button>
+                            <button id="btn-fetch-user" type="button" class="btn btn-secondary btn-sm">
+                                <span class="btn-icon">👥</span> Fetch User (Concurrency)
+                            </button>
+                            <button id="btn-simulate-error" type="button" class="btn btn-warning-outline btn-sm">
+                                <span class="btn-icon">🛡️</span> Trigger Error (Graceful try/catch)
+                            </button>
+                            <button id="btn-clear-fundamentals-console" type="button" class="btn btn-ghost btn-sm">
+                                <span class="btn-icon">🧹</span> Clear Output
+                            </button>
+                        </div>
+
+                        <!-- Live JSONPlaceholder API Result Display -->
+                        <div class="api-preview-wrapper">
+                            <div class="api-preview-header">
+                                <span class="api-preview-title">Live API Response Preview</span>
+                                <span class="api-preview-endpoint">jsonplaceholder.typicode.com</span>
+                            </div>
+                            <div id="fundamentals-api-preview" class="api-preview-card">
+                                <div class="api-preview-placeholder">
+                                    Click <strong>"Fetch JSONPlaceholder Post"</strong> or <strong>"Fetch User"</strong> above to query live REST resources and inspect data rendering here.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Console Output Panel -->
+                    <div class="fundamentals-console-card">
+                        <div class="fundamentals-console-topbar">
+                            <div class="console-window-dots" aria-hidden="true">
+                                <span class="dot red"></span>
+                                <span class="dot yellow"></span>
+                                <span class="dot green"></span>
+                            </div>
+                            <span class="console-title">Live JavaScript Fundamentals Console</span>
+                            <span class="console-badge">ES6+ / Fetch</span>
+                        </div>
+                        <div id="fundamentals-console-output" class="fundamentals-console-body" role="region" aria-label="Console Output">
+                            <div class="console-empty-state">
+                                Terminal initialized. Ready for execution. Click any button on the left to run tests.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 10 Functions Concept Reference Ribbon -->
+                <div class="fundamentals-concepts-grid">
+                    <div class="concept-item">
+                        <span class="concept-num">01</span>
+                        <div class="concept-info">
+                            <strong>Arrow Functions &amp; Defaults</strong>
+                            <span><code>formatServerNode()</code> lexical scoping &amp; fallback values</span>
+                        </div>
+                    </div>
+                    <div class="concept-item">
+                        <span class="concept-num">02</span>
+                        <div class="concept-info">
+                            <strong>Template Literals</strong>
+                            <span><code>calculateClusterCost()</code> multi-line interpolation <code>${expr}</code></span>
+                        </div>
+                    </div>
+                    <div class="concept-item">
+                        <span class="concept-num">03</span>
+                        <div class="concept-info">
+                            <strong>Rest Parameters &amp; reduce</strong>
+                            <span><code>aggregateResourceMetrics()</code> dynamic <code>...args</code> handling</span>
+                        </div>
+                    </div>
+                    <div class="concept-item">
+                        <span class="concept-num">04</span>
+                        <div class="concept-info">
+                            <strong>Object Spread Operator</strong>
+                            <span><code>mergeConfigurationProfiles()</code> immutable profile overrides</span>
+                        </div>
+                    </div>
+                    <div class="concept-item">
+                        <span class="concept-num">05</span>
+                        <div class="concept-info">
+                            <strong>Array Spread Operator</strong>
+                            <span><code>cloneAndExtendClusterNodes()</code> immutable list concatenation</span>
+                        </div>
+                    </div>
+                    <div class="concept-item">
+                        <span class="concept-num">06</span>
+                        <div class="concept-info">
+                            <strong>Nested Destructuring</strong>
+                            <span><code>extractTelemetrySummary()</code> property aliasing &amp; defaults</span>
+                        </div>
+                    </div>
+                    <div class="concept-item">
+                        <span class="concept-num">07</span>
+                        <div class="concept-info">
+                            <strong>Higher-Order Arrow Functions</strong>
+                            <span><code>filterAndTransformServices()</code> declarative pipeline</span>
+                        </div>
+                    </div>
+                    <div class="concept-item">
+                        <span class="concept-num">08</span>
+                        <div class="concept-info">
+                            <strong>Promise Flow (.then/.catch)</strong>
+                            <span><code>simulateAsyncHealthPing()</code> asynchronous status resolution</span>
+                        </div>
+                    </div>
+                    <div class="concept-item">
+                        <span class="concept-num">09</span>
+                        <div class="concept-info">
+                            <strong>async/await &amp; native fetch()</strong>
+                            <span><code>fetchJSONPlaceholderPost()</code> public REST API query</span>
+                        </div>
+                    </div>
+                    <div class="concept-item">
+                        <span class="concept-num">10</span>
+                        <div class="concept-info">
+                            <strong>Graceful try/catch Fallback</strong>
+                            <span><code>fetchSafeApiData()</code> error isolation without application crash</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================
              3. Testimonials Section
              ================================================================= -->
         <section class="testimonials section" id="testimonials" aria-labelledby="testimonials-title">
@@ -706,6 +865,8 @@ const createServiceCalc = (items = []) => ({
     <script src="js/main.js"></script>
     <!-- ES6+ Interactive Services Explorer & Logic Script -->
     <script src="js/script.js"></script>
+    <!-- Week 2 Day 3: JavaScript Fundamentals (ES6+, Promises, Async/Await, Fetch) -->
+    <script src="js_fundamentals.js"></script>
     <!-- Theme Switcher Persistence (Progressive Enhancement) -->
     <script>
         (() => {
