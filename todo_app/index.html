@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Cynaris Solutions - Modern Dynamic To-Do List application demonstrating core DOM manipulation, event delegation, and localStorage persistence.">
+    <meta name="author" content="Cynaris Solutions Full Stack Development Team">
+
+    <!-- Google Fonts for Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <title>Dynamic To-Do Application | Cynaris Solutions (Week 2 Day 4)</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <a href="../index.html" class="brand-link" aria-label="Return to Cynaris Solutions Home">
+                <span class="brand-icon" aria-hidden="true">◆</span>
+                <span class="brand-text">Cynaris<span class="brand-accent">Solutions</span></span>
+            </a>
+            <div class="header-badge">
+                <span class="badge-dot" aria-hidden="true"></span>
+                <span>Week 2 – Day 4: DOM Manipulation</span>
+            </div>
+            <a href="../index.html" class="btn-return" aria-label="Back to Main Platform">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                <span>Back to Platform</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Application Container -->
+    <main class="main-wrapper">
+        <div class="todo-card-container">
+            <!-- App Card Header -->
+            <div class="todo-card-header">
+                <div class="header-title-group">
+                    <h1 class="app-title">Task Management Matrix</h1>
+                    <p class="app-subtitle">
+                        Dynamic DOM-driven task coordinator with live event delegation and persistent storage.
+                    </p>
+                </div>
+                <div class="stats-ribbon" role="region" aria-label="Task Statistics">
+                    <div class="stat-pill">
+                        <span class="stat-label">Total:</span>
+                        <strong id="stat-total" class="stat-value">0</strong>
+                    </div>
+                    <div class="stat-pill">
+                        <span class="stat-label">Active:</span>
+                        <strong id="stat-active" class="stat-value">0</strong>
+                    </div>
+                    <div class="stat-pill">
+                        <span class="stat-label">Done:</span>
+                        <strong id="stat-completed" class="stat-value">0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Form for Adding New Todos -->
+            <form id="todo-form" class="todo-form" novalidate>
+                <div class="input-group">
+                    <label for="todo-input" class="sr-only">Add a new task</label>
+                    <div class="input-icon-wrapper" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 5v14M5 12h14"/>
+                        </svg>
+                    </div>
+                    <input
+                        type="text"
+                        id="todo-input"
+                        class="todo-input"
+                        placeholder="Enter a new infrastructure task or milestone..."
+                        autocomplete="off"
+                        required
+                        aria-required="true"
+                    >
+                    <button type="submit" id="add-btn" class="btn-add" aria-label="Add Task">
+                        <span>Add Task</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div id="form-feedback" class="form-feedback" aria-live="polite"></div>
+            </form>
+
+            <!-- Filter Controls Bar -->
+            <div class="filter-bar" role="toolbar" aria-label="Filter tasks">
+                <div class="filter-tabs">
+                    <button type="button" class="filter-tab active" data-filter="all" aria-pressed="true">
+                        All
+                    </button>
+                    <button type="button" class="filter-tab" data-filter="active" aria-pressed="false">
+                        Active
+                    </button>
+                    <button type="button" class="filter-tab" data-filter="completed" aria-pressed="false">
+                        Completed
+                    </button>
+                </div>
+
+                <div class="filter-actions">
+                    <button type="button" id="clear-completed-btn" class="btn-text-action" aria-label="Clear completed tasks">
+                        Clear Completed
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dynamic Todo List Container (Uses Event Delegation) -->
+            <div class="list-container">
+                <ul id="todo-list" class="todo-list" role="list" aria-label="Task List">
+                    <!-- Dynamic items rendered by script.js via createElement & appendChild -->
+                </ul>
+
+                <!-- Empty State Display -->
+                <div id="empty-state" class="empty-state" aria-live="polite">
+                    <div class="empty-icon" aria-hidden="true">
+                        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect width="18" height="18" x="3" y="3" rx="2"/>
+                            <path d="m9 12 2 2 4-4"/>
+                        </svg>
+                    </div>
+                    <h3 class="empty-title">All tasks cleared</h3>
+                    <p class="empty-subtitle">Add a task above to start tracking your deliverables.</p>
+                </div>
+            </div>
+
+            <!-- Card Footer Status -->
+            <div class="todo-card-footer">
+                <span id="todo-count" class="todo-counter">0 items remaining</span>
+                <span class="storage-indicator">
+                    <span class="indicator-dot" aria-hidden="true"></span>
+                    <span>Auto-saved to localStorage</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Technical Viva & Concept Reference Card -->
+        <section class="concept-section" aria-labelledby="concepts-heading">
+            <h2 id="concepts-heading" class="concept-heading">
+                <span class="concept-badge">DOM Manipulation</span>
+                Core Architectural Implementation Reference
+            </h2>
+            <div class="concept-grid">
+                <div class="concept-card">
+                    <span class="concept-tag">01</span>
+                    <h3><code>querySelector</code></h3>
+                    <p>Accurately binds static DOM targets (<code>#todo-form</code>, <code>#todo-input</code>, <code>#todo-list</code>) using standard CSS selector syntax.</p>
+                </div>
+                <div class="concept-card">
+                    <span class="concept-tag">02</span>
+                    <h3><code>createElement</code> &amp; <code>appendChild</code></h3>
+                    <p>Constructs dynamic <code>&lt;li&gt;</code> elements, custom checkboxes, and delete buttons purely in memory before mounting to the document tree.</p>
+                </div>
+                <div class="concept-card">
+                    <span class="concept-tag">03</span>
+                    <h3><code>removeChild</code></h3>
+                    <p>Safely dismounts items from the DOM tree with <code>todoList.removeChild(itemElement)</code> following smooth fade-out CSS transitions.</p>
+                </div>
+                <div class="concept-card">
+                    <span class="concept-tag">04</span>
+                    <h3><code>classList</code></h3>
+                    <p>Declaratively toggles completion states (<code>classList.toggle('completed')</code>) and filter states without messy inline styles.</p>
+                </div>
+                <div class="concept-card">
+                    <span class="concept-tag">05</span>
+                    <h3>Event Delegation</h3>
+                    <p>A single event listener bound to the parent <code>#todo-list</code> intercepts bubbled events from dynamically spawned checkboxes and delete buttons.</p>
+                </div>
+                <div class="concept-card">
+                    <span class="concept-tag">06</span>
+                    <h3><code>localStorage</code> Persistence</h3>
+                    <p>Serializes state on every modification and automatically restores todos on page load via <code>DOMContentLoaded</code>.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <p>&copy; 2026 Cynaris Solutions Full Stack Development Internship. Week 2 Day 4 Module.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

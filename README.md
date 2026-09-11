@@ -16,6 +16,48 @@ This repository contains tasks, projects, and learning modules for the **Cynaris
 | **Week 2 – Day 1** | CSS Advanced (Themes, Animations, Pseudo-Elements, Sticky Nav) | `feature/week-2-day-1` |
 | **Week 2 – Day 2** | Responsive Design (4-Section Landing Page, Grid & Flexbox, 320/768/1024/1440px) | `feature/week-2-day-2` |
 | **Week 2 – Day 3** | JavaScript Fundamentals (ES6+, Promises, Async/Await, Fetch, Error Handling) | `feature/week-2-day-3` |
+| **Week 2 – Day 4** | DOM Manipulation (Dynamic To-Do Application, Event Delegation, LocalStorage) | `feature/week-2-day-4` |
+
+---
+
+## 📝 Week 2 – Day 4: DOM Manipulation (Dynamic To-Do Application)
+
+### Project Overview
+A modern, accessible, and responsive task coordination application implemented under `todo_app/` for the **Cynaris Solutions Cloud & AI Platform**. Designed to demonstrate production DOM manipulation methodologies without third-party frameworks: programmatic node lifecycle management (`querySelector`, `createElement`, `appendChild`, `removeChild`, and `classList`), scalable event delegation across dynamic elements, bidirectional synchronization with `localStorage`, filtering controls (All, Active, Completed), and WCAG 2.1 AA accessibility.
+
+### 🌟 Key Architectural & DOM Implementation Highlights
+
+1. **Targeting & Caching (`querySelector` / `querySelectorAll`)**:
+   - Accurately captures static UI components (`#todo-form`, `#todo-input`, `#todo-list`, `#filter-controls`, `#stat-total`, etc.) into cached constants, avoiding redundant DOM tree lookups.
+
+2. **Dynamic In-Memory Node Creation (`createElement` & `appendChild`)**:
+   - Constructs `<li>` containers, custom accessible checkboxes, text labels, and SVG delete buttons entirely in memory.
+   - Sets attributes (`type`, `classList`, `aria-label`, `dataset`) prior to mounting to the live document via `appendChild`.
+
+3. **Safe Element Dismounting (`removeChild`)**:
+   - Uses `todoList.removeChild(itemElement)` combined with exit CSS transitions (`.removing`) to guarantee clean garbage collection and avoid phantom layout shifts.
+
+4. **Class-Driven State Manipulation (`classList`)**:
+   - Toggles task completion (`classList.toggle('completed')`) and filter tab selection (`classList.toggle('active')`) declaratively, separating business state from visual presentation.
+
+5. **Event Delegation on Parent Container (`#todo-list`)**:
+   - Instead of binding separate listeners to every new task, a single click listener on `#todo-list` utilizes `event.target.closest('.todo-checkbox')` and `event.target.closest('.todo-delete-btn')`.
+   - Dynamically inserted tasks automatically respond to interactions with zero listener memory leaks.
+
+6. **State Persistence (`localStorage`)**:
+   - Tasks are serialized into JSON under the key `'cynaris_todos_v1'` upon every addition, completion toggle, deletion, or bulk clearing.
+   - On page reload (`DOMContentLoaded`), saved tasks are automatically parsed, reconstructed, and rendered in their exact saved order.
+
+---
+
+### 🧪 Manual & Browser Verification Workflow
+
+Navigate to `todo_app/index.html` (or click "To-Do App" in the top navigation):
+1. **Adding a Task**: Type a task in the input field and press Enter or click "Add Task". Verify the item is created via `createElement` and mounted with `appendChild`.
+2. **Completing a Task**: Click the checkbox or task text. Verify `classList.toggle('completed')` applies strike-through styling and updates the active item counter.
+3. **Deleting a Task**: Click the trash icon. Verify the item dismounts via `removeChild` and counters decrement.
+4. **Refreshing the Page**: Reload the browser window (`F5` or `Ctrl+R`). Verify that all tasks restore automatically from `localStorage`.
+5. **Console Inspection**: Open DevTools Console (`F12`). Verify zero errors or unhandled exceptions.
 
 ---
 
@@ -318,9 +360,13 @@ An enterprise-grade JavaScript ES6+ implementation powering the **Cynaris Soluti
 
 ```text
 Cynaris-Internship/
-├── index.html                   # Semantic Landing Page (4 Core Sections + Telemetry + JS Fundamentals)
+├── index.html                   # Semantic Landing Page (4 Core Sections + JS Fundamentals + To-Do Nav)
 ├── js_fundamentals.js           # Week 2 Day 3: 10 ES6+ Functions, Promises, Async/Await, Fetch, CLI Runner
 ├── test_suite.js                # Week 2 Day 3: Automated 17-Test Assertion & Integration Suite
+├── todo_app/                    # Week 2 Day 4: Dynamic To-Do List Application
+│   ├── index.html               # Semantic accessible To-Do interface & concept reference grid
+│   ├── style.css                # Responsive mobile-first stylesheet & dark/glassmorphic theme
+│   └── script.js                # DOM manipulation, event delegation, & localStorage engine
 ├── css/
 │   ├── style.css                # Mobile-first stylesheet (Flexbox, CSS Grid, 320/768/1024/1440px Breakpoints)
 │   └── advanced_styles.css      # Week 2 Day 1: Themes, Keyframe Animations, Pseudo-Elements, Sticky Nav
