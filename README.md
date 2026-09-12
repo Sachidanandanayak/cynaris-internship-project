@@ -17,6 +17,134 @@ This repository contains tasks, projects, and learning modules for the **Cynaris
 | **Week 2 – Day 2** | Responsive Design (4-Section Landing Page, Grid & Flexbox, 320/768/1024/1440px) | `feature/week-2-day-2` |
 | **Week 2 – Day 3** | JavaScript Fundamentals (ES6+, Promises, Async/Await, Fetch, Error Handling) | `feature/week-2-day-3` |
 | **Week 2 – Day 4** | DOM Manipulation (Dynamic To-Do Application, Event Delegation, LocalStorage) | `feature/week-2-day-4` |
+| **Week 2 – Day 5** | Frontend Mini Project (Responsive Weather App, Async/Await, Fetch API) | `feature/week-2-day-5` |
+
+---
+
+## 🌤️ Week 2 – Day 5: Frontend Mini Project (Responsive Weather Application)
+
+### Project Overview
+An enterprise-grade, responsive meteorological telemetry dashboard implemented under `weather_app/` for the **Cynaris Solutions Cloud & AI Platform**. Engineered to demonstrate real-time external REST API integration using modern asynchronous JavaScript primitives: the native `fetch()` API, non-blocking `async`/`await` control flow, and defensive `try`/`catch`/`finally` exception boundaries.
+
+The application delivers live meteorological telemetry, high-precision weather condition translation from WMO (World Meteorological Organization) standards, dynamic ambient background theming reacting to current weather conditions, an extensive atmospheric metrics grid (humidity, wind speed & compass direction, barometric pressure, UV index rating, precipitation, and solar schedule), an extended 5-day predictive forecast strip, and instant temperature unit conversion (°C <-> °F) without redundant network requests.
+
+---
+
+### 🌟 Key Architectural & Implementation Highlights
+
+1. **Native `fetch()` API & Non-Blocking `async`/`await` Flow**:
+   - Executes asynchronous network queries to resolve location coordinates via the Open-Meteo Geocoding API (`geocodeCity`) and pulls comprehensive multi-day forecasts (`fetchForecastByCoordinates`).
+   - Replaces deeply nested promise chains with clean, linear, synchronous-style `await` statements.
+
+2. **Defensive Error Boundaries & Resilient States**:
+   - Implements strict `try`/`catch`/`finally` blocks:
+     - **Network/HTTP Errors**: Verifies `response.ok` (status code 200–299) before invoking `.json()`.
+     - **Location Not Found**: Catches empty result sets and informs the user with an actionable error alert banner.
+     - **Empty Search Protection**: Defensively rejects whitespace-only queries prior to initiating network dispatch.
+     - **Guaranteed Cleanup**: Employs `finally` to ensure the loading skeleton is hidden and interactive search buttons are re-enabled regardless of whether requests succeed or reject.
+
+3. **Zero API Key Leakage & Segregated Credential Architecture**:
+   - Uses the **Open-Meteo API** as the primary default weather provider: **100% free, requiring ZERO API keys**. This guarantees that no secrets are ever committed to git and that the application runs out-of-the-box on local dev servers and public GitHub Pages deployments.
+   - For enterprise environments or third-party providers requiring private keys (e.g., OpenWeatherMap), a documented segregation pattern is provided:
+     - `weather_app/config.example.js` documents the key structure.
+     - `weather_app/config.js` is strictly ignored by `.gitignore`.
+     - An accessible in-app **API Settings Modal** allows users to provide an optional OpenWeatherMap key, stored exclusively within browser `localStorage` and never tracked in source code.
+
+4. **Responsive Glassmorphism & Weather-Reactive Themes**:
+   - Built mobile-first using CSS Custom Properties, CSS Grid, and Flexbox, tested across 320px, 375px, 768px, 1024px, and 1440px viewports.
+   - Dynamically applies contextual theme classes (`theme-clear-day`, `theme-clear-night`, `theme-clouds`, `theme-rain`, `theme-thunderstorm`, `theme-snow`) to adjust ambient background gradients to match live conditions.
+
+5. **Instant State & Unit Toggling (°C / °F)**:
+   - Caches the active raw meteorological payload in an in-memory application state (`appState`).
+   - Toggling between Celsius and Fahrenheit instantly recalculates temperature values, high/low ranges, and wind speed units (km/h vs mph) in the DOM without triggering network re-fetches.
+
+6. **HTML5 Geolocation & Popular City Chips**:
+   - Integrates `navigator.geolocation.getCurrentPosition` with defensive error handling for permission denial, device timeouts, and positioning unavailability.
+   - Provides quick-launch chips for major global cities (London, Tokyo, New York, Paris, Mumbai, Sydney).
+
+7. **Browser Storage Persistence**:
+   - Serializes user preferences (last searched city, preferred temperature unit) to `localStorage` under `cynaris_weather_prefs_v1`.
+   - Automatically restores the user's active session upon subsequent visits or page refreshes.
+
+---
+
+### 🔒 API Key Security & Configuration Approach
+
+To adhere to security best practices and prevent accidental credential exposure in public repositories:
+- **Default (Keyless)**: Open-Meteo is active by default. No registration or API keys are required.
+- **Custom Keys (Optional)**:
+  1. If you wish to use OpenWeatherMap, copy `weather_app/config.example.js` to `weather_app/config.js`:
+     ```bash
+     cp weather_app/config.example.js weather_app/config.js
+     ```
+  2. Open `weather_app/config.js` and input your private key:
+     ```javascript
+     const WEATHER_CONFIG = {
+         provider: 'openweathermap',
+         openWeatherMap: {
+             apiKey: 'YOUR_ACTUAL_API_KEY_HERE',
+             baseUrl: 'https://api.openweathermap.org/data/2.5'
+         }
+     };
+     ```
+  3. Verify that `weather_app/config.js` is ignored by `.gitignore` (`git status` must not track `config.js`).
+  4. Alternatively, click the **Settings icon (⚙)** in the top navigation bar of the Weather App to enter your key directly into the browser's sandboxed `localStorage`.
+
+---
+
+### 🚀 Setup & Local Execution Instructions
+
+#### Prerequisites
+- Modern web browser (Google Chrome, Microsoft Edge, Firefox, or Safari).
+- Python 3.x or Node.js (for serving static files locally).
+
+#### Running the Application Locally
+1. Clone the repository and navigate to the project directory:
+   ```bash
+   git clone https://github.com/Sachidanandanayak/cynaris-internship-project.git
+   cd cynaris-internship-project
+   ```
+2. Start a local HTTP server:
+   - **Using Python 3**:
+     ```bash
+     python -m http.server 8080
+     ```
+   - **Using Node.js (npx serve)**:
+     ```bash
+     npx serve -l 8080
+     ```
+3. Open your browser and navigate to:
+   ```text
+   http://localhost:8080/weather_app/index.html
+   ```
+4. Access via Project Navigation:
+   - Open `http://localhost:8080/index.html` and click **"Weather App"** in the top navigation.
+   - Switch seamlessly between the **Main Platform**, **To-Do App**, and **Weather App**.
+
+---
+
+### 🌐 Eventual GitHub Pages Live Demo
+
+When merged to `main` and published via GitHub Pages, the application will be publicly accessible at:
+- **Main Platform**: `https://sachidanandanayak.github.io/cynaris-internship-project/`
+- **To-Do Application**: `https://sachidanandanayak.github.io/cynaris-internship-project/todo_app/`
+- **Weather Application**: `https://sachidanandanayak.github.io/cynaris-internship-project/weather_app/`
+
+*(Because Open-Meteo requires no backend proxy and zero API keys, the live deployment functions immediately and reliably without any serverless functions or exposed secrets.)*
+
+---
+
+### 📸 Automated Browser Verification & Screenshots
+
+| Viewport / State | Resolution | Description | Screenshot Preview |
+|---|---|---|---|
+| **Desktop Initial Load** | `1280 x 800` | Default London telemetry with overview card, 6-metric grid, and 5-day forecast | [`weather_app_desktop_london.png`](screenshots/weather_app_desktop_london.png) |
+| **Desktop Active Search** | `1280 x 800` | Tokyo telemetry loaded with Fahrenheit unit conversion (°F) and dynamic clouds theme | [`weather_app_desktop_tokyo.png`](screenshots/weather_app_desktop_tokyo.png) |
+| **Defensive Error Banner** | `1280 x 800` | Graceful error state when querying non-existent location `NonExistentCityXYZ999` | [`weather_app_desktop_error.png`](screenshots/weather_app_desktop_error.png) |
+| **Mobile Standard Viewport**| `375 x 667` | Mobile responsive layout (iPhone SE / standard mobile) with zero horizontal overflow | [`weather_app_mobile_375px.png`](screenshots/weather_app_mobile_375px.png) |
+| **Ultra-Compact Mobile** | `320 x 640` | Narrow mobile layout (320px) with single-column responsive stacking | [`weather_app_mobile_320px.png`](screenshots/weather_app_mobile_320px.png) |
+
+---
 
 ---
 
@@ -367,6 +495,11 @@ Cynaris-Internship/
 │   ├── index.html               # Semantic accessible To-Do interface & concept reference grid
 │   ├── style.css                # Responsive mobile-first stylesheet & dark/glassmorphic theme
 │   └── script.js                # DOM manipulation, event delegation, & localStorage engine
+├── weather_app/                 # Week 2 Day 5: Frontend Mini Project (Weather App)
+│   ├── index.html               # Semantic accessible weather interface & telemetry metrics
+│   ├── style.css                # Mobile-first stylesheet & weather-reactive dynamic themes
+│   ├── script.js                # Asynchronous fetch(), async/await, and error handling engine
+│   └── config.example.js        # Optional API key segregation template & documentation
 ├── css/
 │   ├── style.css                # Mobile-first stylesheet (Flexbox, CSS Grid, 320/768/1024/1440px Breakpoints)
 │   └── advanced_styles.css      # Week 2 Day 1: Themes, Keyframe Animations, Pseudo-Elements, Sticky Nav
