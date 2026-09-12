@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Cynaris Solutions - Modern Responsive Weather Application featuring real-time meteorological forecasting, ES6+ fetch API, async/await, and defensive error handling.">
+    <meta name="keywords" content="Weather App, Cynaris Solutions, JavaScript Fetch, Async Await, Responsive Design, Open-Meteo">
+    <meta name="author" content="Cynaris Solutions Full Stack Development Team">
+
+    <!-- Google Fonts for Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <title>Atmospheric Telemetry &amp; Weather Dashboard | Cynaris Solutions (Week 2 Day 5)</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Top Site Navigation Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <a href="../index.html" class="brand-link" aria-label="Return to Cynaris Solutions Home">
+                <span class="brand-icon" aria-hidden="true">◆</span>
+                <span class="brand-text">Cynaris<span class="brand-accent">Solutions</span></span>
+            </a>
+
+            <div class="header-badge" role="status">
+                <span class="badge-dot" aria-hidden="true"></span>
+                <span>Week 2 – Day 5: Weather App</span>
+            </div>
+
+            <nav class="header-nav" aria-label="Project Quick Links">
+                <a href="../index.html" class="btn-nav-link" aria-label="Back to Main Platform">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    <span>Platform</span>
+                </a>
+                <a href="../todo_app/index.html" class="btn-nav-link" aria-label="Go to To-Do Application">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="9 11 12 14 22 4"></polyline>
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                    </svg>
+                    <span>To-Do App</span>
+                </a>
+                <button id="btn-open-settings" class="btn-nav-icon" type="button" aria-label="Open API &amp; App Settings" title="API Configuration">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-wrapper">
+        <div class="weather-dashboard-container">
+
+            <!-- Hero & Title Section -->
+            <section class="dashboard-hero" aria-labelledby="app-title">
+                <div class="hero-tagline">
+                    <span class="telemetry-ping" aria-hidden="true"></span>
+                    <span>Live Meteorological Telemetry &bull; Async/Await &bull; Fetch API</span>
+                </div>
+                <h1 id="app-title" class="dashboard-title">
+                    Global Atmospheric <span class="gradient-text">Weather Center</span>
+                </h1>
+                <p class="dashboard-subtitle">
+                    Real-time weather telemetry, atmospheric analysis, and 5-day predictive forecasts powered by JavaScript Fetch API and responsive glassmorphic architecture.
+                </p>
+            </section>
+
+            <!-- Search and Controls Card -->
+            <section class="search-panel" aria-label="Location Search and Preferences">
+                <form id="weather-search-form" class="search-form" novalidate role="search">
+                    <div class="search-input-wrapper">
+                        <div class="search-icon" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </div>
+                        <input
+                            type="search"
+                            id="city-input"
+                            class="city-input"
+                            placeholder="Search any global city (e.g., London, Tokyo, New York)..."
+                            autocomplete="off"
+                            spellcheck="false"
+                            aria-label="City or location name"
+                            required
+                        >
+                        <button type="button" id="btn-clear-input" class="btn-clear-input" aria-label="Clear search input" title="Clear" hidden>
+                            &times;
+                        </button>
+                    </div>
+
+                    <div class="search-actions-group">
+                        <button type="submit" id="btn-search" class="btn btn-primary" aria-label="Search weather for entered city">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                            <span>Search</span>
+                        </button>
+
+                        <button type="button" id="btn-geolocation" class="btn btn-secondary" aria-label="Use current geolocation coordinates" title="Use current GPS location">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+                            </svg>
+                            <span class="btn-text-desktop">Locate Me</span>
+                        </button>
+
+                        <!-- Unit Switcher -->
+                        <div class="unit-toggle-wrapper" role="radiogroup" aria-label="Temperature unit selector">
+                            <button type="button" id="unit-celsius" class="unit-btn active" role="radio" aria-checked="true" data-unit="celsius" title="Display Celsius (°C)">
+                                &deg;C
+                            </button>
+                            <button type="button" id="unit-fahrenheit" class="unit-btn" role="radio" aria-checked="false" data-unit="fahrenheit" title="Display Fahrenheit (°F)">
+                                &deg;F
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Quick Location Chips -->
+                <div class="quick-chips-wrapper" aria-label="Quick selection locations">
+                    <span class="quick-chips-label">Popular Cities:</span>
+                    <div class="chips-container" role="list">
+                        <button type="button" class="city-chip" data-city="London" role="listitem">London</button>
+                        <button type="button" class="city-chip" data-city="Tokyo" role="listitem">Tokyo</button>
+                        <button type="button" class="city-chip" data-city="New York" role="listitem">New York</button>
+                        <button type="button" class="city-chip" data-city="Paris" role="listitem">Paris</button>
+                        <button type="button" class="city-chip" data-city="Mumbai" role="listitem">Mumbai</button>
+                        <button type="button" class="city-chip" data-city="Sydney" role="listitem">Sydney</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Notification / Error State Banner -->
+            <section id="error-banner" class="error-banner" role="alert" aria-live="assertive" hidden>
+                <div class="error-icon" aria-hidden="true">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                </div>
+                <div class="error-content">
+                    <strong id="error-title" class="error-title">Location Not Found</strong>
+                    <p id="error-message" class="error-message">Unable to find weather telemetry for the requested city. Please verify spelling.</p>
+                </div>
+                <button type="button" id="btn-dismiss-error" class="btn-dismiss-error" aria-label="Dismiss error notification">
+                    &times;
+                </button>
+            </section>
+
+            <!-- Loading Skeleton State -->
+            <section id="loading-state" class="loading-state" aria-live="polite" aria-busy="true" hidden>
+                <div class="spinner-container">
+                    <div class="weather-spinner" aria-hidden="true"></div>
+                    <p class="loading-text">Fetching live meteorological telemetry...</p>
+                </div>
+                <div class="skeleton-card skeleton-current" aria-hidden="true">
+                    <div class="skeleton-line skeleton-title"></div>
+                    <div class="skeleton-line skeleton-temp"></div>
+                    <div class="skeleton-line skeleton-subtitle"></div>
+                </div>
+                <div class="skeleton-grid" aria-hidden="true">
+                    <div class="skeleton-card skeleton-metric"></div>
+                    <div class="skeleton-card skeleton-metric"></div>
+                    <div class="skeleton-card skeleton-metric"></div>
+                    <div class="skeleton-card skeleton-metric"></div>
+                    <div class="skeleton-card skeleton-metric"></div>
+                    <div class="skeleton-card skeleton-metric"></div>
+                </div>
+            </section>
+
+            <!-- Active Weather Presentation Display -->
+            <section id="weather-display" class="weather-display" aria-live="polite" aria-label="Current Weather Conditions">
+
+                <!-- Main Current Overview Card -->
+                <article class="current-weather-card">
+                    <div class="card-ambient-glow" aria-hidden="true"></div>
+
+                    <div class="current-weather-header">
+                        <div class="location-group">
+                            <div class="location-badge">
+                                <span class="pulse-indicator" aria-hidden="true"></span>
+                                <span id="telemetry-source">Live Station Telemetry</span>
+                            </div>
+                            <h2 id="current-city" class="city-name">London</h2>
+                            <p id="current-country" class="country-name">England, United Kingdom</p>
+                            <p id="current-time" class="timestamp">Local Time: 15:30 &bull; Updated Just Now</p>
+                        </div>
+
+                        <div class="weather-badge-group">
+                            <div id="weather-icon" class="weather-icon-large" role="img" aria-label="Partly Cloudy">
+                                ⛅
+                            </div>
+                            <span id="weather-condition" class="weather-condition-pill">Partly Cloudy</span>
+                        </div>
+                    </div>
+
+                    <div class="current-weather-body">
+                        <div class="temperature-cluster">
+                            <span id="current-temp" class="temperature-digits">22</span>
+                            <span id="current-unit" class="temperature-symbol">&deg;C</span>
+                        </div>
+
+                        <div class="temp-sub-details">
+                            <div class="sub-detail-item">
+                                <span class="sub-label">Feels Like</span>
+                                <strong id="feels-like-temp" class="sub-value">21&deg;C</strong>
+                            </div>
+                            <div class="sub-detail-divider" aria-hidden="true"></div>
+                            <div class="sub-detail-item">
+                                <span class="sub-label">Day High / Low</span>
+                                <strong id="high-low-temp" class="sub-value">24&deg; / 14&deg;</strong>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Detailed Meteorological Metrics Grid (6 Metrics) -->
+                <section class="metrics-section" aria-labelledby="metrics-heading">
+                    <h3 id="metrics-heading" class="sr-only">Detailed Atmospheric Metrics</h3>
+                    <div class="metrics-grid">
+
+                        <!-- Metric 1: Humidity -->
+                        <div class="metric-card" role="region" aria-label="Relative Humidity">
+                            <div class="metric-header">
+                                <span class="metric-title">Humidity</span>
+                                <span class="metric-icon" aria-hidden="true">💧</span>
+                            </div>
+                            <div class="metric-value-wrapper">
+                                <span id="metric-humidity" class="metric-value">56</span>
+                                <span class="metric-unit">%</span>
+                            </div>
+                            <p id="humidity-caption" class="metric-caption">Comfortable ambient moisture</p>
+                            <div class="progress-bar-bg" aria-hidden="true">
+                                <div id="humidity-bar" class="progress-bar-fill" style="width: 56%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Metric 2: Wind Speed & Direction -->
+                        <div class="metric-card" role="region" aria-label="Wind Velocity and Direction">
+                            <div class="metric-header">
+                                <span class="metric-title">Wind Velocity</span>
+                                <span class="metric-icon" aria-hidden="true">💨</span>
+                            </div>
+                            <div class="metric-value-wrapper">
+                                <span id="metric-wind-speed" class="metric-value">18.7</span>
+                                <span id="metric-wind-unit" class="metric-unit">km/h</span>
+                            </div>
+                            <div class="wind-details">
+                                <div id="wind-compass-arrow" class="compass-arrow" aria-hidden="true">&uarr;</div>
+                                <span id="metric-wind-direction" class="metric-caption">WSW (244&deg;) &bull; Moderate Breeze</span>
+                            </div>
+                        </div>
+
+                        <!-- Metric 3: Atmospheric Pressure -->
+                        <div class="metric-card" role="region" aria-label="Atmospheric Pressure">
+                            <div class="metric-header">
+                                <span class="metric-title">Barometric Pressure</span>
+                                <span class="metric-icon" aria-hidden="true">⏱️</span>
+                            </div>
+                            <div class="metric-value-wrapper">
+                                <span id="metric-pressure" class="metric-value">1018.5</span>
+                                <span class="metric-unit">hPa</span>
+                            </div>
+                            <p id="pressure-caption" class="metric-caption">Standard atmospheric equilibrium</p>
+                        </div>
+
+                        <!-- Metric 4: UV Index -->
+                        <div class="metric-card" role="region" aria-label="Ultraviolet Radiation Index">
+                            <div class="metric-header">
+                                <span class="metric-title">UV Index</span>
+                                <span class="metric-icon" aria-hidden="true">☀️</span>
+                            </div>
+                            <div class="metric-value-wrapper">
+                                <span id="metric-uv" class="metric-value">3.8</span>
+                                <span id="metric-uv-badge" class="metric-badge moderate">Moderate</span>
+                            </div>
+                            <p class="metric-caption">Protection recommended at midday</p>
+                        </div>
+
+                        <!-- Metric 5: Precipitation -->
+                        <div class="metric-card" role="region" aria-label="Precipitation">
+                            <div class="metric-header">
+                                <span class="metric-title">Precipitation</span>
+                                <span class="metric-icon" aria-hidden="true">🌧️</span>
+                            </div>
+                            <div class="metric-value-wrapper">
+                                <span id="metric-precip" class="metric-value">0.0</span>
+                                <span class="metric-unit">mm</span>
+                            </div>
+                            <p id="precip-caption" class="metric-caption">No active rainfall detected</p>
+                        </div>
+
+                        <!-- Metric 6: Sunrise & Sunset -->
+                        <div class="metric-card" role="region" aria-label="Sun Schedule">
+                            <div class="metric-header">
+                                <span class="metric-title">Solar Schedule</span>
+                                <span class="metric-icon" aria-hidden="true">🌅</span>
+                            </div>
+                            <div class="sun-schedule-wrapper">
+                                <div class="sun-time-row">
+                                    <span class="sun-time-label">Sunrise:</span>
+                                    <strong id="metric-sunrise" class="sun-time-value">06:30</strong>
+                                </div>
+                                <div class="sun-time-row">
+                                    <span class="sun-time-label">Sunset:</span>
+                                    <strong id="metric-sunset" class="sun-time-value">19:21</strong>
+                                </div>
+                            </div>
+                            <p class="metric-caption">Daylight duration ~12h 51m</p>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- 5-Day Extended Forecast Strip -->
+                <section class="forecast-section" aria-labelledby="forecast-heading">
+                    <div class="forecast-header">
+                        <h3 id="forecast-heading" class="section-title">5-Day Meteorological Forecast</h3>
+                        <span class="forecast-badge">Predictive Simulation</span>
+                    </div>
+
+                    <div id="forecast-cards-container" class="forecast-cards-grid" role="list">
+                        <!-- Dynamically populated via script.js -->
+                    </div>
+                </section>
+
+            </section>
+
+            <!-- Technical & Architecture Explainer Section (Viva / Educational Ready) -->
+            <section class="architecture-section" aria-labelledby="arch-title">
+                <div class="arch-card">
+                    <h3 id="arch-title" class="arch-heading">
+                        <span class="arch-icon" aria-hidden="true">⚡</span>
+                        <span>Under the Hood: Asynchronous Architecture &amp; Security</span>
+                    </h3>
+                    <p class="arch-description">
+                        This mini-project demonstrates modern frontend JavaScript practices: asynchronous flow control with native <code>fetch()</code>, clean error handling, and zero credential leakage.
+                    </p>
+
+                    <div class="arch-pills-grid">
+                        <div class="arch-pill">
+                            <span class="pill-code">fetch(url)</span>
+                            <p>Non-blocking HTTP request returns a <code>Promise</code> resolving to the network response.</p>
+                        </div>
+                        <div class="arch-pill">
+                            <span class="pill-code">async / await</span>
+                            <p>Synchronous-style syntax over native promises, eliminating callback nesting and unhandled rejections.</p>
+                        </div>
+                        <div class="arch-pill">
+                            <span class="pill-code">try / catch / finally</span>
+                            <p>Defensive exception boundaries catching DNS, CORS, HTTP 4xx/5xx status codes, and JSON parsing faults.</p>
+                        </div>
+                        <div class="arch-pill">
+                            <span class="pill-code">Zero Key Leakage</span>
+                            <p>Leverages Open-Meteo as keyless default; isolates optional API keys in gitignored <code>config.js</code>.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- App Configuration & API Settings Modal (Accessible Dialog) -->
+    <div id="settings-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title" hidden>
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modal-title" class="modal-title">Weather Telemetry Settings</h3>
+                <button type="button" id="btn-close-settings" class="modal-close-btn" aria-label="Close settings">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label class="setting-label" for="provider-select">Weather Provider</label>
+                    <select id="provider-select" class="setting-select">
+                        <option value="open-meteo" selected>Open-Meteo API (Default &bull; 100% Free &bull; No API Key)</option>
+                        <option value="openweathermap">OpenWeatherMap API (Requires Custom API Key)</option>
+                    </select>
+                    <span class="setting-hint">Open-Meteo is recommended for portfolio &amp; GitHub Pages deployment as it requires zero secrets.</span>
+                </div>
+
+                <div id="owm-key-group" class="setting-group" hidden>
+                    <label class="setting-label" for="owm-api-key">Custom OpenWeatherMap API Key</label>
+                    <input type="password" id="owm-api-key" class="setting-input" placeholder="Paste 32-character API key...">
+                    <span class="setting-hint">Keys entered here are stored strictly in your browser's private <code>localStorage</code> and are NEVER committed to git.</span>
+                </div>
+
+                <div class="setting-group">
+                    <label class="setting-label">Default Units</label>
+                    <div class="radio-options">
+                        <label class="radio-label">
+                            <input type="radio" name="modal-temp-unit" value="celsius" checked> Celsius (&deg;C)
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="modal-temp-unit" value="fahrenheit"> Fahrenheit (&deg;F)
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" id="btn-reset-settings" class="btn btn-secondary">Restore Defaults</button>
+                <button type="button" id="btn-save-settings" class="btn btn-primary">Save Preferences</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="footer-container">
+            <p>&copy; 2026 Cynaris Solutions Full Stack Development Internship &bull; Week 2 Day 5 Mini Project</p>
+            <p class="footer-subtext">Engineered with semantic HTML5, Vanilla CSS3, ES6+ Fetch, and responsive telemetry architecture.</p>
+        </div>
+    </footer>
+
+    <!-- Main JavaScript Application Engine -->
+    <script src="script.js"></script>
+</body>
+
+</html>
