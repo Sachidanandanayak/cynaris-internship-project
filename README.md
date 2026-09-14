@@ -18,6 +18,7 @@ This repository contains tasks, projects, and learning modules for the **Cynaris
 | **Week 2 – Day 3** | JavaScript Fundamentals (ES6+, Promises, Async/Await, Fetch, Error Handling) | `feature/week-2-day-3` |
 | **Week 2 – Day 4** | DOM Manipulation (Dynamic To-Do Application, Event Delegation, LocalStorage) | `feature/week-2-day-4` |
 | **Week 2 – Day 5** | Frontend Mini Project (Responsive Weather App, Async/Await, Fetch API) | `feature/week-2-day-5` |
+| **Week 3 – Day 1** | PHP Fundamentals (Data Types, Form Handling, Superglobals, XSS Defense) | `feature/week-3-day-1` |
 
 ---
 
@@ -500,6 +501,15 @@ Cynaris-Internship/
 │   ├── style.css                # Mobile-first stylesheet & weather-reactive dynamic themes
 │   ├── script.js                # Asynchronous fetch(), async/await, and error handling engine
 │   └── config.example.js        # Optional API key segregation template & documentation
+├── php_basics/                  # Week 3 Day 1: PHP Fundamentals & Server-Side Processing
+│   ├── functions.php            # Security utility, validation, escaping, and layout helpers
+│   ├── style.css                # Responsive stylesheet & modern dark glassmorphism design system
+│   ├── index.php                # Language explorer (types, arrays, conditionals, loops, functions)
+│   ├── form.php                 # Interactive form with validation alerts, sticky inputs & XSS test
+│   ├── process.php              # Headless POST processor implementing Post/Redirect/Get (PRG) pattern
+│   ├── get_example.php          # URL query parameter inspector ($_GET), defaults & safe output
+│   ├── session_example.php      # Server state persistence ($_SESSION), visit tracker & reset workflow
+│   └── README.md                # Comprehensive technical documentation & testing verification guide
 ├── css/
 │   ├── style.css                # Mobile-first stylesheet (Flexbox, CSS Grid, 320/768/1024/1440px Breakpoints)
 │   └── advanced_styles.css      # Week 2 Day 1: Themes, Keyframe Animations, Pseudo-Elements, Sticky Nav
