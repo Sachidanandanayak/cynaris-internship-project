@@ -13,6 +13,9 @@
             <a href="{{ route('form.index') }}" class="btn" style="background-color: rgba(255,255,255,0.15); color: #ffffff; border: 1px solid rgba(255,255,255,0.3);">
                 Try Feedback Form
             </a>
+            <a href="{{ route('products.index') }}" class="btn" style="background-color: rgba(255,255,255,0.25); color: #ffffff; border: 1px solid rgba(255,255,255,0.4); font-weight: 700;">
+                Product CRUD (Day 3) &rarr;
+            </a>
         </div>
     </section>
 
