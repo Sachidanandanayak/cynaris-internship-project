@@ -23,6 +23,11 @@
                     Contact Form
                 </a>
             </li>
+            <li>
+                <a href="{{ route('products.index') }}" class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}">
+                    Products (CRUD)
+                </a>
+            </li>
         </ul>
     </nav>
 </div>
