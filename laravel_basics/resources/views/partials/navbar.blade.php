@@ -28,6 +28,11 @@
                     Products (CRUD)
                 </a>
             </li>
+            <li>
+                <a href="{{ route('database.demo') }}" class="nav-link {{ request()->routeIs('database.demo') ? 'active' : '' }}">
+                    Database Demo
+                </a>
+            </li>
         </ul>
     </nav>
 </div>
