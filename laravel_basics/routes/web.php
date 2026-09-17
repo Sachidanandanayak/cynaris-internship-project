@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DatabaseDemoController;
 use App\Http\Controllers\FormController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
@@ -24,6 +25,9 @@ use Illuminate\Support\Facades\Route;
 | - GET    /products/{product}/edit -> ProductController@edit (name: products.edit)
 | - PUT    /products/{product}-> ProductController@update   (name: products.update)
 | - DELETE /products/{product}-> ProductController@destroy  (name: products.destroy)
+|
+| Week 3 Day 4 Database Integration & Eloquent Queries:
+| - GET    /database-demo     -> DatabaseDemoController@index (name: database.demo)
 |--------------------------------------------------------------------------
 */
 
@@ -35,3 +39,6 @@ Route::post('/subscribe', [FormController::class, 'subscribe'])->name('newslette
 
 // Week 3 Day 3: Product Resource CRUD with Route Model Binding
 Route::resource('products', ProductController::class);
+
+// Week 3 Day 4: Database Integration & Eloquent Demonstration
+Route::get('/database-demo', [DatabaseDemoController::class, 'index'])->name('database.demo');

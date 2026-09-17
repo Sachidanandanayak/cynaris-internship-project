@@ -434,3 +434,306 @@ Manual and automated browser verification via the browser subagent confirmed:
 6. Updating the product persists changes to SQLite and redirects with success alert.
 7. Deleting the product removes it cleanly from the database and updates the table.
 8. Browser console log inspection: **0 console errors detected**.
+
+---
+
+# Week 3 Day 4: Database Integration & Eloquent ORM
+
+## 1. Database Integration Objective
+The objective of Week 3 Day 4 is to integrate a relational database layer using Laravel's database migrations, Eloquent ORM relationships, Model Factories, Seeders, and query optimizations. Specifically, this implementation demonstrates:
+- Designing normalized schemas with proper foreign key constraints.
+- Defining One-to-Many relationships (`hasMany` and `belongsTo`) between `Post` and `Comment` models.
+- Populating realistic seed datasets (20+ posts, 60+ comments) using factories and seeders without breaking previous Day 1–3 data (Products and Categories).
+- Mastering core Eloquent query builder methods: `where()`, `orderBy()`, and `with()` eager loading.
+- Analyzing and mitigating the classic **N+1 Query Problem** using eager loading.
+
+---
+
+## 2. Database Table Structures
+
+### A. `posts` Table (`database/migrations/2026_09_17_000001_create_posts_table.php`)
+| Field Name | Data Type | Modifiers / Attributes | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `BIGINT UNSIGNED` | Primary Key, Auto Increment | Unique post identifier |
+| `title` | `VARCHAR(255)` | Not Nullable | Title of the blog / article post |
+| `body` | `TEXT` | Not Nullable | Content body of the post |
+| `created_at` | `TIMESTAMP` | Nullable | Record creation timestamp |
+| `updated_at` | `TIMESTAMP` | Nullable | Record modification timestamp |
+
+```php
+Schema::create('posts', function (Blueprint $table) {
+    $table->id();
+    $table->string('title');
+    $table->text('body');
+    $table->timestamps();
+});
+```
+
+### B. `comments` Table (`database/migrations/2026_09_17_000002_create_comments_table.php`)
+| Field Name | Data Type | Modifiers / Attributes | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `BIGINT UNSIGNED` | Primary Key, Auto Increment | Unique comment identifier |
+| `post_id` | `BIGINT UNSIGNED` | Foreign Key &rarr; `posts(id)` | Associated parent post ID |
+| `author_name` | `VARCHAR(255)` | Not Nullable | Name of comment author |
+| `body` | `TEXT` | Not Nullable | Text body of the comment |
+| `created_at` | `TIMESTAMP` | Nullable | Record creation timestamp |
+| `updated_at` | `TIMESTAMP` | Nullable | Record modification timestamp |
+
+```php
+Schema::create('comments', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('post_id')->constrained('posts')->cascadeOnDelete();
+    $table->string('author_name');
+    $table->text('body');
+    $table->timestamps();
+});
+```
+
+---
+
+## 3. Foreign Key Relationship & Referential Integrity
+
+The `comments` table enforces an explicit foreign key referencing the primary key `id` of the `posts` table:
+```php
+$table->foreignId('post_id')->constrained('posts')->cascadeOnDelete();
+```
+- **Foreign Key Constraint:** `comments.post_id` &rarr; `posts.id`.
+- **`cascadeOnDelete()` behavior:** If a post is deleted, SQLite / database engine automatically deletes all child comments belonging to that post, ensuring no orphaned comment records remain.
+
+---
+
+## 4. Eloquent Models & Relationship Definitions
+
+### A. Post Model (`app/Models/Post.php`)
+Represents the parent entity in the one-to-many relationship:
+```php
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Post extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'title',
+        'body',
+    ];
+
+    /**
+     * Get all comments for the post.
+     */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
+}
+```
+
+### B. Comment Model (`app/Models/Comment.php`)
+Represents the child entity in the one-to-many relationship:
+```php
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class Comment extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'post_id',
+        'author_name',
+        'body',
+    ];
+
+    /**
+     * Get the post that owns the comment.
+     */
+    public function post(): BelongsTo
+    {
+        return $this->belongsTo(Post::class);
+    }
+
+    /**
+     * Alias accessor for convenient $comment->author access.
+     */
+    protected function author(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->author_name,
+            set: fn ($value) => ['author_name' => $value],
+        );
+    }
+}
+```
+
+---
+
+## 5. Model Factories & Database Seeders
+
+### Model Factories
+- **`PostFactory` (`database/factories/PostFactory.php`)**: Generates realistic fake post headlines with `fake()->sentence(6)` and multi-paragraph content with `fake()->paragraphs(3, true)`.
+- **`CommentFactory` (`database/factories/CommentFactory.php`)**: Generates linked comments with `post_id => Post::factory()`, `author_name => fake()->name()`, and `body => fake()->paragraph()`.
+
+### Seeders
+- **`PostSeeder` (`database/seeders/PostSeeder.php`)**:
+  - Seeds 5 deterministic tech-focused posts with real-world discussion comments.
+  - Seeds 15 additional posts via `PostFactory` with 2 to 4 comments attached to each post.
+  - Generates **exactly 20 posts** and **over 60 comments**.
+- **`DatabaseSeeder` (`database/seeders/DatabaseSeeder.php`)**:
+  - Integrates `CategorySeeder`, `ProductSeeder`, and `PostSeeder`.
+  - Preserves existing Week 3 Day 3 Product Catalog data (8 products, 4 categories) without interference.
+
+---
+
+## 6. Eloquent Query Demonstrations
+
+### A. Filtering with `where()`
+The `where()` method applies SQL `WHERE` criteria to restrict returned records:
+```php
+// Find all posts whose title contains a specific search term
+$posts = Post::where('title', 'like', '%Laravel%')->get();
+
+// Chained where conditions
+$recentPost = Post::where('title', 'like', '%Database%')
+    ->where('created_at', '>=', now()->subDays(7))
+    ->first();
+```
+
+### B. Sorting with `orderBy()`
+The `orderBy()` method sorts the query result set by a given column in ascending (`asc`) or descending (`desc`) order:
+```php
+// Order posts alphabetically by title (A to Z)
+$alphabetical = Post::orderBy('title', 'asc')->get();
+
+// Order posts by latest creation timestamp
+$latestPosts = Post::orderBy('created_at', 'desc')->take(5)->get();
+```
+
+### C. Eager Loading with `with('comments')`
+The `with()` method preloads relationship data, executing a single secondary query using `WHERE IN`:
+```php
+// Retrieve posts along with their child comments eager-loaded
+$postsWithComments = Post::with('comments')->latest()->take(5)->get();
+
+// Iterate through posts and comments without issuing additional database queries
+foreach ($postsWithComments as $post) {
+    echo $post->title;
+    foreach ($post->comments as $comment) {
+        echo $comment->author_name . ': ' . $comment->body;
+    }
+}
+```
+
+---
+
+## 7. Deep-Dive: The N+1 Query Problem & Eager Loading
+
+### What is the N+1 Query Problem?
+The N+1 problem occurs when an application retrieves parent models and then iterates over them, triggering a separate database query for every child relationship accessed on demand (lazy loading).
+
+For example, when displaying 20 posts with their comments using lazy loading:
+```php
+// 1 query to fetch 20 posts:
+$posts = Post::all(); // Query 1: SELECT * FROM posts;
+
+foreach ($posts as $post) {
+    // 20 separate queries executed (1 for each post):
+    echo $post->comments->count(); // Query 2..21: SELECT * FROM comments WHERE post_id = ?;
+}
+```
+- **Total queries:** `1 + 20 = 21 queries`.
+- As the dataset grows to 1,000 posts, the application issues 1,001 database trips, resulting in severe latency, database connection exhaustion, and poor scalability.
+
+### How Eager Loading (`with()`) Solves It
+Eager loading instructs Eloquent to fetch all parent records and their related child records upfront using **exactly 2 queries**, regardless of how many records exist:
+```php
+$posts = Post::with('comments')->get();
+```
+Laravel executes:
+1. **Query 1:** `SELECT * FROM "posts";`
+2. **Query 2:** `SELECT * FROM "comments" WHERE "comments"."post_id" IN (1, 2, 3, 4, ... 20);`
+
+Eloquent then automatically maps the child `Comment` models to their respective `Post` parent instances in memory. Accessing `$post->comments` incurs **0 additional SQL queries**.
+
+---
+
+## 8. Migration & Seeding Commands
+
+Execute a fresh migration and populate all seeds (Users, Categories, Products, Posts, and Comments):
+```bash
+# Freshly migrate SQLite database and seed all records
+php artisan migrate:fresh --seed
+```
+
+Verify the registered routes:
+```bash
+php artisan route:list
+```
+
+---
+
+## 9. Test Commands & Verification Results
+
+Run the complete test suite:
+```bash
+php artisan test
+```
+
+### Test Suite Execution Output:
+```text
+   PASS  Tests\Feature\DatabaseIntegrationTest
+  ✓ posts table can persist and retrieve records                              0.07s
+  ✓ comments table persists records with foreign key                          0.04s
+  ✓ post has many comments relationship                                       0.05s
+  ✓ comment belongs to post relationship                                      0.04s
+  ✓ deleting post cascades and removes associated comments                    0.05s
+  ✓ where query filters records accurately                                    0.05s
+  ✓ order by query sorts records correctly                                    0.05s
+  ✓ eager loading with comments loads relations in two queries                0.06s
+  ✓ post and comment factories generate valid models                          0.05s
+  ✓ post seeder seeds at least twenty posts and multiple comments             0.07s
+  ✓ database demo page renders successfully                                   0.06s
+  ✓ database demo search and sort parameters work                             0.05s
+
+   PASS  Tests\Feature\ProductCrudTest
+  ✓ products index displays product catalog                                   0.06s
+  ✓ product create page renders successfully                                  0.05s
+  ✓ product can be stored with valid data                                     0.05s
+  ✓ product store validation fails with invalid data                          0.05s
+  ✓ product show displays product using route model binding                   0.05s
+  ✓ product show returns 404 for missing record                               0.05s
+  ✓ product edit page renders with existing values                            0.05s
+  ✓ product can be updated using route model binding                          0.05s
+  ✓ product update fails validation with invalid price                        0.05s
+  ✓ product can be deleted using route model binding                          0.05s
+
+   PASS  Tests\Feature\DemonstrationRoutesTest
+  ✓ home route renders successfully                                           0.05s
+  ✓ about default topic                                                       0.04s
+  ✓ about with route parameter                                                0.04s
+  ✓ form index renders successfully                                           0.05s
+  ✓ form submit with valid data                                               0.05s
+  ✓ form submit validation failure                                            0.05s
+  ✓ newsletter subscribe success                                              0.04s
+  ✓ newsletter subscribe validation failure                                   0.04s
+
+   PASS  Tests\Feature\ExampleTest
+  ✓ the application returns a successful response                             0.04s
+
+  Tests:    32 passed (114 assertions)
+  Duration: 1.10s
+```
+
+---
+
+## 10. Verification of Existing Functionality
+- **Product Catalog (Day 3 CRUD):** Accessible at `/products`, fully operational with categories, creation, editing, route model binding, and deletion.
+- **Day 2 Foundation Routes:** `/`, `/about`, `/form`, `/subscribe` remain fully functional.
+- **Database Demo Endpoint:** Accessible at `/database-demo` showcasing eager loading with query log inspector, where filtering, and orderBy sorting.
