@@ -29,6 +29,11 @@
                 </a>
             </li>
             <li>
+                <a href="{{ route('blog.index') }}" class="nav-link {{ request()->routeIs('blog.*') ? 'active' : '' }}">
+                    Blog (CRUD)
+                </a>
+            </li>
+            <li>
                 <a href="{{ route('database.demo') }}" class="nav-link {{ request()->routeIs('database.demo') ? 'active' : '' }}">
                     Database Demo
                 </a>

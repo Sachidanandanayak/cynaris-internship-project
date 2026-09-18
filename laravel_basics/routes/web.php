@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BlogPostController;
 use App\Http\Controllers\DatabaseDemoController;
 use App\Http\Controllers\FormController;
 use App\Http\Controllers\HomeController;
@@ -28,6 +29,15 @@ use Illuminate\Support\Facades\Route;
 |
 | Week 3 Day 4 Database Integration & Eloquent Queries:
 | - GET    /database-demo     -> DatabaseDemoController@index (name: database.demo)
+|
+| Week 3 Day 5 Blog CRUD Application:
+| - GET    /blog              -> BlogPostController@index   (name: blog.index)
+| - GET    /blog/create       -> BlogPostController@create  (name: blog.create)
+| - POST   /blog              -> BlogPostController@store   (name: blog.store)
+| - GET    /blog/{blog}       -> BlogPostController@show    (name: blog.show)
+| - GET    /blog/{blog}/edit  -> BlogPostController@edit    (name: blog.edit)
+| - PUT    /blog/{blog}       -> BlogPostController@update  (name: blog.update)
+| - DELETE /blog/{blog}       -> BlogPostController@destroy (name: blog.destroy)
 |--------------------------------------------------------------------------
 */
 
@@ -42,3 +52,6 @@ Route::resource('products', ProductController::class);
 
 // Week 3 Day 4: Database Integration & Eloquent Demonstration
 Route::get('/database-demo', [DatabaseDemoController::class, 'index'])->name('database.demo');
+
+// Week 3 Day 5: Blog CRUD Application with Form Request Validation & Pagination
+Route::resource('blog', BlogPostController::class);
