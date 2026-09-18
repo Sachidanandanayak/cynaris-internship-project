@@ -737,3 +737,248 @@ php artisan test
 - **Product Catalog (Day 3 CRUD):** Accessible at `/products`, fully operational with categories, creation, editing, route model binding, and deletion.
 - **Day 2 Foundation Routes:** `/`, `/about`, `/form`, `/subscribe` remain fully functional.
 - **Database Demo Endpoint:** Accessible at `/database-demo` showcasing eager loading with query log inspector, where filtering, and orderBy sorting.
+
+---
+
+# Week 3 Day 5: Blog CRUD Application
+
+## 1. Overview & Architecture
+Week 3 Day 5 builds upon the foundation established in Days 1–4 by creating a complete, production-grade **Blog CRUD Application**. It demonstrates:
+- **RESTful Resource Routing**: Managing 7 canonical CRUD operations cleanly through `Route::resource('blog', BlogPostController::class)`.
+- **Form Request Validation**: Dedicated `BlogPostRequest` encapsulating robust validation logic (`required`, `min`, `max`, and `unique` slug with update collision avoidance).
+- **Route Model Binding**: Automatic Eloquent model injection using type-hinted `Post $blog` in controller actions, complete with automatic 404 handling.
+- **Eloquent Pagination**: Splitting large collections across manageable pages using `Post::withCount('comments')->latest()->paginate(5)` and rendered with Blade's `{{ $posts->links() }}`.
+- **CSRF Protection & HTTP Method Spoofing**: Securing state-changing requests with `@csrf` and routing RESTful `PUT` and `DELETE` requests via `@method('PUT')` and `@method('DELETE')`.
+- **Relationship Integrity & Continuity**: Extending the existing `Post` model and `posts` table (from Day 4's database integration) with an indexed, unique `slug` column while maintaining 100% compatibility with comments and previous database demonstrations.
+
+```
++---------------------------------------------------------------------------------------+
+|                                    MVC CRUD FLOW                                      |
++---------------------------------------------------------------------------------------+
+|  1. Browser GET /blog                                                                 |
+|     --> Route::resource('blog', BlogPostController::class)                            |
+|     --> BlogPostController@index                                                      |
+|     --> Post::withCount('comments')->latest()->paginate(5)                            |
+|     --> resources/views/blog/index.blade.php                                          |
+|                                                                                       |
+|  2. Browser POST /blog                                                                |
+|     --> BlogPostRequest (validates title, slug, body; checks unique slug)             |
+|     --> BlogPostController@store                                                      |
+|     --> Post::create($request->validated())                                          |
+|     --> redirect()->route('blog.index')->with('success', ...)                         |
+|                                                                                       |
+|  3. Browser PUT /blog/{blog}                                                          |
+|     --> Route Model Binding resolves Post $blog                                       |
+|     --> BlogPostRequest (Rule::unique('posts', 'slug')->ignore($postId))              |
+|     --> BlogPostController@update                                                     |
+|     --> $blog->update($request->validated())                                          |
+|     --> redirect()->route('blog.index')->with('success', ...)                         |
+|                                                                                       |
+|  4. Browser DELETE /blog/{blog}                                                       |
+|     --> Route Model Binding resolves Post $blog                                       |
+|     --> BlogPostController@destroy                                                    |
+|     --> $blog->delete() (cascades to comments)                                        |
+|     --> redirect()->route('blog.index')->with('success', ...)                         |
++---------------------------------------------------------------------------------------+
+```
+
+---
+
+## 2. Registered Resource Routes
+
+The blog feature exposes the standard 7 RESTful actions registered via `Route::resource('blog', BlogPostController::class)` in `routes/web.php`:
+
+| HTTP Method | URI Pattern | Route Name | Controller Action | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **GET** | `/blog` | `blog.index` | `BlogPostController@index` | Display paginated list of blog posts with comment counts and actions. |
+| **GET** | `/blog/create` | `blog.create` | `BlogPostController@create` | Show create form with title, auto-slug generator, and body fields. |
+| **POST** | `/blog` | `blog.store` | `BlogPostController@store` | Validate input via `BlogPostRequest` and persist new blog post. |
+| **GET** | `/blog/{blog}` | `blog.show` | `BlogPostController@show` | View full post details, publication date, and associated comments. |
+| **GET** | `/blog/{blog}/edit` | `blog.edit` | `BlogPostController@edit` | Show edit form pre-populated with current post attributes. |
+| **PUT/PATCH**| `/blog/{blog}` | `blog.update` | `BlogPostController@update` | Validate and update post record with unique slug collision bypass. |
+| **DELETE** | `/blog/{blog}` | `blog.destroy` | `BlogPostController@destroy` | Delete post and cascade remove child comments. |
+
+---
+
+## 3. Form Request Validation (`BlogPostRequest`)
+
+Form validation logic is decoupled from controllers and placed inside `app/Http/Requests/BlogPostRequest.php`:
+
+```php
+namespace App\Http\Requests;
+
+use App\Models\Post;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class BlogPostRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        $routeParam = $this->route('blog') ?? $this->route('post');
+        $postId = $routeParam instanceof Post ? $routeParam->id : $routeParam;
+
+        return [
+            'title' => ['required', 'string', 'min:3', 'max:255'],
+            'slug'  => [
+                'required',
+                'string',
+                'min:3',
+                'max:255',
+                'alpha_dash',
+                Rule::unique('posts', 'slug')->ignore($postId),
+            ],
+            'body'  => ['required', 'string', 'min:10'],
+        ];
+    }
+}
+```
+
+### Key Validation Features:
+- **`required`**: All three core fields (`title`, `slug`, `body`) must be provided.
+- **`min` / `max`**: Enforces descriptive titles (3–255 chars), valid slugs (3–255 chars), and substantial body content (min 10 chars).
+- **`alpha_dash`**: Guarantees URL-safe characters (letters, numbers, hyphens, underscores).
+- **`Rule::unique()->ignore($postId)`**: Ensures slugs are globally unique when creating, but allows the existing post to retain its current slug on update without failing validation.
+- **Blade Error Display**:
+  - Global summary alert: `@if ($errors->any()) ... @endif`
+  - Inline input feedback: `@error('field') <div class="invalid-feedback">{{ $message }}</div> @enderror`
+  - Old input preservation: `value="{{ old('title', $blog->title ?? '') }}"`
+
+---
+
+## 4. Eloquent Pagination Implementation
+
+Large numbers of posts are paginated to maintain high performance and clean UI presentation:
+
+### Controller Implementation:
+```php
+public function index(): View
+{
+    $posts = Post::withCount('comments')
+        ->latest()
+        ->paginate(5);
+
+    return view('blog.index', compact('posts'));
+}
+```
+
+### Blade Pagination Links:
+```blade
+@if ($posts->hasPages())
+    <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--border); background: #f8fafc;">
+        {{ $posts->links() }}
+    </div>
+@endif
+```
+
+---
+
+## 5. Security Measures
+
+1. **CSRF Protection**: All state-changing HTML forms (`POST`, `PUT`, `DELETE`) include the `@csrf` Blade directive generating a hidden token checked by Laravel's session middleware.
+2. **HTTP Method Spoofing**: Used `@method('PUT')` for update forms and `@method('DELETE')` for deletion forms to adhere to strict RESTful standards while remaining compatible with HTML forms.
+3. **Safe Mass Assignment**: The `Post` model explicitly declares `$fillable = ['title', 'slug', 'body']`, preventing mass-assignment vulnerabilities.
+4. **HTML Escaping**: All dynamic text in Blade templates is sanitized through `{{ $post->title }}` to mitigate Cross-Site Scripting (XSS).
+5. **Route Model Binding**: Automatically fails with HTTP 404 if a non-existent post ID is requested, preventing unhandled exceptions.
+
+---
+
+## 6. How to Run the Application & Tests
+
+### Start the Local Web Server:
+```bash
+cd laravel_basics
+php artisan serve
+```
+Open `http://127.0.0.1:8000/blog` in your browser.
+
+### Run Migrations & Seeders:
+```bash
+php artisan migrate
+php artisan db:seed
+```
+
+### Execute the Test Suite:
+```bash
+php artisan test
+```
+
+### Test Suite Execution Output (Day 5 Complete):
+```text
+   PASS  Tests\Feature\BlogPostCrudTest
+  ✓ blog index displays posts list                                            0.07s
+  ✓ blog index displays posts with pagination                                 0.08s
+  ✓ blog create page renders successfully                                     0.05s
+  ✓ valid blog post can be created                                            0.06s
+  ✓ blog post creation requires title slug and body                           0.05s
+  ✓ blog post validates min and max lengths                                   0.05s
+  ✓ blog post slug must be unique on creation                                 0.05s
+  ✓ blog show page displays post and comments                                 0.06s
+  ✓ blog edit page renders with existing data                                 0.05s
+  ✓ blog post can be updated keeping same slug                                0.06s
+  ✓ blog post update fails if slug collides with another post                 0.05s
+  ✓ blog post can be deleted                                                  0.05s
+  ✓ csrf token is present in create and edit forms                            0.05s
+
+   PASS  Tests\Feature\DatabaseIntegrationTest
+  ✓ posts table can persist and retrieve records                              0.07s
+  ✓ comments table persists records with foreign key                          0.04s
+  ✓ post has many comments relationship                                       0.05s
+  ✓ comment belongs to post relationship                                      0.04s
+  ✓ deleting post cascades and removes associated comments                    0.05s
+  ✓ where query filters records accurately                                    0.05s
+  ✓ order by query sorts records correctly                                    0.05s
+  ✓ eager loading with comments loads relations in two queries                0.06s
+  ✓ post and comment factories generate valid models                          0.05s
+  ✓ post seeder seeds at least twenty posts and multiple comments             0.07s
+  ✓ database demo page renders successfully                                   0.06s
+  ✓ database demo search and sort parameters work                             0.05s
+
+   PASS  Tests\Feature\ProductCrudTest
+  ✓ products index displays product catalog                                   0.06s
+  ✓ product create page renders successfully                                  0.05s
+  ✓ product can be stored with valid data                                     0.05s
+  ✓ product store validation fails with invalid data                          0.05s
+  ✓ product show displays product using route model binding                   0.05s
+  ✓ product show returns 404 for missing record                               0.05s
+  ✓ product edit page renders with existing values                            0.05s
+  ✓ product can be updated using route model binding                          0.05s
+  ✓ product update fails validation with invalid price                        0.05s
+  ✓ product can be deleted using route model binding                          0.05s
+
+   PASS  Tests\Feature\DemonstrationRoutesTest
+  ✓ home route renders successfully                                           0.05s
+  ✓ about default topic                                                       0.04s
+  ✓ about with route parameter                                                0.04s
+  ✓ form index renders successfully                                           0.05s
+  ✓ form submit with valid data                                               0.05s
+  ✓ form submit validation failure                                            0.05s
+  ✓ newsletter subscribe success                                              0.04s
+  ✓ newsletter subscribe validation failure                                   0.04s
+
+   PASS  Tests\Feature\ExampleTest
+  ✓ the application returns a successful response                             0.04s
+
+  Tests:    45 passed (185 assertions)
+  Duration: 1.48s
+```
+
+---
+
+## 7. Screenshots & UI Demonstration
+
+Captured during browser E2E verification:
+
+### 1. Blog Posts Index & Pagination (`/blog`)
+![Blog Index with Pagination](docs/blog-index.png)
+
+### 2. Form Request Validation Errors (`/blog/create`)
+![Validation Errors](docs/blog-validation-errors.png)
+
+### 3. Blog Post Details & Comments (`/blog/{id}`)
+![Blog Show Detail Page](docs/blog-show-detail.png)

@@ -19,8 +19,11 @@ class PostFactory extends Factory
      */
     public function definition(): array
     {
+        $title = fake()->unique()->sentence(6);
+
         return [
-            'title' => fake()->sentence(6),
+            'title' => $title,
+            'slug' => \Illuminate\Support\Str::slug($title) . '-' . fake()->unique()->numberBetween(1000, 99999),
             'body' => fake()->paragraphs(3, true),
         ];
     }
