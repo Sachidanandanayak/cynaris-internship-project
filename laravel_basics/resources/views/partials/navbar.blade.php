@@ -38,6 +38,42 @@
                     Database Demo
                 </a>
             </li>
+            @auth
+                <li>
+                    <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" style="font-weight: 600; color: var(--primary);">
+                        Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('account') }}" class="nav-link {{ request()->routeIs('account') ? 'active' : '' }}">
+                        Account
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('profile.edit') }}" class="nav-link {{ request()->routeIs('profile.edit') ? 'active' : '' }}">
+                        Profile
+                    </a>
+                </li>
+                <li>
+                    <form method="POST" action="{{ route('logout') }}" style="display: inline;">
+                        @csrf
+                        <button type="submit" class="nav-link" style="background: none; border: none; cursor: pointer; font-family: inherit; font-size: 0.95rem;">
+                            Log Out ({{ Auth::user()->name }})
+                        </button>
+                    </form>
+                </li>
+            @else
+                <li>
+                    <a href="{{ route('login') }}" class="nav-link {{ request()->routeIs('login') ? 'active' : '' }}">
+                        Log in
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('register') }}" class="btn btn-primary btn-sm" style="color: #ffffff; text-decoration: none;">
+                        Register
+                    </a>
+                </li>
+            @endauth
         </ul>
     </nav>
 </div>
