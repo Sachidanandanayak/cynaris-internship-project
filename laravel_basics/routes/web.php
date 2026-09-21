@@ -1,16 +1,19 @@
 <?php
 
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\BlogPostController;
 use App\Http\Controllers\DatabaseDemoController;
 use App\Http\Controllers\FormController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes - Cynaris Internship
 |--------------------------------------------------------------------------
+|
 | Week 3 Day 2 Demonstration Routes:
 | 1. GET  /               -> HomeController@index       (name: home)
 | 2. GET  /about/{topic?} -> HomeController@about       (name: about)
@@ -38,9 +41,19 @@ use Illuminate\Support\Facades\Route;
 | - GET    /blog/{blog}/edit  -> BlogPostController@edit    (name: blog.edit)
 | - PUT    /blog/{blog}       -> BlogPostController@update  (name: blog.update)
 | - DELETE /blog/{blog}       -> BlogPostController@destroy (name: blog.destroy)
+|
+| Week 4 Day 1 Authentication Protected Routes:
+| - GET    /dashboard         -> Dashboard View             (middleware: auth, verified)
+| - GET    /profile           -> ProfileController@edit     (middleware: auth)
+| - PATCH  /profile           -> ProfileController@update   (middleware: auth)
+| - DELETE /profile           -> ProfileController@destroy  (middleware: auth)
+| - GET    /account           -> AccountController@index    (middleware: auth)
 |--------------------------------------------------------------------------
 */
 
+// ==========================================
+// Week 3 Routes (Preserved Exactly)
+// ==========================================
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/about/{topic?}', [HomeController::class, 'about'])->name('about');
 Route::get('/form', [FormController::class, 'index'])->name('form.index');
@@ -55,3 +68,24 @@ Route::get('/database-demo', [DatabaseDemoController::class, 'index'])->name('da
 
 // Week 3 Day 5: Blog CRUD Application with Form Request Validation & Pagination
 Route::resource('blog', BlogPostController::class);
+
+// ==========================================
+// Week 4 Day 1: Protected Authenticated Routes
+// ==========================================
+Route::middleware('auth')->group(function () {
+    // 1. Protected Route 1: Dashboard (also verified protected)
+    Route::get('/dashboard', function () {
+        return view('dashboard');
+    })->middleware('verified')->name('dashboard');
+
+    // 2. Protected Route 2: Profile management
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // 3. Protected Route 3: Account details and verification overview
+    Route::get('/account', [AccountController::class, 'index'])->name('account');
+});
+
+// Laravel Breeze Authentication Routes
+require __DIR__.'/auth.php';

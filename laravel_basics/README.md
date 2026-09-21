@@ -982,3 +982,211 @@ Captured during browser E2E verification:
 
 ### 3. Blog Post Details & Comments (`/blog/{id}`)
 ![Blog Show Detail Page](docs/blog-show-detail.png)
+
+---
+
+# Week 4 Day 1: Authentication with Laravel Breeze
+
+## 1. Overview & Architecture
+Week 4 Day 1 implements a production-grade authentication subsystem using **Laravel Breeze** with the **Blade stack**, customized with a required **Phone Number** registration field, **Remember Me** functionality, **Email Verification** via the `MustVerifyEmail` contract, and **three protected routes** secured by Laravel's `auth` and `verified` middleware.
+
+All Week 3 features (Demonstration Routes, MVC Product CRUD, Eloquent Database Demo, and Blog CRUD with Comments) are 100% preserved.
+
+```mermaid
+graph TD
+    User([Guest / User]) -->|GET /register| Reg[Registration Form]
+    Reg -->|POST with Name, Email, Phone, Password| RegCtrl[RegisteredUserController]
+    RegCtrl -->|Save User + Phone to DB| UserDB[(Users Table)]
+    RegCtrl -->|Fire Registered Event| MailLog[storage/logs/laravel.log]
+    RegCtrl -->|Auto Login| AuthSession[Authenticated Session]
+    AuthSession -->|Redirect| VerifyPrompt[GET /verify-email]
+
+    User -->|GET /login| Login[Login Form with Remember Me]
+    Login -->|POST with Remember Flag| LoginCtrl[AuthenticatedSessionController]
+    LoginCtrl -->|Auth::attempt| AuthCheck{Valid?}
+    AuthCheck -->|Yes| SetCookie[Set Session + remember_web Cookie]
+    AuthCheck -->|No| LoginError[Validation Error]
+
+    User -->|Access Protected Routes| Gatekeeper{auth & verified Middleware}
+    Gatekeeper -->|Unauthenticated| LoginRedirect[Redirect to /login]
+    Gatekeeper -->|Unverified on /dashboard| VerifyRedirect[Redirect to /verify-email]
+    Gatekeeper -->|Authenticated & Verified| AppPages[Dashboard / Profile / Account]
+```
+
+---
+
+## 2. Laravel Breeze Installation
+Laravel Breeze was installed using Composer and scaffolding configured for Blade:
+```bash
+composer require laravel/breeze --dev
+php artisan breeze:install blade --no-interaction
+npm run build
+```
+The scaffolding generates:
+- Authentication controllers in `app/Http/Controllers/Auth/`
+- Authentication requests in `app/Http/Requests/Auth/` (`LoginRequest`)
+- Authentication routes in `routes/auth.php`
+- Blade views in `resources/views/auth/`
+- Layout components in `resources/views/layouts/`
+
+Existing Week 3 layout styling and navigation were cleanly merged into `resources/views/layouts/app.blade.php` to support both Blade slot components (`<x-app-layout>`) and traditional section yields (`@yield('content')`).
+
+---
+
+## 3. Phone Number Registration & Schema Migration
+
+### Database Migration
+A dedicated migration `2026_09_21_163219_add_phone_to_users_table.php` was created and executed without altering or resetting existing Week 3 tables:
+```php
+Schema::table('users', function (Blueprint $table) {
+    $table->string('phone')->nullable()->after('email');
+});
+```
+
+### Safe Mass Assignment (`User.php`)
+The `User` model explicitly defines `phone` as mass assignable using both PHP 8 attributes and the `$fillable` property:
+```php
+#[Fillable(['name', 'email', 'phone', 'password'])]
+class User extends Authenticatable implements MustVerifyEmail
+{
+    use HasFactory, Notifiable;
+
+    protected $fillable = [
+        'name',
+        'email',
+        'phone',
+        'password',
+    ];
+}
+```
+
+### Registration Controller (`RegisteredUserController.php`)
+The registration store action validates the incoming phone number format, ensuring presence and valid phone structure, and stores it directly into the database:
+```php
+$request->validate([
+    'name' => ['required', 'string', 'max:255'],
+    'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+    'phone' => ['required', 'string', 'max:20', 'regex:/^[0-9+\s\-()]{7,20}$/'],
+    'password' => ['required', 'confirmed', Rules\Password::defaults()],
+]);
+
+$user = User::create([
+    'name' => $request->name,
+    'email' => $request->email,
+    'phone' => $request->phone,
+    'password' => Hash::make($request->password),
+]);
+```
+
+### Blade Form (`resources/views/auth/register.blade.php`)
+The registration view renders a prominent phone input field positioned between Email and Password with validation error rendering and `old('phone')` input preservation.
+
+---
+
+## 4. Protected Routes & Middleware
+
+Three distinct protected routes are implemented under the `auth` middleware group in `routes/web.php`:
+
+| HTTP Method | URI Pattern | Route Name | Middleware | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **GET** | `/dashboard` | `dashboard` | `auth`, `verified` | Main authenticated dashboard with metrics, user identity, and module navigation. Requires email verification. |
+| **GET** | `/profile` | `profile.edit` | `auth` | User profile management, password updates, and account deletion. |
+| **GET** | `/account` | `account` | `auth` | Account security and verification overview showcasing phone number, registration timestamps, and email verification status. |
+
+- **Unauthenticated Access:** Any request to `/dashboard`, `/profile`, or `/account` by an unauthenticated guest triggers an automatic redirect to `/login`.
+- **Verified Middleware:** Access to `/dashboard` by an authenticated user whose email is not yet verified redirects automatically to `/verify-email`.
+
+---
+
+## 5. Remember Me Implementation
+- **Login Blade Form:** `resources/views/auth/login.blade.php` includes a styled "Remember me" checkbox bound to `name="remember"`.
+- **Login Request:** `app/Http/Requests/Auth/LoginRequest.php` invokes Laravel's native authentication attempt passing the boolean state:
+  ```php
+  Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))
+  ```
+- **Cookie & Session:** If checked, Laravel issues a cryptographically secure, long-lived `remember_web_*` cookie linked to `remember_token` on the user record. No insecure custom cookies are used.
+
+---
+
+## 6. Email Verification (`MustVerifyEmail`)
+- **User Contract:** `App\Models\User` implements `Illuminate\Contracts\Auth\MustVerifyEmail`.
+- **Verification Notification:** Dispatched upon registration via `event(new Registered($user))`.
+- **Local Mail Configuration:** `.env` uses `MAIL_MAILER=log`. Verification emails and signed temporary links are logged directly to `storage/logs/laravel.log` without requiring external third-party paid mail services:
+  ```
+  [2026-09-21 16:38:00] local.INFO: Please click the button below to verify your email address:
+  http://localhost:8000/verify-email/1/abcdef123456...?expires=1790012000&signature=...
+  ```
+- **Verification Route:** `GET /verify-email/{id}/{hash}` handles signed verification requests using `VerifyEmailController` and `EmailVerificationRequest`.
+
+---
+
+## 7. Automated Test Suite
+
+A comprehensive test suite in `tests/Feature/Auth/` ensures all authentication requirements pass cleanly alongside all existing 45 Week 3 tests:
+
+### Running the Tests
+```bash
+php artisan test --without-tty
+# or directly via PHPUnit:
+php vendor/bin/phpunit
+```
+
+### Test Suite Execution Output
+```
+   PASS  Tests\Feature\Auth\AuthenticationTest
+  ✓ login screen can be rendered                                              0.06s
+  ✓ users can authenticate using the login screen                             0.05s
+  ✓ users can authenticate with remember me                                   0.05s
+  ✓ users can not authenticate with invalid password                          0.05s
+  ✓ users can logout                                                          0.05s
+  ✓ unauthenticated users are redirected to login for three protected routes  0.06s
+  ✓ authenticated users can access protected routes                           0.06s
+  ✓ unverified authenticated user is redirected from verified routes to verification notice 0.05s
+
+   PASS  Tests\Feature\Auth\RegistrationTest
+  ✓ registration screen can be rendered                                       0.05s
+  ✓ new users can register with valid data including phone number             0.06s
+  ✓ registration fails without phone number                                   0.05s
+  ✓ registration fails with invalid phone number                              0.05s
+  ✓ registration fails with duplicate email                                   0.05s
+  ✓ registration fails with mismatched password confirmation                  0.05s
+
+   PASS  Tests\Feature\Auth\EmailVerificationTest
+  ✓ email verification screen can be rendered                                 0.05s
+  ✓ email can be verified                                                     0.05s
+  ✓ email is not verified with invalid hash                                   0.05s
+
+   PASS  Tests\Feature\Auth\PasswordConfirmationTest
+   PASS  Tests\Feature\Auth\PasswordResetTest
+   PASS  Tests\Feature\Auth\PasswordUpdateTest
+   PASS  Tests\Feature\ProfileTest
+   PASS  Tests\Feature\BlogPostCrudTest (14 tests)
+   PASS  Tests\Feature\DatabaseIntegrationTest (12 tests)
+   PASS  Tests\Feature\ProductCrudTest (10 tests)
+   PASS  Tests\Feature\DemonstrationRoutesTest (8 tests)
+   PASS  Tests\Feature\ExampleTest (1 test)
+
+  Tests:    76 passed (284 assertions)
+  Duration: 3.82s
+```
+
+---
+
+## 8. Week 4 Day 1 Screenshots & UI Artifacts
+
+All screenshots captured during browser E2E verification are saved in `docs/`:
+
+### 1. Registration Page with Phone Number Field (`/register`)
+![Registration with Phone Field](docs/register-phone-field.png)
+
+### 2. Login Page with "Remember me" Checkbox (`/login`)
+![Login with Remember Me](docs/login-remember-me.png)
+
+### 3. Email Verification Prompt (`/verify-email`)
+![Email Verification Notice](docs/email-verification-prompt.png)
+
+### 4. Authenticated & Verified Dashboard (`/dashboard`)
+![Authenticated Dashboard](docs/authenticated-dashboard.png)
+
+### 5. Protected Account Overview Route (`/account`)
+![Protected Route Account](docs/protected-route-account.png)

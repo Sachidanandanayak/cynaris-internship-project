@@ -3,8 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Cynaris Internship Week 3 Day 2 - Laravel Basics Demonstration">
-    <title>@yield('title', 'Laravel Basics') | Cynaris Internship</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="description" content="Cynaris Internship - Laravel Basics & Week 4 Day 1 Authentication">
+    <title>@yield('title', 'Laravel Basics & Authentication') | Cynaris Internship</title>
+
+    <!-- Scripts and Tailwind Styles -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         :root {
             --primary: #4f46e5;
@@ -425,8 +429,17 @@
         @include('partials.navbar')
     </header>
 
+    @isset($header)
+        <div style="background-color: #ffffff; border-bottom: 1px solid var(--border); padding: 1.25rem 0;">
+            <div class="container">
+                {{ $header }}
+            </div>
+        </div>
+    @endisset
+
     <main>
         <div class="container">
+            {{ $slot ?? '' }}
             @yield('content')
         </div>
     </main>
@@ -434,7 +447,7 @@
     <footer class="site-footer">
         <div class="container footer-grid">
             <div>
-                <p><strong>Cynaris Internship</strong> &bull; Week 3 Day 2: Laravel Basics</p>
+                <p><strong>Cynaris Internship</strong> &bull; Week 4 Day 1: Authentication &bull; Week 3 Features Preserved</p>
                 <p style="font-size: 0.8rem; margin-top: 0.25rem;">Built with Laravel 13 &bull; PHP 8.5</p>
             </div>
             <div>
