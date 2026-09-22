@@ -1190,3 +1190,201 @@ All screenshots captured during browser E2E verification are saved in `docs/`:
 
 ### 5. Protected Account Overview Route (`/account`)
 ![Protected Route Account](docs/protected-route-account.png)
+
+---
+
+# Week 4 Day 2: RESTful API Integration & Laravel Sanctum
+
+## 1. Overview
+Week 4 Day 2 introduces a complete **RESTful JSON API** for the existing `Post` model, secured with **Laravel Sanctum** token-based authentication. It provides standard HTTP status codes, API Resource transformation, validation via Form Requests, explicit CORS configuration, a live frontend API consumer demo page (`/api-demo`), and a 15-test feature suite.
+
+- **Sanctum Package Version:** `laravel/sanctum ^4.3`
+- **API Versioning / Routing:** Prefix `/api` via `routes/api.php`
+- **Authentication Mechanism:** Bearer Token via HTTP Header `Authorization: Bearer <token>`
+- **Frontend Consumer:** Live SPA-style tester at `http://127.0.0.1:8000/api-demo`
+
+---
+
+## 2. API Endpoint Reference
+
+| HTTP Method | URI Pattern | Name | Auth Required | Description | Status Codes |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **POST** | `/api/login` | `api.login` | Public | Authenticates credentials and issues a Sanctum Bearer token | `200`, `401`, `422` |
+| **POST** | `/api/auth/token` | `api.auth.token` | Public | Alias for token creation | `200`, `401`, `422` |
+| **GET** | `/api/posts` | `api.posts.index` | Public | Paginated collection of posts with comment counts | `200` |
+| **GET** | `/api/posts/{post}` | `api.posts.show` | Public | Detailed view of a single post with comments | `200`, `404` |
+| **POST** | `/api/posts` | `api.posts.store` | `auth:sanctum` | Creates a new post with validation | `201`, `401`, `422` |
+| **PUT/PATCH** | `/api/posts/{post}` | `api.posts.update` | `auth:sanctum` | Updates an existing post with validation | `200`, `401`, `404`, `422` |
+| **DELETE** | `/api/posts/{post}` | `api.posts.destroy` | `auth:sanctum` | Deletes a post | `200`, `401`, `404` |
+| **GET** | `/api/user` | `api.user` | `auth:sanctum` | Fetches authenticated user profile | `200`, `401` |
+| **POST** | `/api/logout` | `api.logout` | `auth:sanctum` | Revokes the current Sanctum token | `200`, `401` |
+
+---
+
+## 3. Laravel Sanctum Authentication Flow
+
+### Obtaining an API Token
+Send a POST request to `/api/login` with your user credentials:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/login \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "test@example.com", "password": "password", "device_name": "Terminal Client"}'
+```
+
+**Example Response (200 OK):**
+```json
+{
+  "message": "Authentication successful.",
+  "token": "1|zrH44YgX9evZ5Fc4aV6E6xq735dBKBZ9Uq5dj0vI1fce37b4",
+  "token_type": "Bearer",
+  "user": {
+    "id": 1,
+    "name": "Test User",
+    "email": "test@example.com"
+  }
+}
+```
+
+### Using the Sanctum Bearer Token
+Include the token in the `Authorization` header for protected write routes (`POST`, `PUT`, `DELETE`):
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/posts \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer 1|zrH44YgX9evZ5Fc4aV6E6xq735dBKBZ9Uq5dj0vI1fce37b4" \
+  -d '{
+    "title": "Mastering Modern Laravel APIs",
+    "body": "A comprehensive guide to building RESTful APIs with Laravel 12 and Sanctum."
+  }'
+```
+
+**Example Response (201 Created):**
+```json
+{
+  "data": {
+    "id": 27,
+    "title": "Mastering Modern Laravel APIs",
+    "slug": "mastering-modern-laravel-apis-a9B1c2",
+    "body": "A comprehensive guide to building RESTful APIs with Laravel 12 and Sanctum.",
+    "comments_count": 0,
+    "created_at": "2026-09-22T13:45:30+00:00",
+    "updated_at": "2026-09-22T13:45:30+00:00"
+  }
+}
+```
+
+### Revoking the Token
+Send a POST request to `/api/logout` with the Bearer token:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/logout \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer 1|zrH44YgX9evZ5Fc4aV6E6xq735dBKBZ9Uq5dj0vI1fce37b4"
+```
+
+**Example Response (200 OK):**
+```json
+{
+  "message": "Token revoked successfully."
+}
+```
+
+---
+
+## 4. API Resource Transformation (`PostResource`)
+The `App\Http\Resources\PostResource` standardizes the JSON response structure and hides database implementation details:
+
+- Exposes only: `id`, `title`, `slug`, `body`, `comments_count`, `comments` (when loaded), `created_at`, `updated_at`.
+- Formats dates as standard ISO-8601 strings (`2026-09-22T13:45:30+00:00`).
+- Prevents leaking internal user fields or foreign keys.
+
+---
+
+## 5. HTTP Status Codes Implemented
+
+| Status Code | Meaning | When Returned |
+| :--- | :--- | :--- |
+| **`200 OK`** | Request succeeded | Successful `GET` reads, `PUT/PATCH` updates, and `DELETE` / `logout` actions. |
+| **`201 Created`** | Resource created | Successful `POST /api/posts` post creation. |
+| **`401 Unauthorized`** | Missing or invalid token | Accessing `POST /api/posts`, `PUT`, or `DELETE` without a valid Sanctum Bearer token. |
+| **`404 Not Found`** | Resource does not exist | Accessing `GET`, `PUT`, or `DELETE` on a post ID that does not exist in the database. |
+| **`422 Unprocessable`** | Validation error | When request payload fails rules (e.g. missing `title` or `body` too short). |
+
+---
+
+## 6. Cross-Origin Resource Sharing (CORS) Configuration
+
+Configured in `config/cors.php`:
+- **Paths Protected:** `['api/*', 'sanctum/csrf-cookie']`
+- **Methods:** `['*']`
+- **Allowed Origins:** Restricts access strictly to trusted domains instead of insecure `*` wildcards:
+  - `env('APP_URL')` (http://localhost:8000)
+  - `http://localhost:8000` & `http://127.0.0.1:8000`
+  - Local frontend development servers: `http://localhost:3000`, `http://localhost:5173`
+  - Optional `FRONTEND_URL` environment variable
+- **Supports Credentials:** `true` (enables cookies and auth headers for SPA/token consumers).
+
+---
+
+## 7. Frontend API Consumer Demo (`/api-demo`)
+
+An interactive API testing interface is included in the web app:
+- **URL:** `http://127.0.0.1:8000/api-demo` (also linked directly in the main navigation bar).
+- **Features:**
+  1. **Sanctum Token Manager:** Quick auto-fill button, login request to `/api/login`, displays active Bearer token with a 1-click clipboard copy button, and logout revocation button.
+  2. **GET Posts Collection:** Fetches recent posts using vanilla `fetch()`, displays post cards with comment counts, and provides View/Edit action buttons.
+  3. **GET Single Post & 404 Testing:** Queries individual posts by ID or tests the `404 Not Found` response with ID 99999.
+  4. **POST Create Post:** Form to submit new posts with title, optional slug, and body. Tests `201 Created` with token or `401 Unauthorized` if unauthenticated.
+  5. **Validation Testing Button:** Triggers `422 Unprocessable Content` with empty payload to verify error display.
+  6. **PUT & DELETE Controls:** Demonstrates resource updates and deletions via API.
+  7. **Live Response Inspector:** Displays HTTP Method, URL, Execution Time in milliseconds, Status Code badge (green 200/201, red 401/404, orange 422), Request Headers, and formatted JSON Response Body.
+
+---
+
+## 8. Complete Test Suite Execution
+
+Run the complete Laravel test suite:
+
+```bash
+php artisan test
+```
+
+### Complete Test Results:
+```
+  PASS  Tests\Feature\PostApiTest
+  ✓ can get posts collection with api resource structure                      0.08s
+  ✓ can get single post by id                                                 0.05s
+  ✓ returns 404 when post not found                                           0.05s
+  ✓ unauthenticated access is rejected on create                              0.05s
+  ✓ authenticated user with sanctum can create post                           0.06s
+  ✓ post creation validation failure                                          0.05s
+  ✓ unauthenticated access is rejected on update                              0.05s
+  ✓ authenticated user can update post                                        0.05s
+  ✓ post update validation failure                                            0.05s
+  ✓ unauthenticated access is rejected on delete                              0.05s
+  ✓ authenticated user can delete post                                        0.05s
+  ✓ sanctum login issues token with valid credentials                         0.06s
+  ✓ sanctum login rejects invalid credentials                                 0.05s
+  ✓ sanctum authenticated user profile and logout                             0.06s
+  ✓ frontend api demo page loads successfully                                 0.05s
+
+  PASS  Tests\Feature\Auth\AuthenticationTest (8 tests)
+  PASS  Tests\Feature\Auth\RegistrationTest (6 tests)
+  PASS  Tests\Feature\Auth\EmailVerificationTest (3 tests)
+  PASS  Tests\Feature\Auth\PasswordConfirmationTest (1 test)
+  PASS  Tests\Feature\Auth\PasswordResetTest (4 tests)
+  PASS  Tests\Feature\Auth\PasswordUpdateTest (3 tests)
+  PASS  Tests\Feature\ProfileTest (5 tests)
+  PASS  Tests\Feature\BlogPostCrudTest (14 tests)
+  PASS  Tests\Feature\DatabaseIntegrationTest (12 tests)
+  PASS  Tests\Feature\ProductCrudTest (10 tests)
+  PASS  Tests\Feature\DemonstrationRoutesTest (8 tests)
+  PASS  Tests\Feature\ExampleTest (1 test)
+  PASS  Tests\Unit\ExampleTest (1 test)
+
+  Tests:    91 passed (379 assertions)
+  Duration: 3.59s
+```

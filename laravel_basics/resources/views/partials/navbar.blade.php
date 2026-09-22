@@ -38,6 +38,11 @@
                     Database Demo
                 </a>
             </li>
+            <li>
+                <a href="{{ route('api.demo') }}" class="nav-link {{ request()->routeIs('api.demo') ? 'active' : '' }}">
+                    API Demo
+                </a>
+            </li>
             @auth
                 <li>
                     <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" style="font-weight: 600; color: var(--primary);">

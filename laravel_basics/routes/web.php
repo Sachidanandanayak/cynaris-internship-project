@@ -87,5 +87,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/account', [AccountController::class, 'index'])->name('account');
 });
 
+// ==========================================
+// Week 4 Day 2: Frontend API Consumer Demonstration
+// ==========================================
+Route::get('/api-demo', function () {
+    return view('api-demo');
+})->name('api.demo');
+
 // Laravel Breeze Authentication Routes
 require __DIR__.'/auth.php';
