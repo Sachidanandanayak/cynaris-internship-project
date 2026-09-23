@@ -1237,7 +1237,7 @@ curl -X POST http://127.0.0.1:8000/api/login \
 ```json
 {
   "message": "Authentication successful.",
-  "token": "1|zrH44YgX9evZ5Fc4aV6E6xq735dBKBZ9Uq5dj0vI1fce37b4",
+  "token": "<SANCTUM_TOKEN>",
   "token_type": "Bearer",
   "user": {
     "id": 1,
@@ -1254,7 +1254,7 @@ Include the token in the `Authorization` header for protected write routes (`POS
 curl -X POST http://127.0.0.1:8000/api/posts \
   -H "Accept: application/json" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer 1|zrH44YgX9evZ5Fc4aV6E6xq735dBKBZ9Uq5dj0vI1fce37b4" \
+  -H "Authorization: Bearer <SANCTUM_TOKEN>" \
   -d '{
     "title": "Mastering Modern Laravel APIs",
     "body": "A comprehensive guide to building RESTful APIs with Laravel 12 and Sanctum."
@@ -1282,7 +1282,7 @@ Send a POST request to `/api/logout` with the Bearer token:
 ```bash
 curl -X POST http://127.0.0.1:8000/api/logout \
   -H "Accept: application/json" \
-  -H "Authorization: Bearer 1|zrH44YgX9evZ5Fc4aV6E6xq735dBKBZ9Uq5dj0vI1fce37b4"
+  -H "Authorization: Bearer <SANCTUM_TOKEN>"
 ```
 
 **Example Response (200 OK):**
@@ -1387,4 +1387,119 @@ php artisan test
 
   Tests:    91 passed (379 assertions)
   Duration: 3.59s
+```
+
+---
+
+# Week 4 Day 3: Production Deployment
+
+## 1. Production Environment Configuration
+When transitioning from local development to production, key environment variables in the server's `.env` file must be updated to secure and optimize the application:
+
+```ini
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=<PRODUCTION_URL>
+```
+
+- **Production URL (`APP_URL`)**: Set `APP_URL` to `<PRODUCTION_URL>` (the real live production domain or subdomain assigned during Hostinger deployment, utilizing `https://`).
+- **Real Production URL Requirement**: The real production URL must be supplied during Hostinger deployment once the domain or subdomain has been provisioned.
+- **Production Database Credentials**: Database credentials (`DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`) must be configured in the server's `.env` file on the hosting environment. These sensitive credentials must **never** be committed to GitHub or tracked in version control.
+
+---
+
+## 2. Production Build and Optimization
+Before running the application in a live production environment, compile frontend assets and cache core framework components for optimal response times:
+
+```bash
+# 1. Compile and minify production frontend assets (CSS, JS, Vite bundles)
+npm run build
+
+# 2. Cache framework routes, config, and views for production performance
+php artisan optimize
+
+# 3. Create the symbolic link from public/storage to storage/app/public
+php artisan storage:link
+```
+
+- `npm run build`: Bundles, minifies, and versions Tailwind CSS and Vite client scripts into `public/build/`.
+- `php artisan optimize`: Caches the application bootstrap configuration, compiled routes, and Blade templates to eliminate runtime file parsing overhead.
+- `php artisan storage:link`: Ensures user-uploaded files and attachments stored in `storage/app/public` are publicly accessible through `public/storage`.
+
+---
+
+## 3. Pre-Deployment Verification
+Before uploading or transferring files to the remote server, verify codebase integrity and test coverage locally:
+
+```bash
+# Run complete test suite across Unit and Feature test suites
+php artisan test
+
+# Verify git diff contains no whitespace errors or conflict markers
+git diff --check
+```
+
+- **Current Verified Test Result:** All **91 tests passed, 379 assertions** successfully verified with zero errors or regressions.
+- **Clean Diff Verification:** `git diff --check` passes with zero whitespace or formatting issues before staging.
+
+---
+
+## 4. Hostinger Deployment Procedure
+General procedure for deploying this Laravel application to Hostinger shared or cloud hosting:
+
+1. **Upload Codebase**:
+   - Upload the Laravel application to Hostinger using FTP or SSH into the hosting root directory (outside of `public_html`).
+2. **Configure Document Root**:
+   - Configure the Laravel `public` directory as the web document root on Hostinger so that web traffic resolves directly to `public/index.php`.
+3. **Configure Server-Side `.env`**:
+   - Configure the server-side `.env` file directly on Hostinger with production values (`APP_ENV=production`, `APP_DEBUG=false`, `APP_KEY`, `APP_URL=<PRODUCTION_URL>`).
+4. **Configure Production Database Connection**:
+   - Create a MySQL database and user in Hostinger hPanel. Configure the production database connection (`DB_HOST`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`) in the server-side `.env`.
+5. **Run Required Server-Side Commands**:
+   - Run required Composer and Laravel commands on the server via SSH:
+     ```bash
+     composer install --no-dev --optimize-autoloader
+     php artisan migrate --force
+     php artisan optimize
+     ```
+6. **Create Storage Link**:
+   - Create the storage link (`php artisan storage:link`) on the server.
+7. **Set File and Directory Permissions**:
+   - Set directories to `755` and files to `644` where required, ensuring `storage` and `bootstrap/cache` are writable.
+8. **Verify the Live Application**:
+   - Access the live domain over HTTPS and verify core site functionality.
+
+---
+
+## 5. Security
+Maintaining stringent security in the production environment is paramount:
+
+- **Never Commit `.env`**: Never commit `.env` to version control or GitHub.
+- **Never Commit Secrets**: Never commit database passwords, API keys, or Sanctum tokens to source control.
+- **Keep `APP_DEBUG=false` in Production**: Prevent sensitive debug information, environment secrets, and stack traces from being displayed to users.
+- **Use HTTPS for the Production URL**: Enforce encrypted HTTPS connections across the entire production site to protect user sessions and API tokens.
+
+---
+
+## 6. Live Verification Checklist
+Perform end-to-end verification of all application features after live deployment:
+
+- [ ] **Home Page**: Verify public landing page renders correctly with compiled styles and scripts.
+- [ ] **Registration/Login**: Test user account registration, authentication, and logout.
+- [ ] **Protected Dashboard**: Verify authenticated dashboard route access and profile display.
+- [ ] **Blog CRUD**: Verify post creation, reading, editing, and deletion operations.
+- [ ] **API Endpoints**: Verify Sanctum authentication, RESTful post endpoints, and expected status codes (`200`, `201`, `401`, `404`, `422`).
+- [ ] **Storage/Uploads**: Verify publicly accessible media and storage links resolve properly (if applicable).
+- [ ] **Browser Console/Network Errors**: Inspect DevTools to confirm zero broken links, missing assets, or console errors.
+
+---
+
+## 7. Deployment Status
+Local production preparation completed. Hostinger deployment is pending because the production hosting account, domain/subdomain, and database credentials have not yet been configured.
+
+---
+
+## 8. Required Git Commit
+```text
+feat: deployment week-4-day-3 complete
 ```
