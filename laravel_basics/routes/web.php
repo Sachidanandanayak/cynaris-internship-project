@@ -3,6 +3,7 @@
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\BlogPostController;
 use App\Http\Controllers\DatabaseDemoController;
+use App\Http\Controllers\DebuggingDemoController;
 use App\Http\Controllers\FormController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
@@ -93,6 +94,11 @@ Route::middleware('auth')->group(function () {
 Route::get('/api-demo', function () {
     return view('api-demo');
 })->name('api.demo');
+
+// ==========================================
+// Week 4 Day 4: Testing & Debugging Demonstration
+// ==========================================
+Route::get('/debug-demo', [DebuggingDemoController::class, 'index'])->name('debug.demo');
 
 // Laravel Breeze Authentication Routes
 require __DIR__.'/auth.php';
