@@ -1503,3 +1503,34 @@ Local production preparation completed. Hostinger deployment is pending because 
 ```text
 feat: deployment week-4-day-3 complete
 ```
+
+---
+
+# Week 4 Day 4: Testing & Debugging
+
+Comprehensive automated feature testing, performance profiling, and error diagnostics were implemented to ensure full code reliability and maintainability.
+
+## 1. Feature Test Suite (PHPUnit)
+Located in `tests/Feature/Week4Day4TestingAndDebuggingTest.php`:
+- **Test A:** `test_homepage_loads_successfully_with_http_200()` — Verifies public landing page returns HTTP 200.
+- **Test B:** `test_user_registration_works_and_creates_a_user()` — Verifies user registration, phone field validation, authentication state, and database record.
+- **Test C:** `test_user_login_works_with_valid_credentials()` — Verifies authentication against credentials and dashboard redirection.
+- **Test D:** `test_crud_create_works_for_blog_post_application()` — Verifies blog post store endpoint, database persistence, and flash message.
+- **Test E:** `test_crud_delete_works_for_blog_post_application()` — Verifies blog post deletion, database record removal, and flash message.
+
+### Run Tests:
+```bash
+php artisan test tests/Feature/Week4Day4TestingAndDebuggingTest.php
+php artisan test
+```
+
+## 2. Laravel Debugbar
+- Installed development-only: `composer require barryvdh/laravel-debugbar --dev`
+- Listed under `require-dev` in `composer.json`
+- Safely configured in `config/debugbar.php`: `'enabled' => env('DEBUGBAR_ENABLED', false)`
+- Strictly disabled for production environments.
+
+## 3. Structured Logging & Debugging Workflow
+- Logging via `Illuminate\Support\Facades\Log` writes to `storage/logs/laravel.log`.
+- Interactive testing route: `GET /debug-demo` (served by `DebuggingDemoController`).
+- Detailed debugging log, `dump()` vs `dd()` analysis, and simulated bug lifecycle documented in `debug_log.md`.
