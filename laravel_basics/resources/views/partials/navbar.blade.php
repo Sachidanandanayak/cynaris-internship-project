@@ -14,6 +14,11 @@
                 </a>
             </li>
             <li>
+                <a href="{{ route('jobs.index') }}" class="nav-link {{ request()->routeIs('jobs.*') ? 'active' : '' }}" style="font-weight: 700; color: #4338ca;">
+                    Job Board
+                </a>
+            </li>
+            <li>
                 <a href="{{ route('about') }}" class="nav-link {{ request()->routeIs('about') ? 'active' : '' }}">
                     About
                 </a>
@@ -52,6 +57,11 @@
                 <li>
                     <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" style="font-weight: 600; color: var(--primary);">
                         Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('applications.index') }}" class="nav-link {{ request()->routeIs('applications.*') ? 'active' : '' }}">
+                        My Applications
                     </a>
                 </li>
                 <li>
