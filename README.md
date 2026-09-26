@@ -19,6 +19,15 @@ This repository contains tasks, projects, and learning modules for the **Cynaris
 | **Week 2 – Day 4** | DOM Manipulation (Dynamic To-Do Application, Event Delegation, LocalStorage) | `feature/week-2-day-4` |
 | **Week 2 – Day 5** | Frontend Mini Project (Responsive Weather App, Async/Await, Fetch API) | `feature/week-2-day-5` |
 | **Week 3 – Day 1** | PHP Fundamentals (Data Types, Form Handling, Superglobals, XSS Defense) | `feature/week-3-day-1` |
+| **Week 3 – Day 2** | Laravel Basics (Routing, Controllers, Blade Views, Form Validation) | `feature/week-3-day-2` |
+| **Week 3 – Day 3** | MVC Architecture & Product Resource CRUD | `feature/week-3-day-3` |
+| **Week 3 – Day 4** | Database Integration, Migrations & Eloquent ORM | `feature/week-3-day-4` |
+| **Week 3 – Day 5** | Blog Application, Slugs & Relationship Cascade | `feature/week-3-day-5` |
+| **Week 4 – Day 1** | Laravel Breeze Authentication, Protected Dashboard & Phone Field | `feature/week-4-day-1` |
+| **Week 4 – Day 2** | Laravel Sanctum RESTful API & Frontend Token Consumer | `feature/week-4-day-2` |
+| **Week 4 – Day 3** | Railway Cloud Production Deployment & Environment Tuning | `feature/week-4-day-3` |
+| **Week 4 – Day 4** | Automated Feature Testing with PHPUnit & Debug Logging | `feature/week-4-day-4` |
+| **Week 4 – Day 5** | Full-Stack Capstone: Recruitment & Job Board Management System | `feature/week-4-day-5` |
 
 ---
 

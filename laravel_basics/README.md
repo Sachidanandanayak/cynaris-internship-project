@@ -1,3 +1,267 @@
+# Full Stack Job Board — Cynaris Capstone
+
+## Overview
+The **Cynaris Full-Stack Job Board & Recruitment Management System** is an enterprise-grade recruitment platform built as the culminating Capstone Project for the Cynaris Internship. The application unifies employer job postings, public candidate job discovery, role filtering, one-click candidate job applications with cover letters and portfolios, duplicate application prevention, authenticated candidate and recruiter dashboards, and an external token-authenticated RESTful API.
+
+All functionality is built on top of the existing enterprise Laravel application, seamlessly integrating with Laravel Breeze session authentication, Eloquent ORM, Laravel Sanctum Bearer tokens, Vite asset compilation, Tailwind CSS responsive layouts, and automated PHPUnit test suites.
+
+---
+
+## Features
+- **Authentication:** Registration, login, remember-me, logout, password resets, and email verification powered by Laravel Breeze with custom phone number validation.
+- **Job CRUD:** Comprehensive Job Management allowing recruiters to list, view, create, edit, and delete job postings with ownership authorization.
+- **Job Applications:** Authenticated candidate application submission capturing custom cover letters and portfolio/resume links with strict duplicate prevention.
+- **Database Relationships:** Eloquent relationships linking `User`, `Job`, and `Application` models (`User hasMany Jobs`, `User hasMany Applications`, `Job hasMany Applications`, `Job belongsTo User`, `Application belongsTo Job`, `Application belongsTo User`).
+- **REST API:** Complete RESTful API supporting token-authenticated CRUD operations and candidate application submissions via Laravel Sanctum.
+- **Validation:** Robust server-side validation using custom FormRequest classes (`JobRequest`, `ApplyJobRequest`, `StoreJobApiRequest`, `UpdateJobApiRequest`, `ApplyJobApiRequest`).
+- **Responsive UI:** Modern, high-conversion recruitment UI built with Tailwind CSS, custom aesthetic gradients, filter pills, interactive application states, and mobile hamburger navigation.
+- **PHPUnit Tests:** 104 automated tests (464 assertions) covering public routes, authentication, job CRUD, applications, duplicate defenses, and API endpoints.
+- **Debugging & Logging:** Structured JSON logging, development-only Laravel Debugbar integration (strictly disabled in production), and defensive error boundaries.
+- **Deployment:** Live production deployment on Railway with automated Nixpacks/Railpack builds, HTTPS termination, and SQLite database persistence.
+
+---
+
+## Architecture
+
+The application adopts a dual-entry architecture catering to both browser-based users and headless/API clients:
+
+### Web Architecture Flow:
+```text
+Browser / Client
+      │
+      ▼
+HTTP Request (GET / POST / PUT / DELETE)
+      │
+      ▼
+CSRF & Web Middleware (web, auth, verified)
+      │
+      ▼
+Laravel Routes (routes/web.php)
+      │
+      ▼
+Controller Layer (JobController / ApplicationController / DashboardController)
+      │
+      ▼
+Form Request Validation (JobRequest / ApplyJobRequest)
+      │
+      ▼
+Eloquent Models & Relationships (Job, Application, User)
+      │
+      ▼
+Database (SQLite / MySQL)
+      │
+      ▼
+Blade Views & Tailwind UI Component Rendering
+      │
+      ▼
+HTTP Response (HTML5 + CSS + JavaScript)
+```
+
+### REST API Architecture Flow:
+```text
+Client (Mobile / SPA / Postman / cURL)
+      │
+      ▼
+HTTP Request + Bearer Token
+      │
+      ▼
+API & Sanctum Middleware (auth:sanctum, ThrottleRequests)
+      │
+      ▼
+API Routes (routes/api.php)
+      │
+      ▼
+API Controllers (JobApiController / AuthApiController / PostApiController)
+      │
+      ▼
+API FormRequest Validation (StoreJobApiRequest / ApplyJobApiRequest)
+      │
+      ▼
+Eloquent ORM Query Execution & Relationship Loading
+      │
+      ▼
+API Resources (JobResource / ApplicationResource)
+      │
+      ▼
+JSON Response (Standardized HTTP Status Codes: 200, 201, 401, 404, 422)
+```
+
+---
+
+## Tech Stack
+- **Framework:** Laravel `13.32.0`
+- **Language / Runtime:** PHP `8.4` / `8.5` (Visual C++ 2022 x64)
+- **Authentication:** Laravel Breeze (Session Authentication & Blade Components)
+- **API Token Authentication:** Laravel Sanctum `^4.0`
+- **Database & ORM:** SQLite / MySQL with Eloquent ORM
+- **Asset Bundler & Compiler:** Vite `^8.0` with `@tailwindcss/vite`
+- **Frontend Styling:** Tailwind CSS `^3.1` / `^4.0` with curated typography and custom variables
+- **Testing Framework:** PHPUnit `12.5.35` (104 Feature & Unit Tests)
+- **Development Profiling:** Laravel Debugbar `^3.16` (dev-only)
+- **Version Control:** Git & GitHub (`feature/week-4-day-5`)
+- **Cloud Hosting:** Railway PaaS (`railway.app`)
+
+---
+
+## Database Schema
+
+The Capstone database structure implements normalized tables with foreign key constraints, cascading rules, and index optimization:
+
+```text
+┌─────────────────┐       1:N       ┌─────────────────────┐
+│      users      │ ───────────────< │        jobs         │
+│─────────────────│                  │─────────────────────│
+│ id (PK)         │                  │ id (PK)             │
+│ name            │                  │ user_id (FK->users) │
+│ email (UQ)      │                  │ title               │
+│ phone           │                  │ company             │
+│ password        │                  │ location            │
+│ created_at      │                  │ employment_type     │
+│ updated_at      │                  │ description         │
+└─────────────────┘                  │ requirements        │
+        │                            │ salary_range        │
+        │ 1:N                        │ application_deadline│
+        │                            │ status              │
+        ▼                            │ created_at          │
+┌─────────────────────┐              └─────────────────────┘
+│    applications     │                         │
+│─────────────────────│                         │ 1:N
+│ id (PK)             │                         │
+│ job_id (FK->jobs)   │ <───────────────────────┘
+│ user_id (FK->users) │
+│ cover_letter        │
+│ resume_url          │
+│ status              │
+│ created_at          │
+│ updated_at          │
+│ UNIQUE(job_id,user) │
+└─────────────────────┘
+```
+
+### Main Relationships:
+1. **User `hasMany` Jobs:** Employers/recruiters own and manage their published job postings.
+2. **User `hasMany` Applications:** Candidates track all submitted job applications across the platform.
+3. **Job `belongsTo` User:** Each job listing references its creating recruiter (`user_id`).
+4. **Job `hasMany` Applications:** Multiple candidates can apply to a given job listing.
+5. **Application `belongsTo` Job:** Application references the target job position with `cascadeOnDelete`.
+6. **Application `belongsTo` User:** Application references the candidate profile with `cascadeOnDelete`.
+7. **Unique Candidate Application:** Enforced compound unique index `['job_id', 'user_id']` at the database level prevents duplicate submissions from the same user to the same job.
+
+---
+
+## Local Setup
+
+Follow these steps to run the complete Capstone locally:
+
+```bash
+# 1. Clone repository and navigate to the project directory
+cd laravel_basics
+
+# 2. Install PHP dependencies
+composer install
+
+# 3. Install frontend JavaScript dependencies
+npm install
+
+# 4. Compile frontend CSS and JavaScript assets
+npm run build
+
+# 5. Environment configuration
+cp .env.example .env
+php artisan key:generate
+
+# 6. Execute database migrations and seed realistic demonstration data
+php artisan migrate --seed
+
+# 7. Start the local development web server
+php artisan serve
+```
+
+The application is accessible at:
+```text
+http://127.0.0.1:8000
+```
+
+---
+
+## Testing
+
+Execute the automated test suite with PHPUnit:
+
+```bash
+# Run entire test suite (104 tests)
+php artisan test
+
+# Or run the Capstone feature tests specifically
+php artisan test tests/Feature/JobBoardCapstoneTest.php
+```
+
+All 104 unit and feature tests pass with 0 errors and 0 failures:
+```text
+Tests:    104 passed (464 assertions)
+Duration: ~4.4s
+```
+
+---
+
+## API Endpoints
+
+The application exposes a robust RESTful API authenticated via Laravel Sanctum Bearer tokens:
+
+| HTTP Method | Endpoint URI | Auth Required | Description | Status Code |
+| :--- | :--- | :--- | :--- | :--- |
+| **POST** | `/api/login` | Public | Obtain Sanctum Bearer token with email & password | `200 OK` / `401` |
+| **POST** | `/api/logout` | `auth:sanctum` | Revoke the active personal access token | `200 OK` |
+| **GET** | `/api/user` | `auth:sanctum` | Get current authenticated user profile | `200 OK` |
+| **GET** | `/api/jobs` | Public | List job opportunities with search & filters | `200 OK` |
+| **GET** | `/api/jobs/{job}` | Public | Show detailed information for a single job | `200 OK` / `404` |
+| **POST** | `/api/jobs` | `auth:sanctum` | Create a new job listing | `201 Created` / `422` |
+| **PUT/PATCH**| `/api/jobs/{job}` | `auth:sanctum` | Update an existing job listing | `200 OK` / `422` |
+| **DELETE** | `/api/jobs/{job}` | `auth:sanctum` | Permanently remove a job listing | `200 OK` / `404` |
+| **POST** | `/api/jobs/{job}/apply`| `auth:sanctum` | Submit an application (prevents duplicate) | `201 Created` / `422` |
+| **GET** | `/api/user/applications`| `auth:sanctum` | Retrieve candidate's submitted applications | `200 OK` |
+
+---
+
+## Live Demo
+
+The production application is live and accessible globally:
+
+**Production URL:**
+[https://cynaris-internship-project-production.up.railway.app](https://cynaris-internship-project-production.up.railway.app)
+
+---
+
+## Screenshots
+
+Below are placeholders and references for key views of the recruitment platform:
+
+### 1. Home / Job Listing Page
+> *Reference Placeholder:* `docs/screenshots/01_job_listing_index.png`
+> *Description:* Modern hero section with quick filter counters, live keyword search, employment type dropdown, and responsive grid of job opportunity cards.
+
+### 2. Candidate Login & Authentication
+> *Reference Placeholder:* `docs/screenshots/02_auth_login.png`
+> *Description:* Clean Laravel Breeze login screen featuring CSRF protection, remember-me token handling, and phone number registration fields.
+
+### 3. Unified Recruitment Dashboard
+> *Reference Placeholder:* `docs/screenshots/03_dashboard_metrics.png`
+> *Description:* Comprehensive dashboard displaying Available Jobs count, User Posted Jobs count, Applications Submitted count, recent applications review, and quick actions.
+
+### 4. Job Details Page
+> *Reference Placeholder:* `docs/screenshots/04_job_details.png`
+> *Description:* Full position overview, company background, responsibilities, technical requirements, salary range, application deadline, and similar job recommendations.
+
+### 5. Candidate Application Flow
+> *Reference Placeholder:* `docs/screenshots/05_job_application_form.png`
+> *Description:* In-page application submission card with cover letter textarea, portfolio/resume link validation, and duplicate submission prevention warning banner.
+
+### 6. REST API Response (JSON)
+> *Reference Placeholder:* `docs/screenshots/06_rest_api_response.png`
+> *Description:* Standardized JSON output from `GET /api/jobs` and `POST /api/jobs/{job}/apply` formatted via Laravel API Resources with ISO8601 timestamps.
+
+---
+
 # Cynaris Web Development Internship — Week 3 Day 2: Laravel Basics
 
 ## Project Overview
