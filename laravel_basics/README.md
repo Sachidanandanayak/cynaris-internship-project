@@ -1798,3 +1798,253 @@ php artisan test
 - Logging via `Illuminate\Support\Facades\Log` writes to `storage/logs/laravel.log`.
 - Interactive testing route: `GET /debug-demo` (served by `DebuggingDemoController`).
 - Detailed debugging log, `dump()` vs `dd()` analysis, and simulated bug lifecycle documented in `debug_log.md`.
+
+---
+
+# Week 4 Day 6 — Docker & CI/CD
+
+## 1. Why Docker is Being Used
+Containerization provides reproducible, environment-agnostic runtimes across development, testing, and production:
+- **Parity Across Environments:** Eliminates "it works on my machine" issues by packaging PHP 8.4 runtime, system libraries, web server, and PHP extensions together.
+- **Service Isolation:** Separates the web runtime from the persistent PostgreSQL 16 database, preventing port, library, and configuration conflicts with the host system.
+- **Production Pipeline Readiness:** Enables standardized CI/CD pipelines (GitHub Actions) to run automated PHPUnit tests, build lightweight multi-stage container images, and publish to container registries (Docker Hub).
+- **Zero Impact on Existing Deployments:** The Docker setup is completely decoupled from the live Railway PaaS deployment (`https://cynaris-internship-project-production.up.railway.app`), leaving `railpack.json` and `php-config/sqlite.ini` intact.
+
+---
+
+## 2. Multi-Stage Dockerfile Architecture
+
+The application uses an optimized, three-stage build pattern defined in `Dockerfile`:
+
+```text
+┌─────────────────────────────────┐
+│ Stage 1: Frontend Builder       │
+│ Image: node:22-alpine           │
+│ Task: npm ci && npm run build   │ -> Outputs /app/public/build
+└─────────────────────────────────┘
+                 │
+┌─────────────────────────────────┐
+│ Stage 2: Composer Builder       │
+│ Image: composer:2               │
+│ Task: composer install --no-dev │ -> Outputs /app/vendor
+└─────────────────────────────────┘
+                 │
+                 ▼
+┌─────────────────────────────────┐
+│ Stage 3: Runtime Stage          │
+│ Image: php:8.4-apache           │
+│ Task: System libraries, PHP     │
+│       extensions, Apache config │
+│       Copy vendor + public/build│
+│ Startup: apache2-foreground     │
+└─────────────────────────────────┘
+```
+
+### Build Stage vs. Runtime Stage:
+1. **Frontend Builder (`node:22-alpine`):**
+   - Installs Node dependencies cleanly using `npm ci`.
+   - Compiles Vite assets, Tailwind CSS styles, and Alpine.js scripts.
+   - Generates production bundles under `public/build/`.
+   - Node runtime and `node_modules` (over 150 MB) are completely discarded from the final container.
+
+2. **Composer Builder (`composer:2`):**
+   - Installs production-only PHP dependencies using:
+     ```bash
+     composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader --no-scripts
+     ```
+   - Generates optimized classmaps for PSR-4 autoloading (`App\`, `Database\`).
+   - Dev-only packages (PHPUnit, Faker, Mockery, Collision, Debugbar) are omitted to minimize image size and attack surface.
+
+3. **Production Runtime (`php:8.4-apache`):**
+   - Official PHP 8.4 Apache Debian base.
+   - Installs required Linux dev headers and PHP extensions: `pdo_pgsql`, `pgsql`, `pdo_sqlite`, `sqlite3`, `pdo_mysql`, `bcmath`, `zip`, and `opcache`.
+   - Configures Apache `DocumentRoot` to `/var/www/html/public` with `AllowOverride All` and `a2enmod rewrite` enabled.
+   - Applies production OPcache and PHP performance directives in `/usr/local/etc/php/conf.d/laravel.ini`.
+   - Copies clean application source, vendor dependencies, and compiled Vite assets.
+   - Sets appropriate permissions (`775` / `www-data:www-data`) for `storage/` and `bootstrap/cache/`.
+   - Executes via `docker-entrypoint.sh` for safe initialization before starting `apache2-foreground`.
+
+---
+
+## 3. Docker Compose Stack (Laravel + PostgreSQL 16)
+
+The container stack is orchestrated using `docker-compose.yml`:
+
+| Service | Image | Internal Port | Host Port (Configurable) | Health Check |
+|---|---|---|---|---|
+| **`postgres`** | `postgres:16-alpine` | `5432` | `${DB_PORT:-5432}` | `pg_isready -U cynaris_user -d cynaris_db` |
+| **`app`** | Custom build (`Dockerfile`) | `80` | `${APP_PORT:-8000}` | Depends on `postgres` healthy |
+
+### Key Compose Architecture Principles:
+- **Isolated PostgreSQL Database:** The containerized application communicates over the private Docker bridge network (`cynaris_network`) with PostgreSQL 16 (`DB_CONNECTION=pgsql`, `DB_HOST=postgres`).
+- **Persistent Data:** PostgreSQL data is persisted across container rebuilds via the named Docker volume `postgres_data`.
+- **Zero Host SQLite Interference:** The local SQLite database (`database/database.sqlite`) and host `.env` file are completely untouched.
+- **Safe Environment Fallbacks:** Development-safe fallbacks are configured so developers can launch the stack immediately without editing files.
+
+---
+
+## 4. How to Use the Docker Environment
+
+### Step 1: Start Docker Desktop
+Ensure Docker Desktop is running on Windows / macOS / Linux. Check availability:
+```bash
+docker --version
+docker compose version
+```
+
+### Step 2: Build the Docker Image
+Build the multi-stage image locally:
+```bash
+docker compose build
+```
+
+### Step 3: Start the Compose Stack
+Start both `postgres` and `app` services in detached mode:
+```bash
+docker compose up -d
+```
+
+### Step 4: Verify Service Status & Health
+Check container state:
+```bash
+docker compose ps
+```
+PostgreSQL will report `(healthy)`, and `cynaris_app` will be running on port `8000`.
+
+### Step 5: Run Laravel Database Migrations Inside the Container
+Run migrations against the containerized PostgreSQL database:
+```bash
+docker compose exec app php artisan migrate --force
+```
+
+### Step 6: Access the Application
+Open your web browser at:
+```text
+http://localhost:8000
+```
+Or if custom `APP_PORT` was specified (e.g., 8080):
+```text
+http://localhost:8080
+```
+
+### Step 7: How to Run PHPUnit Tests
+- **Host Testing (Standard & Isolated):**
+  The standard test suite continues running against in-memory SQLite for maximum speed and complete database isolation:
+  ```bash
+  php artisan test
+  ```
+- **Inside Container (Development Mode):**
+  If running tests inside the container with dev dependencies enabled:
+  ```bash
+  docker compose exec app php artisan test
+  ```
+
+### Step 8: Stop the Compose Stack
+Stop the running containers while preserving PostgreSQL data:
+```bash
+docker compose down
+```
+To stop and remove persistent volumes:
+```bash
+docker compose down -v
+```
+
+---
+
+## 5. Security & Deployment Isolation Rules
+
+1. **Never Commit Secrets:**
+   - Never commit `.env`, `.env.docker`, `APP_KEY`, PostgreSQL passwords, Docker Hub tokens, or Railway deployment tokens to Git.
+   - All `.env` and `.env.*` files (except `.env.example` and `.env.docker.example`) are strictly ignored in `.gitignore` and `.dockerignore`.
+2. **GitHub Encrypted Secrets:**
+   - In CI/CD pipelines, all credentials (`DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `APP_KEY`) must be supplied via GitHub repository secrets.
+3. **Railway Deployment Continuity:**
+   - Railway PaaS builds directly from source via `railpack.json` and `php-config/sqlite.ini`.
+   - The addition of Docker and GitHub Actions does **not** modify or break the existing live Railway production deployment (`https://cynaris-internship-project-production.up.railway.app`).
+
+---
+
+## 6. GitHub Actions CI/CD Pipeline
+
+The project features an automated continuous integration and continuous delivery (CI/CD) pipeline built with GitHub Actions.
+
+### 1. Workflow Location
+The workflow is defined at the repository root:
+[`.github/workflows/ci-cd.yml`](file:///c:/Users/sachin/Documents/Cynaris-Internship/.github/workflows/ci-cd.yml)
+
+### 2. Pipeline Architecture
+```text
+┌──────────────────────────────────────┐
+│ Trigger: push / pull_request to main │
+└──────────────────┬───────────────────┘
+                   │
+                   ▼
+┌──────────────────────────────────────┐
+│ Job 1: test                          │
+│ PHP 8.4 + Composer + SQLite in-memory│
+│ Result: 104/104 PHPUnit tests pass   │
+└──────────────────┬───────────────────┘
+                   │
+                   ▼
+┌──────────────────────────────────────┐
+│ Job 2: docker-build (needs: test)    │
+│ Multi-stage Dockerfile build test    │
+│ Push: false (Validation only)        │
+└──────────────────┬───────────────────┘
+                   │
+                   ▼
+┌──────────────────────────────────────┐
+│ Job 3: docker-push                   │
+│ (needs: [test, docker-build])        │
+│ Condition: push to main only         │
+│ Registry: Docker Hub                 │
+│ Tags: :<git-sha> and :latest         │
+└──────────────────────────────────────┘
+```
+
+### 3. Trigger Conditions
+- **`push` to `main` branch:** Executes the complete pipeline: `test` &rarr; `docker-build` &rarr; `docker-push`.
+- **`pull_request` targeting `main` branch:** Executes `test` and `docker-build` to guarantee code quality and image compilability before merge. The `docker-push` job is skipped on pull requests.
+
+### 4. Job Specifications
+1. **`test` Job (Automated PHPUnit Testing):**
+   - Environment: `ubuntu-latest`.
+   - Sets up PHP 8.4 runtime with extensions: `mbstring`, `pdo`, `pdo_sqlite`, `sqlite3`, `curl`, `zip`, `bcmath`.
+   - Caches Composer dependency downloads via `actions/cache@v4`.
+   - Runs `composer install --prefer-dist --no-interaction --no-progress`.
+   - Creates a temporary application key and database file.
+   - Executes `php artisan test` against in-memory SQLite, verifying that all **104 tests (464 assertions)** pass before building containers.
+
+2. **`docker-build` Job (Multi-Stage Build Validation):**
+   - Depends on: `needs: test`.
+   - Environment: `ubuntu-latest`.
+   - Initializes Docker Buildx (`docker/setup-buildx-action@v3`).
+   - Compiles the multi-stage image using context `laravel_basics` and `laravel_basics/Dockerfile`.
+   - Sets `push: false` to ensure PRs and branches validate compilation without attempting premature Docker Hub publishing.
+   - Uses GitHub Actions caching (`type=gha`) to accelerate subsequent builds.
+
+3. **`docker-push` Job (Publish to Docker Hub):**
+   - Depends on: `needs: [test, docker-build]`.
+   - Execution Condition: `if: github.event_name == 'push' && github.ref == 'refs/heads/main'`.
+   - Authenticates with Docker Hub using `docker/login-action@v3` and encrypted GitHub Secrets.
+   - Builds and publishes the production image using `docker/build-push-action@v6`.
+   - Pushes two distinct tags:
+     - **Immutable Git SHA Tag:** `${{ secrets.DOCKERHUB_USERNAME }}/cynaris-internship-project:${{ github.sha }}` for precise audit trails and rollbacks.
+     - **Stable Release Tag:** `${{ secrets.DOCKERHUB_USERNAME }}/cynaris-internship-project:latest` for direct production pulls.
+
+### 5. Required GitHub Secrets
+To enable the `docker-push` job in your GitHub repository, configure these two encrypted secrets under **Settings &rarr; Secrets and variables &rarr; Actions**:
+
+| Secret Name | Description | Example / Note |
+|---|---|---|
+| `DOCKERHUB_USERNAME` | Your Docker Hub account username | `myusername` |
+| `DOCKERHUB_TOKEN` | Docker Hub Personal Access Token (Read/Write) | Generated in Docker Hub Account Settings &rarr; Security |
+
+> [!SECURITY]
+> **Zero Secrets in Repository:** Real usernames, passwords, tokens, API keys, and `APP_KEY` values are **never** committed to version control. They are injected exclusively at runtime via GitHub Encrypted Secrets.
+
+### 6. Inspecting Workflow Runs
+1. Navigate to your repository on GitHub: `https://github.com/Sachidanandanayak/cynaris-internship-project`.
+2. Click the **Actions** tab in the top navigation bar.
+3. Select **CI/CD Pipeline** from the left sidebar to view real-time logs, step timings, and artifact generation.
+4. Each commit or pull request will display green checkmarks (`✓`) next to `test`, `docker-build`, and `docker-push`.

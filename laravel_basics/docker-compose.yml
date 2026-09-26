@@ -1,0 +1,85 @@
+# ==============================================================================
+# Docker Compose Configuration: Laravel 13 Full-Stack Application + PostgreSQL 16
+# Cynaris Internship — Week 4 Day 6
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # PostgreSQL 16 Relational Database Service
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: cynaris_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-cynaris_db}
+      POSTGRES_USER: ${DB_USERNAME:-cynaris_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-cynaris_secret}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-cynaris_user} -d ${DB_DATABASE:-cynaris_db}"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - cynaris_network
+
+  # ----------------------------------------------------------------------------
+  # Laravel 13 Application Runtime Service (PHP 8.4 Apache)
+  # ----------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cynaris_app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8000}:80"
+    environment:
+      # Application Core Settings
+      APP_NAME: "${APP_NAME:-Cynaris Job Board (Docker)}"
+      APP_ENV: ${APP_ENV:-local}
+      APP_KEY: ${APP_KEY:-base64:4R6PHI0A2+C3gaBQ+iiE6EB65wYbDN1HOqTxut9I6j8=}
+      APP_DEBUG: "${APP_DEBUG:-true}"
+      APP_URL: "http://localhost:${APP_PORT:-8000}"
+      DEBUGBAR_ENABLED: "false"
+
+      # Logging
+      LOG_CHANNEL: stack
+      LOG_LEVEL: debug
+
+      # PostgreSQL Database Configuration (Isolated from host SQLite)
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_DATABASE:-cynaris_db}
+      DB_USERNAME: ${DB_USERNAME:-cynaris_user}
+      DB_PASSWORD: ${DB_PASSWORD:-cynaris_secret}
+
+      # State Drivers
+      SESSION_DRIVER: database
+      QUEUE_CONNECTION: database
+      CACHE_STORE: database
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - cynaris_network
+
+# ------------------------------------------------------------------------------
+# Persistent Volumes
+# ------------------------------------------------------------------------------
+volumes:
+  postgres_data:
+    driver: local
+
+# ------------------------------------------------------------------------------
+# Bridge Network
+# ------------------------------------------------------------------------------
+networks:
+  cynaris_network:
+    driver: bridge
