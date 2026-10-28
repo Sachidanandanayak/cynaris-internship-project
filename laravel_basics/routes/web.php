@@ -3,6 +3,7 @@
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\BlogPostController;
+use App\Http\Controllers\CiaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DatabaseDemoController;
 use App\Http\Controllers\DebuggingDemoController;
@@ -122,6 +123,15 @@ Route::get('/api-demo', function () {
 // Week 4 Day 4: Testing & Debugging Demonstration
 // ==========================================
 Route::get('/debug-demo', [DebuggingDemoController::class, 'index'])->name('debug.demo');
+
+// ==========================================
+// Week 9: CIA Career Mode & Skill Gap Intelligence
+// ==========================================
+Route::middleware('auth')->group(function () {
+    Route::get('/candidate/cia/career', [CiaController::class, 'index'])->name('cia.career.index');
+    Route::post('/candidate/cia/career/skill-gap', [CiaController::class, 'skillGap'])->name('cia.career.skill-gap');
+    Route::post('/candidate/cia/career/recommendations', [CiaController::class, 'recommendations'])->name('cia.career.recommendations');
+});
 
 // Laravel Breeze Authentication Routes
 require __DIR__.'/auth.php';
