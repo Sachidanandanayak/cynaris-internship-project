@@ -21,6 +21,9 @@
                     <x-nav-link :href="route('applications.index')" :active="request()->routeIs('applications.*')">
                         {{ __('My Applications') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('cia.career.index')" :active="request()->routeIs('cia.career.*')">
+                        {{ __('CIA Career') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -81,6 +84,9 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('applications.index')" :active="request()->routeIs('applications.*')">
                 {{ __('My Applications') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('cia.career.index')" :active="request()->routeIs('cia.career.*')">
+                {{ __('CIA Career') }}
             </x-responsive-nav-link>
         </div>
 
