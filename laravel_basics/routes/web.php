@@ -131,6 +131,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/candidate/cia/career', [CiaController::class, 'index'])->name('cia.career.index');
     Route::post('/candidate/cia/career/skill-gap', [CiaController::class, 'skillGap'])->name('cia.career.skill-gap');
     Route::post('/candidate/cia/career/recommendations', [CiaController::class, 'recommendations'])->name('cia.career.recommendations');
+    Route::post('/candidate/cia/career/profile/sync', [CiaController::class, 'syncProfile'])->name('cia.career.profile.sync');
+    Route::get('/candidate/cia/career/matches', [CiaController::class, 'matches'])->name('cia.career.matches');
 });
 
 // Laravel Breeze Authentication Routes
