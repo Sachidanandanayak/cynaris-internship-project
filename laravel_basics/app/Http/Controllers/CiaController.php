@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CiaSearchLog;
+use App\Services\LearningPathGeneratorService;
 use App\Services\SkillGapAnalysisService;
 use App\Services\Vector\ChromaDbService;
 use Illuminate\Http\JsonResponse;
@@ -14,7 +15,8 @@ class CiaController extends Controller
 {
     public function __construct(
         protected SkillGapAnalysisService $gapService,
-        protected ChromaDbService $chromaService
+        protected ChromaDbService $chromaService,
+        protected LearningPathGeneratorService $learningPathService
     ) {}
 
     /**
@@ -39,6 +41,10 @@ class CiaController extends Controller
         $recentLogs = $user
             ? $user->ciaSearchLogs()->latest()->take(5)->get()
             : collect();
+
+        $latestLearningPath = $user
+            ? $user->ciaSearchLogs()->where('query_type', 'learning_path')->latest()->first()
+            : null;
 
         // Calculate initial candidate readiness score if lessons exist
         $initialAnalysis = $user
@@ -82,6 +88,7 @@ class CiaController extends Controller
             'initialAnalysis' => $initialAnalysis,
             'initialMatches' => $initialMatches,
             'vectorSyncStatus' => $vectorSyncStatus,
+            'latestLearningPath' => $latestLearningPath,
             'recentLogs' => $recentLogs,
         ]);
     }
@@ -325,6 +332,53 @@ class CiaController extends Controller
                 'success' => false,
                 'message' => 'An error occurred during semantic internship matching.',
                 'error_code' => 'ERR_MATCHING_FAILED',
+                'details' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * POST /candidate/cia/career/learning-path
+     *
+     * Generates an Eight-Week Personalized Learning Path via LangGraph 5-node StateGraph (W9D5).
+     * Nodes: AssessState -> IdentifyGaps -> BuildPlan -> ValidatePlan -> OutputPlan
+     */
+    public function learningPath(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Candidate is unauthenticated.',
+                'error_code' => 'ERR_UNAUTHENTICATED',
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'target_role' => ['nullable', 'string', 'max:150'],
+            'target_job_id' => ['nullable', 'integer', 'exists:jobs,id'],
+        ]);
+
+        $targetRole = trim($validated['target_role'] ?? 'Junior Backend Laravel Engineer') ?: 'Junior Backend Laravel Engineer';
+        $jobId = !empty($validated['target_job_id']) ? (int) $validated['target_job_id'] : null;
+
+        try {
+            $result = $this->learningPathService->generateLearningPath($user, $targetRole, $jobId);
+
+            return response()->json($result, 200);
+        } catch (\Throwable $e) {
+            Log::error('LangGraph learning path generation error: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'target_role' => $targetRole,
+                'target_job_id' => $jobId,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred during learning path generation.',
+                'error_code' => 'ERR_LEARNING_PATH_FAILED',
                 'details' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }

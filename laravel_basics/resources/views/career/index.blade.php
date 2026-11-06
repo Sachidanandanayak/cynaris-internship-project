@@ -32,7 +32,7 @@
                 <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                     <div class="max-w-2xl">
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-indigo-200 border border-white/15 mb-2">
-                            Module 1: LlamaIndex + Groq Pipeline &bull; Module 2: CrewAI Career Engine &bull; Module 3: ChromaDB Vector Retrieval
+                            Module 1: LlamaIndex + Groq &bull; Module 2: CrewAI Agent &bull; Module 3: ChromaDB Matching &bull; Module 4: LangGraph 8-Week Path
                         </span>
                         <h3 class="text-2xl sm:text-3xl font-black">
                             Career Readiness Cockpit &mdash; {{ $candidate->name }}
@@ -469,6 +469,66 @@
                             No internship roles matched the selected criteria. Adjust filters or click "Sync Vector Profile".
                         </div>
                     @endforelse
+                </div>
+            </div>
+
+            <!-- LangGraph 8-Week Learning Path Generator Section (W9D5) -->
+            <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm" id="langgraphSection">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between pb-4 border-b border-gray-100 mb-6 gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-rose-600 text-white">
+                                Module 4: LangGraph Engine
+                            </span>
+                            <h4 class="font-bold text-base text-gray-900">
+                                Eight-Week Personalized Learning Path Generator
+                            </h4>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Autonomous five-node StateGraph workflow (<span class="font-mono text-rose-700">AssessState &rarr; IdentifyGaps &rarr; BuildPlan &rarr; ValidatePlan &rarr; OutputPlan</span>) synthesizing candidate competencies into a rigorous 8-week curriculum
+                        </p>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <div class="text-right hidden sm:block">
+                            <span class="text-[11px] font-semibold text-gray-500 block">Workflow Engine:</span>
+                            <span id="pathEngineBadge" class="text-xs font-bold text-rose-700">LangGraph StateGraph</span>
+                        </div>
+                        <button type="button" id="generatePathBtn" onclick="runLearningPathGenerator();" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md shadow-rose-600/20 transition flex items-center justify-center gap-2">
+                            <svg id="generatePathSpinner" class="hidden animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                            <span id="generatePathBtnText">Generate 8-Week Curriculum &rarr;</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Learning Path Metrics Summary Bar -->
+                <div id="pathMetricsBar" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-3 bg-rose-50/50 p-4 rounded-xl border border-rose-100 mb-6">
+                    <div>
+                        <span class="text-[11px] font-bold text-rose-800 uppercase tracking-wider block">Duration</span>
+                        <span id="pathTotalWeeks" class="text-lg font-black text-rose-950">8 Weeks</span>
+                    </div>
+                    <div>
+                        <span class="text-[11px] font-bold text-rose-800 uppercase tracking-wider block">Total Learning Hours</span>
+                        <span id="pathTotalHours" class="text-lg font-black text-rose-950">96 Hours</span>
+                    </div>
+                    <div>
+                        <span class="text-[11px] font-bold text-rose-800 uppercase tracking-wider block">Baseline Mastery</span>
+                        <span id="pathBaselineTier" class="text-lg font-black text-rose-950">Intermediate</span>
+                    </div>
+                    <div>
+                        <span class="text-[11px] font-bold text-rose-800 uppercase tracking-wider block">StateGraph Nodes</span>
+                        <span id="pathNodesExecuted" class="text-xs font-bold text-rose-900 block mt-1">5 / 5 Traversed</span>
+                    </div>
+                </div>
+
+                <!-- 8-Week Schedule Container -->
+                <div id="learningPathContainer" class="space-y-4">
+                    <div class="text-center py-10 text-gray-400 text-xs bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                        Click "Generate 8-Week Curriculum" to initiate the five-node LangGraph StateGraph workflow based on your verified skills and target role.
+                    </div>
                 </div>
             </div>
 
@@ -946,6 +1006,146 @@
                                 </span>
                             </div>
                             ${applyBtn}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function runLearningPathGenerator() {
+            const roleSelect = document.getElementById('target_role_select').value;
+            let targetRole = roleSelect === 'custom' ? (document.getElementById('custom_role_input').value.trim() || 'Junior Backend Laravel Engineer') : roleSelect;
+
+            const btn = document.getElementById('generatePathBtn');
+            const spinner = document.getElementById('generatePathSpinner');
+            const btnText = document.getElementById('generatePathBtnText');
+
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+            btnText.innerText = 'LangGraph Orchestrating...';
+
+            try {
+                const response = await fetch("{{ route('cia.career.learning-path', [], false) }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                    },
+                    body: JSON.stringify({
+                        target_role: targetRole,
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Learning path generation failed.');
+                }
+
+                renderLearningPath(data);
+            } catch (err) {
+                alert('Learning Path Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+                btnText.innerText = 'Generate 8-Week Curriculum \u2192';
+            }
+        }
+
+        function renderLearningPath(data) {
+            const metricsBar = document.getElementById('pathMetricsBar');
+            metricsBar.classList.remove('hidden');
+
+            document.getElementById('pathTotalWeeks').innerText = `${data.total_weeks} Weeks`;
+            document.getElementById('pathTotalHours').innerText = `${data.total_hours} Hours`;
+            document.getElementById('pathBaselineTier').innerText = data.baseline_tier || 'Intermediate';
+
+            const nodes = data.workflow_metadata?.nodes_executed || [];
+            document.getElementById('pathNodesExecuted').innerText = `${nodes.length} Nodes Completed`;
+
+            const engineName = data.workflow_metadata?.engine || 'LangGraph';
+            document.getElementById('pathEngineBadge').innerText = engineName.toUpperCase();
+
+            const container = document.getElementById('learningPathContainer');
+            const schedule = data.schedule || [];
+
+            if (schedule.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-gray-400 text-xs bg-gray-50 rounded-xl border border-dashed border-gray-200">No learning schedule available.</div>';
+                return;
+            }
+
+            container.innerHTML = schedule.map(w => {
+                const skillsHtml = (w.focus_skills || []).map(s => `
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-800 border border-rose-200">
+                        ${escapeHtml(s)}
+                    </span>
+                `).join(' ');
+
+                const objectivesHtml = (w.learning_objectives || []).map(obj => `
+                    <li class="flex items-start gap-1.5 text-xs text-gray-700">
+                        <span class="text-rose-500 font-bold shrink-0">&bull;</span>
+                        <span>${escapeHtml(obj)}</span>
+                    </li>
+                `).join('');
+
+                const tasksHtml = (w.actionable_tasks || []).map(task => `
+                    <li class="flex items-start gap-1.5 text-xs text-gray-600">
+                        <span class="text-emerald-500 font-bold shrink-0">✓</span>
+                        <span>${escapeHtml(task)}</span>
+                    </li>
+                `).join('');
+
+                const resourcesHtml = (w.recommended_resources || []).map(res => `
+                    <span class="inline-block text-[11px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded font-medium">
+                        📖 ${escapeHtml(res)}
+                    </span>
+                `).join(' ');
+
+                return `
+                    <div class="p-5 rounded-2xl border border-gray-200 bg-gradient-to-r from-white via-rose-50/20 to-white shadow-sm hover:shadow-md transition space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-100 gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider bg-rose-600 text-white">
+                                    Week #${w.week_number}
+                                </span>
+                                <h5 class="font-bold text-sm sm:text-base text-gray-900">
+                                    ${escapeHtml(w.theme)}
+                                </h5>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-800 border border-rose-200 self-start sm:self-auto shrink-0">
+                                ~${w.estimated_hours}h Estimated
+                            </span>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <span class="text-[11px] font-bold text-gray-400 mr-1 uppercase">Target Competencies:</span>
+                            ${skillsHtml}
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                            <div class="bg-white p-3.5 rounded-xl border border-gray-100 space-y-2">
+                                <span class="text-[11px] font-bold text-rose-900 uppercase block tracking-wider">Learning Objectives:</span>
+                                <ul class="space-y-1">
+                                    ${objectivesHtml}
+                                </ul>
+                            </div>
+
+                            <div class="bg-white p-3.5 rounded-xl border border-gray-100 space-y-2">
+                                <span class="text-[11px] font-bold text-emerald-900 uppercase block tracking-wider">Actionable Practice Tasks:</span>
+                                <ul class="space-y-1">
+                                    ${tasksHtml}
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between pt-2 border-t border-gray-100 text-xs gap-2">
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                ${resourcesHtml}
+                            </div>
+                            <div class="flex items-center gap-1 text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200 shrink-0">
+                                <span>🎯 Milestone Checkpoint:</span>
+                                <span>${escapeHtml(w.checkpoint_quiz)}</span>
+                            </div>
                         </div>
                     </div>
                 `;
