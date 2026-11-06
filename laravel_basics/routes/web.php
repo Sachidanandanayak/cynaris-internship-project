@@ -133,6 +133,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/candidate/cia/career/recommendations', [CiaController::class, 'recommendations'])->name('cia.career.recommendations');
     Route::post('/candidate/cia/career/profile/sync', [CiaController::class, 'syncProfile'])->name('cia.career.profile.sync');
     Route::get('/candidate/cia/career/matches', [CiaController::class, 'matches'])->name('cia.career.matches');
+    Route::post('/candidate/cia/career/learning-path', [CiaController::class, 'learningPath'])->name('cia.career.learning-path');
 });
 
 // Laravel Breeze Authentication Routes
