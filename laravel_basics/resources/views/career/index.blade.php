@@ -32,7 +32,7 @@
                 <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                     <div class="max-w-2xl">
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-indigo-200 border border-white/15 mb-2">
-                            Module 1: LlamaIndex + Groq Pipeline &bull; Module 2: CrewAI Career Engine
+                            Module 1: LlamaIndex + Groq Pipeline &bull; Module 2: CrewAI Career Engine &bull; Module 3: ChromaDB Vector Retrieval
                         </span>
                         <h3 class="text-2xl sm:text-3xl font-black">
                             Career Readiness Cockpit &mdash; {{ $candidate->name }}
@@ -303,6 +303,172 @@
                     <div class="col-span-3 text-center py-8 text-gray-400 text-xs bg-gray-50 rounded-xl border border-dashed border-gray-200">
                         Click "Generate 3 Recommendations" to query the CrewAI CareerAdvisorAgent based on current skill gaps.
                     </div>
+                </div>
+            </div>
+
+            <!-- ChromaDB Semantic Internship Matching Section (W9D4) -->
+            <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm" id="chromaMatchingSection">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between pb-4 border-b border-gray-100 mb-6 gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-teal-600 text-white">
+                                Module 3: ChromaDB Engine
+                            </span>
+                            <h4 class="font-bold text-base text-gray-900">
+                                AI Semantic Internship Matching Engine
+                            </h4>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Vector $k$-NN cosine distance matching across 20 curated opportunities using pseudonymous candidate embeddings
+                        </p>
+                    </div>
+
+                    <!-- Sync Profile CTA & Status -->
+                    <div class="flex items-center gap-3">
+                        <div class="text-right hidden sm:block">
+                            <span class="text-[11px] font-semibold text-gray-500 block">Vector Collection:</span>
+                            <span id="syncCollectionBadge" class="text-xs font-bold text-teal-700">cynaris_intern_profiles</span>
+                        </div>
+                        <button type="button" id="syncVectorBtn" onclick="runVectorProfileSync();" class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/20 transition flex items-center justify-center gap-2">
+                            <svg id="syncVectorSpinner" class="hidden animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                            <span id="syncVectorBtnText">Sync Vector Profile</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sync Notification Banner -->
+                <div id="syncAlertBanner" class="hidden mb-6 p-3 rounded-xl bg-teal-50 border border-teal-200 text-teal-900 text-xs flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <svg class="h-4 w-4 text-teal-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                        <span id="syncAlertMessage">Candidate profile synchronized to ChromaDB collection cynaris_intern_profiles.</span>
+                    </div>
+                    <span id="syncTimestampBadge" class="text-[11px] text-teal-700 font-semibold"></span>
+                </div>
+
+                <!-- Filters Control Bar -->
+                <div class="bg-gray-50/70 p-4 rounded-xl border border-gray-200 mb-6">
+                    <form id="matchingFilterForm" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end" onsubmit="event.preventDefault(); fetchSemanticMatches();">
+                        <div>
+                            <label for="filter_domain" class="block text-[11px] uppercase font-bold text-gray-500 mb-1">Domain</label>
+                            <select id="filter_domain" class="w-full rounded-lg border-gray-300 text-xs font-semibold text-gray-800 focus:border-teal-500 focus:ring-teal-500">
+                                <option value="all">All Domains</option>
+                                <option value="backend">Backend & API</option>
+                                <option value="frontend">Frontend & UI/UX</option>
+                                <option value="fullstack">Full-Stack</option>
+                                <option value="devops">Cloud & DevOps</option>
+                                <option value="ai">AI & LLM Integration</option>
+                                <option value="database">Database & SQL</option>
+                                <option value="security">Security & AppSec</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="filter_location" class="block text-[11px] uppercase font-bold text-gray-500 mb-1">Workplace Mode</label>
+                            <select id="filter_location" class="w-full rounded-lg border-gray-300 text-xs font-semibold text-gray-800 focus:border-teal-500 focus:ring-teal-500">
+                                <option value="all">All Locations</option>
+                                <option value="remote">Remote Only</option>
+                                <option value="hybrid">Hybrid</option>
+                                <option value="onsite">On-Site</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="filter_min_affinity" class="text-[11px] uppercase font-bold text-gray-500">Min Affinity</label>
+                                <span id="affinityValueLabel" class="text-xs font-bold text-teal-700">0%</span>
+                            </div>
+                            <input type="range" id="filter_min_affinity" min="0" max="95" step="5" value="0" class="w-full accent-teal-600" oninput="document.getElementById('affinityValueLabel').innerText = this.value + '%'">
+                        </div>
+
+                        <div>
+                            <button type="submit" id="filterMatchesBtn" class="w-full px-4 py-2 rounded-lg bg-gray-900 hover:bg-black text-white font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-sm">
+                                <svg id="filterSpinner" class="hidden animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                </svg>
+                                <span id="filterBtnText">Apply Vector Filters &rarr;</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Matches Grid -->
+                <div id="semanticMatchesContainer" class="space-y-4">
+                    @forelse ($initialMatches as $match)
+                        <div class="p-5 rounded-xl border border-gray-200 bg-white hover:border-teal-300 hover:shadow-md transition flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div class="space-y-2 flex-1">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-teal-100 text-teal-800">
+                                        {{ $match['domain'] }}
+                                    </span>
+                                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-gray-100 text-gray-700">
+                                        {{ $match['location_type'] }}
+                                    </span>
+                                    <span class="text-xs text-gray-400">&bull; {{ $match['location'] }}</span>
+                                </div>
+
+                                <h5 class="text-base font-bold text-gray-900">
+                                    {{ $match['title'] }}
+                                </h5>
+
+                                <p class="text-xs text-gray-500 font-medium">
+                                    {{ $match['company_pseudonym'] }} &bull; Stipend: <strong class="text-gray-700">{{ $match['salary_range'] }}</strong>
+                                </p>
+
+                                <!-- Skill overlap pills -->
+                                <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                                    <span class="text-[11px] font-bold text-gray-500 mr-1">Matching:</span>
+                                    @forelse ($match['matching_skills'] as $ms)
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                            ✓ {{ $ms }}
+                                        </span>
+                                    @empty
+                                        <span class="text-[11px] text-gray-400 italic">Foundational competencies aligned</span>
+                                    @endforelse
+
+                                    @if (!empty($match['missing_skills']))
+                                        <span class="text-[11px] font-bold text-gray-400 ml-2 mr-1">Delta:</span>
+                                        @foreach (array_slice($match['missing_skills'], 0, 3) as $gapSkill)
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                                + {{ $gapSkill }}
+                                            </span>
+                                        @endforeach
+                                    @endif
+                                </div>
+                            </div>
+
+                            <!-- Right Column: Affinity & Action -->
+                            <div class="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-3 shrink-0 border-t md:border-t-0 pt-3 md:pt-0 border-gray-100">
+                                <div class="text-right">
+                                    @php
+                                        $affinity = $match['affinity_percentage'];
+                                        $affClass = $affinity >= 80 ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : ($affinity >= 65 ? 'text-indigo-600 bg-indigo-50 border-indigo-200' : 'text-amber-600 bg-amber-50 border-amber-200');
+                                    @endphp
+                                    <span class="px-3 py-1 rounded-full text-sm font-black border {{ $affClass }} inline-block">
+                                        {{ $affinity }}% Match
+                                    </span>
+                                    <span class="block text-[10px] text-gray-400 mt-1 font-mono">
+                                        cosine dist: {{ $match['vector_distance'] }}
+                                    </span>
+                                </div>
+
+                                @if (!empty($match['application_url']))
+                                    <a href="{{ $match['application_url'] }}" class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-sm transition inline-flex items-center gap-1">
+                                        Quick Apply &rarr;
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center py-8 text-gray-400 text-xs bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                            No internship roles matched the selected criteria. Adjust filters or click "Sync Vector Profile".
+                        </div>
+                    @endforelse
                 </div>
             </div>
 
@@ -627,6 +793,163 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        async function runVectorProfileSync() {
+            const btn = document.getElementById('syncVectorBtn');
+            const spinner = document.getElementById('syncVectorSpinner');
+            const btnText = document.getElementById('syncVectorBtnText');
+
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+            btnText.innerText = 'Synchronizing...';
+
+            try {
+                const response = await fetch("{{ route('cia.career.profile.sync', [], false) }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                    },
+                    body: JSON.stringify({
+                        force_refresh: true,
+                        sync_source: 'user_manual_trigger'
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Profile synchronization failed.');
+                }
+
+                const banner = document.getElementById('syncAlertBanner');
+                const alertMsg = document.getElementById('syncAlertMessage');
+                const timeBadge = document.getElementById('syncTimestampBadge');
+
+                banner.classList.remove('hidden');
+                alertMsg.innerText = `Candidate vector profile synchronized to collection ${data.data.target_collection} (Candidate ID: ${data.data.candidate_id})`;
+                timeBadge.innerText = new Date(data.data.last_synced_at).toLocaleTimeString();
+
+                fetchSemanticMatches();
+            } catch (err) {
+                alert('Vector Sync Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+                btnText.innerText = 'Sync Vector Profile';
+            }
+        }
+
+        async function fetchSemanticMatches() {
+            const domain = document.getElementById('filter_domain').value;
+            const locationType = document.getElementById('filter_location').value;
+            const minAffinity = document.getElementById('filter_min_affinity').value;
+
+            const btn = document.getElementById('filterMatchesBtn');
+            const spinner = document.getElementById('filterSpinner');
+            const btnText = document.getElementById('filterBtnText');
+
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+            btnText.innerText = 'Filtering...';
+
+            const params = new URLSearchParams({
+                domain: domain,
+                location_type: locationType,
+                min_affinity: minAffinity,
+                limit: '5'
+            });
+
+            try {
+                const response = await fetch(`{{ route('cia.career.matches', [], false) }}?${params.toString()}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Failed to retrieve semantic matches.');
+                }
+
+                renderSemanticMatches(data.data || []);
+            } catch (err) {
+                alert('Matching Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+                btnText.innerText = 'Apply Vector Filters \u2192';
+            }
+        }
+
+        function renderSemanticMatches(matches) {
+            const container = document.getElementById('semanticMatchesContainer');
+            if (!matches || matches.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-gray-400 text-xs bg-gray-50 rounded-xl border border-dashed border-gray-200">No internship roles matched the selected criteria. Adjust filters or click "Sync Vector Profile".</div>';
+                return;
+            }
+
+            container.innerHTML = matches.map(m => {
+                const affinity = m.affinity_percentage;
+                const affClass = affinity >= 80 ? 'text-emerald-600 bg-emerald-50 border-emerald-200' :
+                                 (affinity >= 65 ? 'text-indigo-600 bg-indigo-50 border-indigo-200' : 'text-amber-600 bg-amber-50 border-amber-200');
+
+                const matchingPills = (m.matching_skills && m.matching_skills.length > 0)
+                    ? m.matching_skills.map(s => `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">✓ ${escapeHtml(s)}</span>`).join(' ')
+                    : '<span class="text-[11px] text-gray-400 italic">Foundational competencies aligned</span>';
+
+                const missingPills = (m.missing_skills && m.missing_skills.length > 0)
+                    ? `<span class="text-[11px] font-bold text-gray-400 ml-2 mr-1">Delta:</span>` + m.missing_skills.slice(0, 3).map(s => `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">+ ${escapeHtml(s)}</span>`).join(' ')
+                    : '';
+
+                const applyBtn = m.application_url
+                    ? `<a href="${m.application_url}" class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-sm transition inline-flex items-center gap-1">Quick Apply &rarr;</a>`
+                    : '';
+
+                return `
+                    <div class="p-5 rounded-xl border border-gray-200 bg-white hover:border-teal-300 hover:shadow-md transition flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div class="space-y-2 flex-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-teal-100 text-teal-800">
+                                    ${escapeHtml(m.domain)}
+                                </span>
+                                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-gray-100 text-gray-700">
+                                    ${escapeHtml(m.location_type)}
+                                </span>
+                                <span class="text-xs text-gray-400">&bull; ${escapeHtml(m.location)}</span>
+                            </div>
+
+                            <h5 class="text-base font-bold text-gray-900">
+                                ${escapeHtml(m.title)}
+                            </h5>
+
+                            <p class="text-xs text-gray-500 font-medium">
+                                ${escapeHtml(m.company_pseudonym || m.company)} &bull; Stipend: <strong class="text-gray-700">${escapeHtml(m.salary_range || 'Competitive')}</strong>
+                            </p>
+
+                            <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                                <span class="text-[11px] font-bold text-gray-500 mr-1">Matching:</span>
+                                ${matchingPills}
+                                ${missingPills}
+                            </div>
+                        </div>
+
+                        <div class="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-3 shrink-0 border-t md:border-t-0 pt-3 md:pt-0 border-gray-100">
+                            <div class="text-right">
+                                <span class="px-3 py-1 rounded-full text-sm font-black border ${affClass} inline-block">
+                                    ${affinity}% Match
+                                </span>
+                                <span class="block text-[10px] text-gray-400 mt-1 font-mono">
+                                    cosine dist: ${m.vector_distance}
+                                </span>
+                            </div>
+                            ${applyBtn}
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
     </script>
 </x-app-layout>

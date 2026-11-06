@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CiaSearchLog;
 use App\Services\SkillGapAnalysisService;
+use App\Services\Vector\ChromaDbService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -12,7 +13,8 @@ use Illuminate\View\View;
 class CiaController extends Controller
 {
     public function __construct(
-        protected SkillGapAnalysisService $gapService
+        protected SkillGapAnalysisService $gapService,
+        protected ChromaDbService $chromaService
     ) {}
 
     /**
@@ -48,6 +50,28 @@ class CiaController extends Controller
                 'engine' => 'initial_state',
             ];
 
+        // Retrieve initial top-5 semantic internship matches (W9D4)
+        $initialMatches = [];
+        $vectorSyncStatus = [
+            'is_synchronized' => false,
+            'last_synced_at' => null,
+            'target_collection' => 'cynaris_intern_profiles',
+        ];
+
+        if ($user) {
+            try {
+                $matchResponse = $this->chromaService->matchInternships($user, ['limit' => 5]);
+                $initialMatches = $matchResponse['data'] ?? [];
+                $vectorSyncStatus = [
+                    'is_synchronized' => true,
+                    'last_synced_at' => now()->toIso8601String(),
+                    'target_collection' => 'cynaris_intern_profiles',
+                ];
+            } catch (\Throwable $e) {
+                Log::warning('Failed retrieving initial semantic internship matches: ' . $e->getMessage());
+            }
+        }
+
         return view('career.index', [
             'candidate' => $user,
             'completedLessons' => $completedLessons,
@@ -56,6 +80,8 @@ class CiaController extends Controller
             'defaultRole' => $defaultRole,
             'radarData' => $radarData,
             'initialAnalysis' => $initialAnalysis,
+            'initialMatches' => $initialMatches,
+            'vectorSyncStatus' => $vectorSyncStatus,
             'recentLogs' => $recentLogs,
         ]);
     }
@@ -201,6 +227,104 @@ class CiaController extends Controller
                 'success' => false,
                 'message' => 'An error occurred during career recommendation generation.',
                 'error_code' => 'ERR_RECOMMENDATION_FAILED',
+                'details' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * POST /candidate/cia/career/profile/sync
+     *
+     * Synchronizes candidate profile to ChromaDB vector store (cynaris_intern_profiles).
+     * Enforces zero PII in vector document narrative and metadata.
+     */
+    public function syncProfile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Candidate is unauthenticated.',
+                'error_code' => 'ERR_UNAUTHENTICATED',
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'force_refresh' => ['nullable', 'boolean'],
+            'sync_source' => ['nullable', 'string', 'in:user_manual_trigger,assessment_completion,scheduled_cron'],
+        ]);
+
+        try {
+            $syncResult = $this->chromaService->syncProfile($user, $validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Candidate vector profile synchronized successfully.',
+                'data' => [
+                    'sync_job_id' => 'job_sync_' . $user->id . '_' . date('YmdHis'),
+                    'candidate_id' => $syncResult['candidate_id'] ?? ('cand_' . $user->id),
+                    'status' => 'SYNCHRONIZED',
+                    'target_collection' => $syncResult['target_collection'] ?? 'cynaris_intern_profiles',
+                    'estimated_completion_seconds' => 1,
+                    'queued_at' => now()->toIso8601String(),
+                    'last_synced_at' => $syncResult['last_synced_at'] ?? now()->toIso8601String(),
+                ],
+            ], 202);
+        } catch (\Throwable $e) {
+            Log::error('Profile vector sync error: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred during vector profile synchronization.',
+                'error_code' => 'ERR_SYNC_FAILED',
+                'details' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * GET /candidate/cia/career/matches
+     *
+     * Queries ChromaDB for top semantic internship matches with domain, affinity, and location filters.
+     */
+    public function matches(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Candidate is unauthenticated.',
+                'error_code' => 'ERR_UNAUTHENTICATED',
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'domain' => ['nullable', 'string', 'max:50'],
+            'min_affinity' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:20'],
+            'location_type' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        try {
+            $result = $this->chromaService->matchInternships($user, $validated);
+
+            return response()->json($result, 200);
+        } catch (\Throwable $e) {
+            Log::error('ChromaDB internship matching error: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'filters' => $validated,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred during semantic internship matching.',
+                'error_code' => 'ERR_MATCHING_FAILED',
                 'details' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
