@@ -84,6 +84,22 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get candidate placement and interview readiness scores.
+     */
+    public function placementReadinessScores(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(PlacementReadinessScore::class);
+    }
+
+    /**
+     * Get the latest placement readiness score evaluation.
+     */
+    public function latestPlacementReadinessScore(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(PlacementReadinessScore::class)->latestOfMany();
+    }
+
+    /**
      * Build candidate validated skill-profile array from completed lessons and quiz scores.
      *
      * @return array<int, array{skill: string, proficiency_score: float, proficiency_level: string, lessons_completed: int, quiz_average: float, verified: bool}>
