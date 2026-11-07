@@ -48,3 +48,4 @@ return new class extends Migration
         Schema::dropIfExists('placement_readiness_scores');
     }
 };
+

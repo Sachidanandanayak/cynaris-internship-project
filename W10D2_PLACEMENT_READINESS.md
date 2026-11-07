@@ -153,3 +153,4 @@ All 7 test cases execute with 29 assertions covering:
 - Zero-coursework candidate safety and graceful default derivation
 - Database persistence in `placement_readiness_scores`
 - API retrieval via `GET /candidate/cia/career/readiness`
+
