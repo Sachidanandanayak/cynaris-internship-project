@@ -28,6 +28,13 @@ This repository contains tasks, projects, and learning modules for the **Cynaris
 | **Week 4 – Day 3** | Railway Cloud Production Deployment & Environment Tuning | `feature/week-4-day-3` |
 | **Week 4 – Day 4** | Automated Feature Testing with PHPUnit & Debug Logging | `feature/week-4-day-4` |
 | **Week 4 – Day 5** | Full-Stack Capstone: Recruitment & Job Board Management System | `feature/week-4-day-5` |
+| **Week 9 – Day 1** | CIA Career Intelligence Architecture & API Contracts | `feat/cia-career-w9d1-sachidananda` |
+| **Week 9 – Day 2** | Skill Gap Analysis (LlamaIndex + Groq Pipeline & Chart.js Radar) | `feat/cia-career-w9d2-sachidananda` |
+| **Week 9 – Day 3** | Career Recommendation Engine (CrewAI Multi-Agent Pipeline) | `feat/cia-career-w9d3-sachidananda` |
+| **Week 9 – Day 4** | ChromaDB Vector Internship Semantic Matching Engine | `feat/cia-career-w9d4-sachidananda` |
+| **Week 9 – Day 5** | LangGraph 5-Node StateGraph 8-Week Learning Path Generator | `feat/cia-career-w9d5-sachidananda` |
+| **Week 10 – Day 1** | Resume Intelligence: PDF Upload + 4-Category Groq ATS Scoring Engine | `feat/cia-career-w10d1-sachidananda` |
+| **Week 10 – Day 2** | Placement Readiness Score & Interview Readiness Scorecard (40/30/10/20 & 40/30/20/10) | `feat/cia-career-w10d1-sachidananda` |
 
 ---
 
@@ -491,6 +498,54 @@ An enterprise-grade JavaScript ES6+ implementation powering the **Cynaris Soluti
    - **Nested & Default Destructuring**: `specs: { cpu = 'N/A', ram = 'N/A' } = {}`
    - **Array Destructuring**: `const [firstHighlight, ...rest] = tags;`
    - **Spread Operator**: `[...SERVICES_DATA]` for immutable sorting and state updates.
+
+---
+
+## 📄 Week 10 – Day 1: Resume Intelligence (PDF Extraction + Groq ATS Scoring)
+
+### Overview
+Module 5 of the CIA Career Intelligence Cockpit delivers an enterprise-grade **Resume Intelligence & Applicant Tracking System (ATS) Scoring Pipeline**.
+Candidates upload their PDF resume (up to 10MB) and receive automated text extraction and weighted multi-category ATS scoring against targeted technical roles.
+
+### ATS Scoring Formula:
+$$\text{Overall ATS Score} = (\text{Keyword Matching} \times 0.35) + (\text{Technical Skills} \times 0.35) + (\text{Work Experience} \times 0.20) + (\text{Formatting} \times 0.10)$$
+
+- **Keyword Matching (35%):** Density and presence of domain keywords (PHP, Laravel, MySQL, REST APIs, Docker, Git, etc.).
+- **Technical Skills (35%):** Depth of backend/fullstack languages, frameworks, ORMs, and test automation.
+- **Work Experience (20%):** Action verbs (`developed`, `architected`, `optimized`) and quantified metrics (`%`, latency, throughput).
+- **Formatting (10%):** Standardized sections (Education, Experience, Skills, Contact) and clean parsable structure.
+
+### Multi-Tier Text Extraction Architecture:
+1. **Tier 1 (Python Engine):** Executes `scripts/extract_pdf_text.py` leveraging `pdfplumber` / `pdfminer` with UTF-8 normalization.
+2. **Tier 2 (Native Stream Fallback):** Reads uncompressed/flate-decode PDF font blocks natively in PHP when Python is unavailable.
+3. **Groq Cloud LLM Scoring:** Evaluates resume text using `llama-3.3-70b-versatile` with `json_object` format enforcement.
+4. **Deterministic Heuristic Fallback:** Evaluates keywords and metrics deterministically when the LLM API is offline.
+5. **Persistence:** Automatically logs scan history and score breakdowns to `cia_search_logs` (`query_type: 'resume_ats_score'`).
+
+---
+
+## 📊 Week 10 – Day 2: Placement Readiness Score & Interview Readiness Scorecard
+
+### Overview
+Module 6 implements the **Placement Readiness Score & Interview Readiness Scorecard** engine, synthesizing academic progress, platform engagement, viva performance, and engineering craftsmanship.
+
+### Placement Readiness Formula:
+$$\text{Placement Readiness} = (\text{Project Completion} \times 0.40) + (\text{Assessment} \times 0.30) + (\text{CIA Usage} \times 0.10) + (\text{Documentation} \times 0.20)$$
+
+- **Project Completion (40%):** Progress across curriculum modules and capstone projects.
+- **Assessment (30%):** Average performance percentage on technical quiz evaluations.
+- **CIA Usage (10%):** Telemetry from CIA Career Cockpit interactions.
+- **Documentation (20%):** Architecture documentation, API design, and code comments.
+
+### Interview Readiness Formula:
+$$\text{Interview Readiness} = (\text{Viva} \times 0.40) + (\text{Code Review} \times 0.30) + (\text{Demo Clarity} \times 0.20) + (\text{Git Quality} \times 0.10)$$
+
+- **Technical Viva (40%):** Conceptual oral examination and system architecture defense.
+- **Code Review Rigor (30%):** PSR-12 conformance, automated test coverage, and clean architecture.
+- **Demo Clarity (20%):** Feature demonstration, articulate technical walkthrough, and edge case coverage.
+- **Git Quality (10%):** Commit atomicity, Conventional Commits formatting, and branch hygiene.
+
+All component scores and compound scores are strictly clamped between **0.0 and 100.0** and stored in the `placement_readiness_scores` table with detailed JSON breakdowns.
 
 ---
 

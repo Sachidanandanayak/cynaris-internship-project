@@ -3,7 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\CiaSearchLog;
+use App\Models\Job;
 use App\Services\LearningPathGeneratorService;
+use App\Services\Readiness\PlacementReadinessService;
+use App\Services\Resume\ResumeAtsScoringService;
+use App\Services\Resume\ResumeTextExtractor;
 use App\Services\SkillGapAnalysisService;
 use App\Services\Vector\ChromaDbService;
 use Illuminate\Http\JsonResponse;
@@ -16,7 +20,10 @@ class CiaController extends Controller
     public function __construct(
         protected SkillGapAnalysisService $gapService,
         protected ChromaDbService $chromaService,
-        protected LearningPathGeneratorService $learningPathService
+        protected LearningPathGeneratorService $learningPathService,
+        protected ResumeTextExtractor $textExtractor,
+        protected ResumeAtsScoringService $atsScoringService,
+        protected PlacementReadinessService $readinessService
     ) {}
 
     /**
@@ -44,6 +51,10 @@ class CiaController extends Controller
 
         $latestLearningPath = $user
             ? $user->ciaSearchLogs()->where('query_type', 'learning_path')->latest()->first()
+            : null;
+
+        $latestReadiness = $user
+            ? $this->readinessService->getOrCalculateLatest($user)
             : null;
 
         // Calculate initial candidate readiness score if lessons exist
@@ -89,6 +100,7 @@ class CiaController extends Controller
             'initialMatches' => $initialMatches,
             'vectorSyncStatus' => $vectorSyncStatus,
             'latestLearningPath' => $latestLearningPath,
+            'latestReadiness' => $latestReadiness,
             'recentLogs' => $recentLogs,
         ]);
     }
@@ -380,6 +392,160 @@ class CiaController extends Controller
                 'message' => 'An error occurred during learning path generation.',
                 'error_code' => 'ERR_LEARNING_PATH_FAILED',
                 'details' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * POST /candidate/cia/career/resume/scan
+     *
+     * Uploads candidate PDF resume, extracts raw text, and generates Groq ATS score breakdown (W10D1).
+     */
+    public function scanResume(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Candidate is unauthenticated.',
+                'error_code' => 'ERR_UNAUTHENTICATED',
+            ], 401);
+        }
+
+        $request->validate([
+            'resume' => ['required', 'file', 'mimes:pdf', 'max:10240'], // 10MB limit
+            'target_role' => ['nullable', 'string', 'max:150'],
+            'job_id' => ['nullable', 'integer', 'exists:jobs,id'],
+        ]);
+
+        $file = $request->file('resume');
+        $targetRole = trim((string) $request->input('target_role', 'Junior Backend Laravel Engineer')) ?: 'Junior Backend Laravel Engineer';
+        $jobId = $request->input('job_id') ? (int) $request->input('job_id') : null;
+        $job = $jobId ? Job::find($jobId) : null;
+
+        try {
+            $realPath = $file->getRealPath();
+            $extractedText = $this->textExtractor->extract($realPath);
+
+            if (empty(trim($extractedText))) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unable to extract text from the provided PDF resume. Ensure the PDF contains readable text streams and is not an image scan or encrypted.',
+                    'error_code' => 'ERR_PDF_EXTRACTION_EMPTY',
+                ], 422);
+            }
+
+            $scoringResult = $this->atsScoringService->scoreResume($user, $extractedText, $targetRole, $job);
+
+            return response()->json(array_merge([
+                'success' => true,
+                'message' => 'Resume analyzed and ATS scores calculated successfully.',
+                'character_count' => strlen($extractedText),
+                'word_count' => str_word_count($extractedText),
+            ], $scoringResult), 200);
+        } catch (\Throwable $e) {
+            Log::error('Resume ATS scanning failure: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'target_role' => $targetRole,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred during resume ATS scoring: ' . $e->getMessage(),
+                'error_code' => 'ERR_RESUME_SCAN_FAILED',
+                'details' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * POST /candidate/cia/career/readiness/calculate
+     *
+     * Evaluates Placement Readiness and Interview Readiness scores (W10D2).
+     */
+    public function calculateReadiness(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Candidate is unauthenticated.',
+                'error_code' => 'ERR_UNAUTHENTICATED',
+            ], 401);
+        }
+
+        $validated = $request->validate([
+            'project_completion_score' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'assessment_score' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'cia_usage_score' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'documentation_score' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'viva_score' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'code_review_score' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'demo_clarity_score' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'git_quality_score' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        try {
+            $readinessRecord = $this->readinessService->calculateScores($user, $validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Placement and Interview readiness scores evaluated successfully.',
+                'data' => $readinessRecord,
+            ], 200);
+        } catch (\Throwable $e) {
+            Log::error('Placement readiness calculation error: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while evaluating readiness scores.',
+                'error_code' => 'ERR_READINESS_CALCULATION_FAILED',
+                'details' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * GET /candidate/cia/career/readiness
+     *
+     * Returns the latest evaluated Placement and Interview readiness scorecard (W10D2).
+     */
+    public function getReadiness(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Candidate is unauthenticated.',
+                'error_code' => 'ERR_UNAUTHENTICATED',
+            ], 401);
+        }
+
+        try {
+            $latest = $this->readinessService->getOrCalculateLatest($user);
+
+            return response()->json([
+                'success' => true,
+                'data' => $latest,
+            ], 200);
+        } catch (\Throwable $e) {
+            Log::error('Readiness retrieval error: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve candidate readiness score.',
+                'error_code' => 'ERR_READINESS_FETCH_FAILED',
             ], 500);
         }
     }

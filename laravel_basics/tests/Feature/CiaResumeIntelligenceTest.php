@@ -197,3 +197,4 @@ class CiaResumeIntelligenceTest extends TestCase
         $extractor->extract('C:\\non_existent_directory\\fake_file.pdf');
     }
 }
+
