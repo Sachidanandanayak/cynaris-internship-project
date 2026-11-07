@@ -143,3 +143,4 @@ php vendor/phpunit/phpunit/phpunit tests/Feature/CiaResumeIntelligenceTest.php
 ```
 
 All 7 test cases execute with 38 assertions covering auth checks, MIME validation, 10MB limits, category weighting formulas, database persistence, and extraction sanitization.
+

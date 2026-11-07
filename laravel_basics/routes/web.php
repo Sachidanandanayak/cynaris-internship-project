@@ -137,6 +137,10 @@ Route::middleware('auth')->group(function () {
 
     // Week 10 Day 1: Resume Intelligence - PDF Upload & Groq ATS Scoring
     Route::post('/candidate/cia/career/resume/scan', [CiaController::class, 'scanResume'])->name('cia.career.resume.scan');
+
+    // Week 10 Day 2: Placement & Interview Readiness Scorecard
+    Route::post('/candidate/cia/career/readiness/calculate', [CiaController::class, 'calculateReadiness'])->name('cia.career.readiness.calculate');
+    Route::get('/candidate/cia/career/readiness', [CiaController::class, 'getReadiness'])->name('cia.career.readiness.show');
 });
 
 // Laravel Breeze Authentication Routes

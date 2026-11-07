@@ -34,6 +34,7 @@ This repository contains tasks, projects, and learning modules for the **Cynaris
 | **Week 9 – Day 4** | ChromaDB Vector Internship Semantic Matching Engine | `feat/cia-career-w9d4-sachidananda` |
 | **Week 9 – Day 5** | LangGraph 5-Node StateGraph 8-Week Learning Path Generator | `feat/cia-career-w9d5-sachidananda` |
 | **Week 10 – Day 1** | Resume Intelligence: PDF Upload + 4-Category Groq ATS Scoring Engine | `feat/cia-career-w10d1-sachidananda` |
+| **Week 10 – Day 2** | Placement Readiness Score & Interview Readiness Scorecard (40/30/10/20 & 40/30/20/10) | `feat/cia-career-w10d1-sachidananda` |
 
 ---
 
@@ -520,6 +521,31 @@ $$\text{Overall ATS Score} = (\text{Keyword Matching} \times 0.35) + (\text{Tech
 3. **Groq Cloud LLM Scoring:** Evaluates resume text using `llama-3.3-70b-versatile` with `json_object` format enforcement.
 4. **Deterministic Heuristic Fallback:** Evaluates keywords and metrics deterministically when the LLM API is offline.
 5. **Persistence:** Automatically logs scan history and score breakdowns to `cia_search_logs` (`query_type: 'resume_ats_score'`).
+
+---
+
+## 📊 Week 10 – Day 2: Placement Readiness Score & Interview Readiness Scorecard
+
+### Overview
+Module 6 implements the **Placement Readiness Score & Interview Readiness Scorecard** engine, synthesizing academic progress, platform engagement, viva performance, and engineering craftsmanship.
+
+### Placement Readiness Formula:
+$$\text{Placement Readiness} = (\text{Project Completion} \times 0.40) + (\text{Assessment} \times 0.30) + (\text{CIA Usage} \times 0.10) + (\text{Documentation} \times 0.20)$$
+
+- **Project Completion (40%):** Progress across curriculum modules and capstone projects.
+- **Assessment (30%):** Average performance percentage on technical quiz evaluations.
+- **CIA Usage (10%):** Telemetry from CIA Career Cockpit interactions.
+- **Documentation (20%):** Architecture documentation, API design, and code comments.
+
+### Interview Readiness Formula:
+$$\text{Interview Readiness} = (\text{Viva} \times 0.40) + (\text{Code Review} \times 0.30) + (\text{Demo Clarity} \times 0.20) + (\text{Git Quality} \times 0.10)$$
+
+- **Technical Viva (40%):** Conceptual oral examination and system architecture defense.
+- **Code Review Rigor (30%):** PSR-12 conformance, automated test coverage, and clean architecture.
+- **Demo Clarity (20%):** Feature demonstration, articulate technical walkthrough, and edge case coverage.
+- **Git Quality (10%):** Commit atomicity, Conventional Commits formatting, and branch hygiene.
+
+All component scores and compound scores are strictly clamped between **0.0 and 100.0** and stored in the `placement_readiness_scores` table with detailed JSON breakdowns.
 
 ---
 

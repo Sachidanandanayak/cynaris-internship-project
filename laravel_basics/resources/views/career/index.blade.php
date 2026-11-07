@@ -32,7 +32,7 @@
                 <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                     <div class="max-w-2xl">
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-indigo-200 border border-white/15 mb-2">
-                            Module 1: LlamaIndex + Groq &bull; Module 2: CrewAI Agent &bull; Module 3: ChromaDB Matching &bull; Module 4: LangGraph 8-Week Path &bull; Module 5: Resume ATS
+                            Module 1: LlamaIndex + Groq &bull; Module 2: CrewAI Agent &bull; Module 3: ChromaDB Matching &bull; Module 4: LangGraph 8-Week Path &bull; Module 5: Resume ATS &bull; Module 6: Readiness Scorecard
                         </span>
                         <h3 class="text-2xl sm:text-3xl font-black">
                             Career Readiness Cockpit &mdash; {{ $candidate->name }}
@@ -696,6 +696,163 @@
                                 ✍️ Section Rewrite Recommendations
                             </h5>
                             <div id="sectionRewritesContainer" class="space-y-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Module 6: Placement & Interview Readiness Scorecard (W10D2) -->
+            <div class="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-600 text-white">
+                                Module 6
+                            </span>
+                            <span class="text-xs font-bold text-emerald-700">Cynaris Readiness Index</span>
+                        </div>
+                        <h4 class="text-xl font-black text-gray-900 mt-1">
+                            Placement & Interview Readiness Scorecard
+                        </h4>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Multi-metric weighted scoring synthesising project completion, quiz assessments, platform telemetry, viva examination, and code review rigor.
+                        </p>
+                    </div>
+                    <div class="shrink-0 flex items-center gap-2">
+                        <button onclick="recalculateReadiness()" id="recalculateReadinessBtn"
+                            class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition inline-flex items-center gap-2">
+                            <svg id="readinessSpinner" class="animate-spin h-3.5 w-3.5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                            <span id="readinessBtnText">Recalculate Scores &#x21bb;</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dual Scorecard Gauges -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Placement Readiness Card -->
+                    <div class="p-6 rounded-2xl border-2 border-emerald-500/30 bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/40 shadow-sm space-y-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xs uppercase font-extrabold tracking-wider text-emerald-800">Primary Benchmark</span>
+                                <h5 class="text-lg font-black text-gray-900">Placement Readiness Score</h5>
+                                <p class="text-[11px] text-gray-500 font-mono mt-0.5">(Project 40% + Quiz 30% + CIA 10% + Docs 20%)</p>
+                            </div>
+                            <div class="text-right">
+                                <span id="placementScoreDisplay" class="text-4xl font-black text-emerald-600">
+                                    {{ $latestReadiness ? round($latestReadiness->placement_readiness_score) : 75 }}%
+                                </span>
+                                <span id="placementTierDisplay" class="block text-[11px] font-bold text-emerald-800 mt-1">
+                                    {{ $latestReadiness ? ($latestReadiness->breakdown['placement']['status_tier'] ?? 'Placement Ready') : 'Placement Ready' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Breakdown Bars -->
+                        <div class="space-y-3 pt-2 border-t border-emerald-100">
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-gray-600 font-medium">Project Completion (40% Weight)</span>
+                                    <span id="mProjectScore" class="font-bold text-gray-900">{{ $latestReadiness ? $latestReadiness->project_completion_score : 80 }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div id="mProjectBar" class="bg-emerald-500 h-2 rounded-full" style="width: {{ $latestReadiness ? $latestReadiness->project_completion_score : 80 }}%"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-gray-600 font-medium">Assessment / Quizzes (30% Weight)</span>
+                                    <span id="mAssessmentScore" class="font-bold text-gray-900">{{ $latestReadiness ? $latestReadiness->assessment_score : 70 }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div id="mAssessmentBar" class="bg-emerald-600 h-2 rounded-full" style="width: {{ $latestReadiness ? $latestReadiness->assessment_score : 70 }}%"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-gray-600 font-medium">CIA Platform Usage (10% Weight)</span>
+                                    <span id="mCiaScore" class="font-bold text-gray-900">{{ $latestReadiness ? $latestReadiness->cia_usage_score : 70 }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div id="mCiaBar" class="bg-teal-500 h-2 rounded-full" style="width: {{ $latestReadiness ? $latestReadiness->cia_usage_score : 70 }}%"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-gray-600 font-medium">Documentation & Portfolio (20% Weight)</span>
+                                    <span id="mDocScore" class="font-bold text-gray-900">{{ $latestReadiness ? $latestReadiness->documentation_score : 80 }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div id="mDocBar" class="bg-teal-600 h-2 rounded-full" style="width: {{ $latestReadiness ? $latestReadiness->documentation_score : 80 }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Interview Readiness Card -->
+                    <div class="p-6 rounded-2xl border-2 border-indigo-500/30 bg-gradient-to-br from-indigo-50/50 via-white to-sky-50/40 shadow-sm space-y-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xs uppercase font-extrabold tracking-wider text-indigo-800">Evaluator Benchmark</span>
+                                <h5 class="text-lg font-black text-gray-900">Interview Readiness Score</h5>
+                                <p class="text-[11px] text-gray-500 font-mono mt-0.5">(Viva 40% + Review 30% + Demo 20% + Git 10%)</p>
+                            </div>
+                            <div class="text-right">
+                                <span id="interviewScoreDisplay" class="text-4xl font-black text-indigo-600">
+                                    {{ $latestReadiness ? round($latestReadiness->interview_readiness_score) : 79 }}%
+                                </span>
+                                <span id="interviewTierDisplay" class="block text-[11px] font-bold text-indigo-800 mt-1">
+                                    {{ $latestReadiness ? ($latestReadiness->breakdown['interview']['status_tier'] ?? 'Interview Ready') : 'Interview Ready' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Breakdown Bars -->
+                        <div class="space-y-3 pt-2 border-t border-indigo-100">
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-gray-600 font-medium">Technical Viva (40% Weight)</span>
+                                    <span id="mVivaScore" class="font-bold text-gray-900">{{ $latestReadiness ? $latestReadiness->viva_score : 75 }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div id="mVivaBar" class="bg-indigo-500 h-2 rounded-full" style="width: {{ $latestReadiness ? $latestReadiness->viva_score : 75 }}%"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-gray-600 font-medium">Code Review Rigor (30% Weight)</span>
+                                    <span id="mReviewScore" class="font-bold text-gray-900">{{ $latestReadiness ? $latestReadiness->code_review_score : 82 }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div id="mReviewBar" class="bg-indigo-600 h-2 rounded-full" style="width: {{ $latestReadiness ? $latestReadiness->code_review_score : 82 }}%"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-gray-600 font-medium">Demo Clarity (20% Weight)</span>
+                                    <span id="mDemoScore" class="font-bold text-gray-900">{{ $latestReadiness ? $latestReadiness->demo_clarity_score : 78 }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div id="mDemoBar" class="bg-sky-500 h-2 rounded-full" style="width: {{ $latestReadiness ? $latestReadiness->demo_clarity_score : 78 }}%"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-gray-600 font-medium">Git Quality & Commit Hygiene (10% Weight)</span>
+                                    <span id="mGitScore" class="font-bold text-gray-900">{{ $latestReadiness ? $latestReadiness->git_quality_score : 85 }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div id="mGitBar" class="bg-sky-600 h-2 rounded-full" style="width: {{ $latestReadiness ? $latestReadiness->git_quality_score : 85 }}%"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1458,6 +1615,86 @@
             `).join('') || '<div class="text-xs text-gray-400 italic">No rewrite recommendations needed.</div>';
 
             panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        async function recalculateReadiness() {
+            const btn = document.getElementById('recalculateReadinessBtn');
+            const spinner = document.getElementById('readinessSpinner');
+            const btnText = document.getElementById('readinessBtnText');
+
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+            btnText.innerText = 'Evaluating...';
+
+            try {
+                const response = await fetch("{{ route('cia.career.readiness.calculate', [], false) }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                    },
+                    body: JSON.stringify({}),
+                });
+
+                const json = await response.json();
+                if (!response.ok || !json.success) {
+                    throw new Error(json.message || 'Failed to recalculate readiness.');
+                }
+
+                renderReadinessScorecard(json.data);
+            } catch (err) {
+                alert('Readiness Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+                btnText.innerText = 'Recalculate Scores \u21bb';
+            }
+        }
+
+        function renderReadinessScorecard(data) {
+            const pScore = Math.round(data.placement_readiness_score || 0);
+            const iScore = Math.round(data.interview_readiness_score || 0);
+
+            document.getElementById('placementScoreDisplay').innerText = `${pScore}%`;
+            document.getElementById('interviewScoreDisplay').innerText = `${iScore}%`;
+
+            if (data.breakdown?.placement?.status_tier) {
+                document.getElementById('placementTierDisplay').innerText = data.breakdown.placement.status_tier;
+            }
+            if (data.breakdown?.interview?.status_tier) {
+                document.getElementById('interviewTierDisplay').innerText = data.breakdown.interview.status_tier;
+            }
+
+            // Placement sub-metrics
+            const proj = Math.round(data.project_completion_score || 0);
+            const asmt = Math.round(data.assessment_score || 0);
+            const cia = Math.round(data.cia_usage_score || 0);
+            const doc = Math.round(data.documentation_score || 0);
+
+            document.getElementById('mProjectScore').innerText = `${proj}%`;
+            document.getElementById('mProjectBar').style.width = `${proj}%`;
+            document.getElementById('mAssessmentScore').innerText = `${asmt}%`;
+            document.getElementById('mAssessmentBar').style.width = `${asmt}%`;
+            document.getElementById('mCiaScore').innerText = `${cia}%`;
+            document.getElementById('mCiaBar').style.width = `${cia}%`;
+            document.getElementById('mDocScore').innerText = `${doc}%`;
+            document.getElementById('mDocBar').style.width = `${doc}%`;
+
+            // Interview sub-metrics
+            const viva = Math.round(data.viva_score || 0);
+            const rev = Math.round(data.code_review_score || 0);
+            const demo = Math.round(data.demo_clarity_score || 0);
+            const git = Math.round(data.git_quality_score || 0);
+
+            document.getElementById('mVivaScore').innerText = `${viva}%`;
+            document.getElementById('mVivaBar').style.width = `${viva}%`;
+            document.getElementById('mReviewScore').innerText = `${rev}%`;
+            document.getElementById('mReviewBar').style.width = `${rev}%`;
+            document.getElementById('mDemoScore').innerText = `${demo}%`;
+            document.getElementById('mDemoBar').style.width = `${demo}%`;
+            document.getElementById('mGitScore').innerText = `${git}%`;
+            document.getElementById('mGitBar').style.width = `${git}%`;
         }
     </script>
 </x-app-layout>
