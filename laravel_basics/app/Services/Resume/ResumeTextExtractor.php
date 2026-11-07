@@ -146,3 +146,4 @@ class ResumeTextExtractor
         return trim($clean);
     }
 }
+
