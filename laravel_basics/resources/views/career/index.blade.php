@@ -32,7 +32,7 @@
                 <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                     <div class="max-w-2xl">
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-indigo-200 border border-white/15 mb-2">
-                            Module 1: LlamaIndex + Groq &bull; Module 2: CrewAI Agent &bull; Module 3: ChromaDB Matching &bull; Module 4: LangGraph 8-Week Path
+                            Module 1: LlamaIndex + Groq &bull; Module 2: CrewAI Agent &bull; Module 3: ChromaDB Matching &bull; Module 4: LangGraph 8-Week Path &bull; Module 5: Resume ATS &bull; Module 6: Readiness Scorecard
                         </span>
                         <h3 class="text-2xl sm:text-3xl font-black">
                             Career Readiness Cockpit &mdash; {{ $candidate->name }}
@@ -528,6 +528,332 @@
                 <div id="learningPathContainer" class="space-y-4">
                     <div class="text-center py-10 text-gray-400 text-xs bg-gray-50 rounded-xl border border-dashed border-gray-200">
                         Click "Generate 8-Week Curriculum" to initiate the five-node LangGraph StateGraph workflow based on your verified skills and target role.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Module 5: Resume Intelligence & Groq ATS Scoring (W10D1) -->
+            <div class="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-violet-600 text-white">
+                                Module 5
+                            </span>
+                            <span class="text-xs font-bold text-violet-700">Groq ATS Resume Intelligence</span>
+                        </div>
+                        <h4 class="text-xl font-black text-gray-900 mt-1">
+                            PDF Resume Upload & 4-Category ATS Scoring Engine
+                        </h4>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Upload your engineering resume (PDF, max 10MB) for automated text extraction, keyword alignment, formatting compliance, and Groq LLM ATS evaluation.
+                        </p>
+                    </div>
+                    <div class="shrink-0 flex items-center gap-2">
+                        <span id="atsEngineBadge" class="px-3 py-1 rounded-full text-xs font-black bg-violet-100 text-violet-800 border border-violet-200">
+                            GROQ LLAMA-3 ATS
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Upload Form -->
+                <form id="resumeScanForm" onsubmit="event.preventDefault(); runResumeScan();" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-xs uppercase font-bold text-gray-600 mb-1.5">
+                                Select Candidate PDF Resume (Max 10MB)
+                            </label>
+                            <input type="file" id="resumeFileInput" accept="application/pdf,.pdf" required
+                                class="block w-full text-xs text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 border border-gray-300 rounded-xl cursor-pointer bg-gray-50/50" />
+                        </div>
+                        <div>
+                            <label class="block text-xs uppercase font-bold text-gray-600 mb-1.5">
+                                Target Role Benchmark
+                            </label>
+                            <input type="text" id="resumeTargetRoleInput" value="Junior Backend Laravel Engineer" placeholder="e.g. Junior Backend Laravel Engineer"
+                                class="w-full rounded-xl border-gray-300 text-xs font-semibold text-gray-800 focus:border-violet-500 focus:ring-violet-500" />
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-2">
+                        <span class="text-[11px] text-gray-400">
+                            Powered by PyMuPDF / pdfplumber parser + native stream fallback.
+                        </span>
+                        <button type="submit" id="scanResumeBtn"
+                            class="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs shadow-sm transition inline-flex items-center gap-2">
+                            <svg id="scanResumeSpinner" class="animate-spin h-3.5 w-3.5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                            <span id="scanResumeBtnText">Extract Text & Score ATS &rarr;</span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Scan Results Panel (Hidden until scan completed) -->
+                <div id="resumeResultsPanel" class="hidden space-y-6 pt-4 border-t border-gray-100">
+                    <!-- Top Metrics Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                        <!-- Overall Score Card -->
+                        <div class="p-5 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-700 text-white shadow-md flex flex-col justify-between">
+                            <div>
+                                <span class="text-xs uppercase font-bold tracking-wider text-violet-200">Overall ATS Score</span>
+                                <div class="flex items-baseline gap-2 mt-2">
+                                    <span id="overallAtsScore" class="text-4xl font-black">0</span>
+                                    <span class="text-lg font-bold text-violet-200">/ 100</span>
+                                </div>
+                            </div>
+                            <div class="mt-4 pt-3 border-t border-white/20">
+                                <span id="atsReadinessBadge" class="inline-block px-3 py-1 rounded-full text-[11px] font-bold bg-white/20 text-white">
+                                    Evaluation Ready
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- 4 Category Progress Bars -->
+                        <div class="lg:col-span-3 p-5 rounded-2xl border border-gray-200 bg-gray-50/50 space-y-3.5">
+                            <h5 class="text-xs font-bold uppercase tracking-wider text-gray-500">
+                                4-Category Weighted ATS Breakdown
+                            </h5>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <!-- Keyword Matching (35%) -->
+                                <div class="space-y-1">
+                                    <div class="flex justify-between text-xs">
+                                        <span class="font-bold text-gray-700">Keyword Matching (35%)</span>
+                                        <span id="scoreKeywordVal" class="font-bold text-violet-600">0%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div id="scoreKeywordBar" class="bg-violet-600 h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Technical Skills (35%) -->
+                                <div class="space-y-1">
+                                    <div class="flex justify-between text-xs">
+                                        <span class="font-bold text-gray-700">Technical Skills (35%)</span>
+                                        <span id="scoreTechVal" class="font-bold text-indigo-600">0%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div id="scoreTechBar" class="bg-indigo-600 h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Work Experience (20%) -->
+                                <div class="space-y-1">
+                                    <div class="flex justify-between text-xs">
+                                        <span class="font-bold text-gray-700">Work Experience (20%)</span>
+                                        <span id="scoreExpVal" class="font-bold text-blue-600">0%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div id="scoreExpBar" class="bg-blue-600 h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Formatting (10%) -->
+                                <div class="space-y-1">
+                                    <div class="flex justify-between text-xs">
+                                        <span class="font-bold text-gray-700">Formatting & Structure (10%)</span>
+                                        <span id="scoreFormatVal" class="font-bold text-emerald-600">0%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div id="scoreFormatBar" class="bg-emerald-600 h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Matched & Missing Keywords -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 space-y-2">
+                            <span class="text-xs font-bold uppercase tracking-wider text-emerald-900 block">
+                                ✓ Matched Target Keywords
+                            </span>
+                            <div id="matchedKeywordsContainer" class="flex flex-wrap gap-1.5 pt-1"></div>
+                        </div>
+
+                        <div class="p-4 rounded-xl border border-rose-200 bg-rose-50/40 space-y-2">
+                            <span class="text-xs font-bold uppercase tracking-wider text-rose-900 block">
+                                + Missing / High-Priority Keywords
+                            </span>
+                            <div id="missingKeywordsContainer" class="flex flex-wrap gap-1.5 pt-1"></div>
+                        </div>
+                    </div>
+
+                    <!-- Improvement Suggestions & Section Rewrites -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <!-- Suggestions -->
+                        <div class="p-5 rounded-xl border border-gray-200 bg-white space-y-3">
+                            <h5 class="text-xs font-black uppercase tracking-wider text-gray-700">
+                                💡 Actionable ATS Improvement Suggestions
+                            </h5>
+                            <ul id="improvementSuggestionsList" class="space-y-2 text-xs text-gray-600"></ul>
+                        </div>
+
+                        <!-- Rewrites -->
+                        <div class="p-5 rounded-xl border border-gray-200 bg-white space-y-3">
+                            <h5 class="text-xs font-black uppercase tracking-wider text-gray-700">
+                                ✍️ Section Rewrite Recommendations
+                            </h5>
+                            <div id="sectionRewritesContainer" class="space-y-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Module 6: Placement & Interview Readiness Scorecard (W10D2) -->
+            <div class="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-600 text-white">
+                                Module 6
+                            </span>
+                            <span class="text-xs font-bold text-emerald-700">Cynaris Readiness Index</span>
+                        </div>
+                        <h4 class="text-xl font-black text-gray-900 mt-1">
+                            Placement & Interview Readiness Scorecard
+                        </h4>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Multi-metric weighted scoring synthesising project completion, quiz assessments, platform telemetry, viva examination, and code review rigor.
+                        </p>
+                    </div>
+                    <div class="shrink-0 flex items-center gap-2">
+                        <button onclick="recalculateReadiness()" id="recalculateReadinessBtn"
+                            class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition inline-flex items-center gap-2">
+                            <svg id="readinessSpinner" class="animate-spin h-3.5 w-3.5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                            <span id="readinessBtnText">Recalculate Scores &#x21bb;</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dual Scorecard Gauges -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Placement Readiness Card -->
+                    <div class="p-6 rounded-2xl border-2 border-emerald-500/30 bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/40 shadow-sm space-y-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xs uppercase font-extrabold tracking-wider text-emerald-800">Primary Benchmark</span>
+                                <h5 class="text-lg font-black text-gray-900">Placement Readiness Score</h5>
+                                <p class="text-[11px] text-gray-500 font-mono mt-0.5">(Project 40% + Quiz 30% + CIA 10% + Docs 20%)</p>
+                            </div>
+                            <div class="text-right">
+                                <span id="placementScoreDisplay" class="text-4xl font-black text-emerald-600">
+                                    {{ $latestReadiness ? round($latestReadiness->placement_readiness_score) : 75 }}%
+                                </span>
+                                <span id="placementTierDisplay" class="block text-[11px] font-bold text-emerald-800 mt-1">
+                                    {{ $latestReadiness ? ($latestReadiness->breakdown['placement']['status_tier'] ?? 'Placement Ready') : 'Placement Ready' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Breakdown Bars -->
+                        <div class="space-y-3 pt-2 border-t border-emerald-100">
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-gray-600 font-medium">Project Completion (40% Weight)</span>
+                                    <span id="mProjectScore" class="font-bold text-gray-900">{{ $latestReadiness ? $latestReadiness->project_completion_score : 80 }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div id="mProjectBar" class="bg-emerald-500 h-2 rounded-full" style="width: {{ $latestReadiness ? $latestReadiness->project_completion_score : 80 }}%"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-gray-600 font-medium">Assessment / Quizzes (30% Weight)</span>
+                                    <span id="mAssessmentScore" class="font-bold text-gray-900">{{ $latestReadiness ? $latestReadiness->assessment_score : 70 }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div id="mAssessmentBar" class="bg-emerald-600 h-2 rounded-full" style="width: {{ $latestReadiness ? $latestReadiness->assessment_score : 70 }}%"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-gray-600 font-medium">CIA Platform Usage (10% Weight)</span>
+                                    <span id="mCiaScore" class="font-bold text-gray-900">{{ $latestReadiness ? $latestReadiness->cia_usage_score : 70 }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div id="mCiaBar" class="bg-teal-500 h-2 rounded-full" style="width: {{ $latestReadiness ? $latestReadiness->cia_usage_score : 70 }}%"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-gray-600 font-medium">Documentation & Portfolio (20% Weight)</span>
+                                    <span id="mDocScore" class="font-bold text-gray-900">{{ $latestReadiness ? $latestReadiness->documentation_score : 80 }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div id="mDocBar" class="bg-teal-600 h-2 rounded-full" style="width: {{ $latestReadiness ? $latestReadiness->documentation_score : 80 }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Interview Readiness Card -->
+                    <div class="p-6 rounded-2xl border-2 border-indigo-500/30 bg-gradient-to-br from-indigo-50/50 via-white to-sky-50/40 shadow-sm space-y-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xs uppercase font-extrabold tracking-wider text-indigo-800">Evaluator Benchmark</span>
+                                <h5 class="text-lg font-black text-gray-900">Interview Readiness Score</h5>
+                                <p class="text-[11px] text-gray-500 font-mono mt-0.5">(Viva 40% + Review 30% + Demo 20% + Git 10%)</p>
+                            </div>
+                            <div class="text-right">
+                                <span id="interviewScoreDisplay" class="text-4xl font-black text-indigo-600">
+                                    {{ $latestReadiness ? round($latestReadiness->interview_readiness_score) : 79 }}%
+                                </span>
+                                <span id="interviewTierDisplay" class="block text-[11px] font-bold text-indigo-800 mt-1">
+                                    {{ $latestReadiness ? ($latestReadiness->breakdown['interview']['status_tier'] ?? 'Interview Ready') : 'Interview Ready' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Breakdown Bars -->
+                        <div class="space-y-3 pt-2 border-t border-indigo-100">
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-gray-600 font-medium">Technical Viva (40% Weight)</span>
+                                    <span id="mVivaScore" class="font-bold text-gray-900">{{ $latestReadiness ? $latestReadiness->viva_score : 75 }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div id="mVivaBar" class="bg-indigo-500 h-2 rounded-full" style="width: {{ $latestReadiness ? $latestReadiness->viva_score : 75 }}%"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-gray-600 font-medium">Code Review Rigor (30% Weight)</span>
+                                    <span id="mReviewScore" class="font-bold text-gray-900">{{ $latestReadiness ? $latestReadiness->code_review_score : 82 }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div id="mReviewBar" class="bg-indigo-600 h-2 rounded-full" style="width: {{ $latestReadiness ? $latestReadiness->code_review_score : 82 }}%"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-gray-600 font-medium">Demo Clarity (20% Weight)</span>
+                                    <span id="mDemoScore" class="font-bold text-gray-900">{{ $latestReadiness ? $latestReadiness->demo_clarity_score : 78 }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div id="mDemoBar" class="bg-sky-500 h-2 rounded-full" style="width: {{ $latestReadiness ? $latestReadiness->demo_clarity_score : 78 }}%"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-gray-600 font-medium">Git Quality & Commit Hygiene (10% Weight)</span>
+                                    <span id="mGitScore" class="font-bold text-gray-900">{{ $latestReadiness ? $latestReadiness->git_quality_score : 85 }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div id="mGitBar" class="bg-sky-600 h-2 rounded-full" style="width: {{ $latestReadiness ? $latestReadiness->git_quality_score : 85 }}%"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1150,6 +1476,225 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        async function runResumeScan() {
+            const fileInput = document.getElementById('resumeFileInput');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Please select a valid candidate PDF resume to scan.');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+                alert('Only PDF files (.pdf) are supported.');
+                return;
+            }
+
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size exceeds 10MB limit.');
+                return;
+            }
+
+            const targetRole = document.getElementById('resumeTargetRoleInput').value.trim() || 'Junior Backend Laravel Engineer';
+            const btn = document.getElementById('scanResumeBtn');
+            const spinner = document.getElementById('scanResumeSpinner');
+            const btnText = document.getElementById('scanResumeBtnText');
+
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+            btnText.innerText = 'Extracting & Scoring ATS...';
+
+            const formData = new FormData();
+            formData.append('resume', file);
+            formData.append('target_role', targetRole);
+
+            try {
+                const response = await fetch("{{ route('cia.career.resume.scan', [], false) }}", {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                    },
+                    body: formData,
+                });
+
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Resume scan failed.');
+                }
+
+                renderAtsResults(data);
+            } catch (err) {
+                alert('Resume ATS Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+                btnText.innerText = 'Extract Text & Score ATS \u2192';
+            }
+        }
+
+        function renderAtsResults(data) {
+            const panel = document.getElementById('resumeResultsPanel');
+            panel.classList.remove('hidden');
+
+            const overall = Math.round(data.overall_ats_score || 0);
+            document.getElementById('overallAtsScore').innerText = overall;
+
+            const badge = document.getElementById('atsReadinessBadge');
+            if (overall >= 80) {
+                badge.innerText = 'Top Candidate Match';
+                badge.className = 'inline-block px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-400/30 text-white';
+            } else if (overall >= 60) {
+                badge.innerText = 'Competitive Profile';
+                badge.className = 'inline-block px-3 py-1 rounded-full text-[11px] font-bold bg-amber-400/30 text-white';
+            } else {
+                badge.innerText = 'Improvement Recommended';
+                badge.className = 'inline-block px-3 py-1 rounded-full text-[11px] font-bold bg-rose-400/30 text-white';
+            }
+
+            const engine = data.engine || 'GROQ_LLAMA3';
+            document.getElementById('atsEngineBadge').innerText = engine.toUpperCase();
+
+            // 4 Category scores
+            const scores = data.scores || {};
+            const kw = Math.round(scores.keyword_matching || 0);
+            const tech = Math.round(scores.technical_skills || 0);
+            const exp = Math.round(scores.work_experience || 0);
+            const fmt = Math.round(scores.formatting || 0);
+
+            document.getElementById('scoreKeywordVal').innerText = `${kw}%`;
+            document.getElementById('scoreKeywordBar').style.width = `${kw}%`;
+
+            document.getElementById('scoreTechVal').innerText = `${tech}%`;
+            document.getElementById('scoreTechBar').style.width = `${tech}%`;
+
+            document.getElementById('scoreExpVal').innerText = `${exp}%`;
+            document.getElementById('scoreExpBar').style.width = `${exp}%`;
+
+            document.getElementById('scoreFormatVal').innerText = `${fmt}%`;
+            document.getElementById('scoreFormatBar').style.width = `${fmt}%`;
+
+            // Matched keywords
+            const matchedContainer = document.getElementById('matchedKeywordsContainer');
+            matchedContainer.innerHTML = (data.matched_keywords || []).map(k => `
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    ✓ ${escapeHtml(k)}
+                </span>
+            `).join('') || '<span class="text-xs text-gray-400 italic">No matched keywords</span>';
+
+            // Missing keywords
+            const missingContainer = document.getElementById('missingKeywordsContainer');
+            missingContainer.innerHTML = (data.missing_keywords || []).map(k => `
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                    + ${escapeHtml(k)}
+                </span>
+            `).join('') || '<span class="text-xs text-gray-400 italic">No critical keywords missing</span>';
+
+            // Improvement suggestions
+            const suggestionsList = document.getElementById('improvementSuggestionsList');
+            suggestionsList.innerHTML = (data.improvement_suggestions || []).map(s => `
+                <li class="flex items-start gap-2">
+                    <span class="text-violet-500 font-bold shrink-0">&bull;</span>
+                    <span>${escapeHtml(s)}</span>
+                </li>
+            `).join('') || '<li class="text-gray-400 italic">No suggestions provided.</li>';
+
+            // Section rewrites
+            const rewritesContainer = document.getElementById('sectionRewritesContainer');
+            rewritesContainer.innerHTML = (data.section_rewrites || []).map(r => `
+                <div class="p-3.5 rounded-xl border border-gray-100 bg-gray-50/50 space-y-1.5 text-xs">
+                    <span class="font-bold text-gray-800 block">${escapeHtml(r.section || 'Experience')}</span>
+                    <p class="text-rose-700 bg-rose-50/60 p-2 rounded-lg border border-rose-100">
+                        <strong class="font-semibold text-rose-900">Current Weakness:</strong> ${escapeHtml(r.current_weakness)}
+                    </p>
+                    <p class="text-emerald-800 bg-emerald-50/60 p-2 rounded-lg border border-emerald-100">
+                        <strong class="font-semibold text-emerald-900">Suggested Action Statement:</strong> ${escapeHtml(r.suggested_rewrite)}
+                    </p>
+                </div>
+            `).join('') || '<div class="text-xs text-gray-400 italic">No rewrite recommendations needed.</div>';
+
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        async function recalculateReadiness() {
+            const btn = document.getElementById('recalculateReadinessBtn');
+            const spinner = document.getElementById('readinessSpinner');
+            const btnText = document.getElementById('readinessBtnText');
+
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+            btnText.innerText = 'Evaluating...';
+
+            try {
+                const response = await fetch("{{ route('cia.career.readiness.calculate', [], false) }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                    },
+                    body: JSON.stringify({}),
+                });
+
+                const json = await response.json();
+                if (!response.ok || !json.success) {
+                    throw new Error(json.message || 'Failed to recalculate readiness.');
+                }
+
+                renderReadinessScorecard(json.data);
+            } catch (err) {
+                alert('Readiness Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+                btnText.innerText = 'Recalculate Scores \u21bb';
+            }
+        }
+
+        function renderReadinessScorecard(data) {
+            const pScore = Math.round(data.placement_readiness_score || 0);
+            const iScore = Math.round(data.interview_readiness_score || 0);
+
+            document.getElementById('placementScoreDisplay').innerText = `${pScore}%`;
+            document.getElementById('interviewScoreDisplay').innerText = `${iScore}%`;
+
+            if (data.breakdown?.placement?.status_tier) {
+                document.getElementById('placementTierDisplay').innerText = data.breakdown.placement.status_tier;
+            }
+            if (data.breakdown?.interview?.status_tier) {
+                document.getElementById('interviewTierDisplay').innerText = data.breakdown.interview.status_tier;
+            }
+
+            // Placement sub-metrics
+            const proj = Math.round(data.project_completion_score || 0);
+            const asmt = Math.round(data.assessment_score || 0);
+            const cia = Math.round(data.cia_usage_score || 0);
+            const doc = Math.round(data.documentation_score || 0);
+
+            document.getElementById('mProjectScore').innerText = `${proj}%`;
+            document.getElementById('mProjectBar').style.width = `${proj}%`;
+            document.getElementById('mAssessmentScore').innerText = `${asmt}%`;
+            document.getElementById('mAssessmentBar').style.width = `${asmt}%`;
+            document.getElementById('mCiaScore').innerText = `${cia}%`;
+            document.getElementById('mCiaBar').style.width = `${cia}%`;
+            document.getElementById('mDocScore').innerText = `${doc}%`;
+            document.getElementById('mDocBar').style.width = `${doc}%`;
+
+            // Interview sub-metrics
+            const viva = Math.round(data.viva_score || 0);
+            const rev = Math.round(data.code_review_score || 0);
+            const demo = Math.round(data.demo_clarity_score || 0);
+            const git = Math.round(data.git_quality_score || 0);
+
+            document.getElementById('mVivaScore').innerText = `${viva}%`;
+            document.getElementById('mVivaBar').style.width = `${viva}%`;
+            document.getElementById('mReviewScore').innerText = `${rev}%`;
+            document.getElementById('mReviewBar').style.width = `${rev}%`;
+            document.getElementById('mDemoScore').innerText = `${demo}%`;
+            document.getElementById('mDemoBar').style.width = `${demo}%`;
+            document.getElementById('mGitScore').innerText = `${git}%`;
+            document.getElementById('mGitBar').style.width = `${git}%`;
         }
     </script>
 </x-app-layout>
