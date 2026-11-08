@@ -36,6 +36,7 @@ This repository contains tasks, projects, and learning modules for the **Cynaris
 | **Week 10 – Day 1** | Resume Intelligence: PDF Upload + 4-Category Groq ATS Scoring Engine | `feat/cia-career-w10d1-sachidananda` |
 | **Week 10 – Day 2** | Placement Readiness Score & Interview Readiness Scorecard (40/30/10/20 & 40/30/20/10) | `feat/cia-career-w10d2-sachidananda` |
 | **Week 10 – Day 3** | Career Intelligence Report: 6 Engineering Archetypes, Groq Narrative & DomPDF Export | `feat/cia-career-w10d3-sachidananda` |
+| **Week 10 – Day 4** | CIA Memory Layer: 20 Role Profiles ChromaDB Vector Retrieval & Skill Gap Engine | `feat/cia-career-w10d4-sachidananda` |
 
 ---
 
@@ -564,6 +565,24 @@ $$\text{Employability Score} = (\text{Primary Archetype} \times 0.25) + (\text{P
 - **Skill Profile Average (15%):** Average proficiency score across verified candidate technical skills.
 
 All scores are strictly clamped to $[0.0, 100.0]$ and stored in `candidate_reports` with full audit telemetry in `cia_search_logs`. Official PDF reports are downloadable via `GET /candidate/cia/career/report/{report}/download`.
+
+---
+
+## 🧠 Week 10 – Day 4: CIA Memory Layer (ChromaDB Vector Role Matching)
+
+### Overview
+Module 8 implements the **CIA Memory Layer** using ChromaDB vector persistence (`storage/app/chromadb`). The engine seeds and indexes 20 industry-standard technical role profiles across backend, frontend, full-stack, AI, DevOps, data, security, and QA disciplines.
+
+### Vector Retrieval & Cosine Similarity Formula:
+Candidate validated skill profiles are projected into high-dimensional cosine space (`hnsw:space = "cosine"`). Cosine distances are translated into intuitive percentage match scores:
+
+$$\text{Affinity \%} = \max\left(0.0, \min\left(100.0, \text{round}((1.0 - \text{cosine\_distance}) \times 100, 1)\right)\right)$$
+
+### Key Highlights:
+- **20 Seeded Technical Role Profiles:** Pre-configured with technical domain, required competencies, match criteria, and experience levels.
+- **Top-5 Ranked Role Matches:** Real-time retrieval returning ranked cards with distance metrics and affinity rings.
+- **Competency & Gap Partitioning:** Explicit separation of matching skills (green badges) and missing skill deltas (amber badges).
+- **Audit Persistence:** Automatically logs vector search telemetry to `cia_search_logs` (`query_type: 'memory_role_match'`).
 
 ---
 

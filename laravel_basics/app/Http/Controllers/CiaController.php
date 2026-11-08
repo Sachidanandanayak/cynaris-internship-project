@@ -12,6 +12,7 @@ use App\Services\Resume\ResumeAtsScoringService;
 use App\Services\Resume\ResumeTextExtractor;
 use App\Services\SkillGapAnalysisService;
 use App\Services\Vector\ChromaDbService;
+use App\Services\Vector\CiaMemoryLayerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -26,7 +27,8 @@ class CiaController extends Controller
         protected ResumeTextExtractor $textExtractor,
         protected ResumeAtsScoringService $atsScoringService,
         protected PlacementReadinessService $readinessService,
-        protected CareerIntelligenceReportService $reportService
+        protected CareerIntelligenceReportService $reportService,
+        protected CiaMemoryLayerService $memoryService
     ) {}
 
     /**
@@ -96,6 +98,17 @@ class CiaController extends Controller
             }
         }
 
+        // Retrieve initial top-5 role memory matches (W10D4)
+        $initialMemoryMatches = [];
+        if ($user) {
+            try {
+                $memResponse = $this->memoryService->searchRoleMatches($user, ['limit' => 5]);
+                $initialMemoryMatches = $memResponse['data'] ?? [];
+            } catch (\Throwable $e) {
+                Log::warning('Failed retrieving initial role memory matches: ' . $e->getMessage());
+            }
+        }
+
         return view('career.index', [
             'candidate' => $user,
             'completedLessons' => $completedLessons,
@@ -109,6 +122,7 @@ class CiaController extends Controller
             'latestLearningPath' => $latestLearningPath,
             'latestReadiness' => $latestReadiness,
             'latestReport' => $latestReport,
+            'initialMemoryMatches' => $initialMemoryMatches,
             'recentLogs' => $recentLogs,
         ]);
     }
@@ -653,5 +667,84 @@ class CiaController extends Controller
         }
 
         return $this->reportService->downloadPdf($report);
+    }
+
+    /**
+     * GET /candidate/cia/career/memory/match
+     *
+     * Performs vector similarity search against 20 seeded technical role profiles (W10D4).
+     */
+    public function memoryMatch(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Candidate is unauthenticated.',
+                'error_code' => 'ERR_UNAUTHENTICATED',
+            ], 401);
+        }
+
+        try {
+            $limit = (int) $request->query('limit', 5);
+            $result = $this->memoryService->searchRoleMatches($user, ['limit' => $limit]);
+
+            return response()->json([
+                'success' => true,
+                'meta' => $result['meta'] ?? [],
+                'data' => $result['data'] ?? [],
+            ], 200);
+        } catch (\Throwable $e) {
+            Log::error('Memory layer role search error: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to query memory layer role profiles.',
+                'error_code' => 'ERR_MEMORY_SEARCH_FAILED',
+                'details' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * POST /candidate/cia/career/memory/seed
+     *
+     * Seeds or refreshes the 20 technical role profiles into the ChromaDB memory store (W10D4).
+     */
+    public function memorySeed(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Candidate is unauthenticated.',
+                'error_code' => 'ERR_UNAUTHENTICATED',
+            ], 401);
+        }
+
+        try {
+            $result = $this->memoryService->seedRoles();
+
+            return response()->json([
+                'success' => true,
+                'message' => '20 role profiles successfully synchronized to memory layer.',
+                'data' => $result,
+            ], 200);
+        } catch (\Throwable $e) {
+            Log::error('Memory layer seeding error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to seed role profiles into memory layer.',
+                'error_code' => 'ERR_MEMORY_SEED_FAILED',
+            ], 500);
+        }
     }
 }
