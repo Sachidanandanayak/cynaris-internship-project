@@ -100,6 +100,22 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get candidate intelligence reports.
+     */
+    public function candidateReports(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(CandidateReport::class);
+    }
+
+    /**
+     * Get the latest candidate intelligence report.
+     */
+    public function latestCandidateReport(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(CandidateReport::class)->latestOfMany();
+    }
+
+    /**
      * Build candidate validated skill-profile array from completed lessons and quiz scores.
      *
      * @return array<int, array{skill: string, proficiency_score: float, proficiency_level: string, lessons_completed: int, quiz_average: float, verified: bool}>
