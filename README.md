@@ -34,7 +34,9 @@ This repository contains tasks, projects, and learning modules for the **Cynaris
 | **Week 9 – Day 4** | ChromaDB Vector Internship Semantic Matching Engine | `feat/cia-career-w9d4-sachidananda` |
 | **Week 9 – Day 5** | LangGraph 5-Node StateGraph 8-Week Learning Path Generator | `feat/cia-career-w9d5-sachidananda` |
 | **Week 10 – Day 1** | Resume Intelligence: PDF Upload + 4-Category Groq ATS Scoring Engine | `feat/cia-career-w10d1-sachidananda` |
-| **Week 10 – Day 2** | Placement Readiness Score & Interview Readiness Scorecard (40/30/10/20 & 40/30/20/10) | `feat/cia-career-w10d1-sachidananda` |
+| **Week 10 – Day 2** | Placement Readiness Score & Interview Readiness Scorecard (40/30/10/20 & 40/30/20/10) | `feat/cia-career-w10d2-sachidananda` |
+| **Week 10 – Day 3** | Career Intelligence Report: 6 Engineering Archetypes, Groq Narrative & DomPDF Export | `feat/cia-career-w10d3-sachidananda` |
+| **Week 10 – Day 4** | CIA Memory Layer: 20 Role Profiles ChromaDB Vector Retrieval & Skill Gap Engine | `feat/cia-career-w10d4-sachidananda` |
 
 ---
 
@@ -546,6 +548,41 @@ $$\text{Interview Readiness} = (\text{Viva} \times 0.40) + (\text{Code Review} \
 - **Git Quality (10%):** Commit atomicity, Conventional Commits formatting, and branch hygiene.
 
 All component scores and compound scores are strictly clamped between **0.0 and 100.0** and stored in the `placement_readiness_scores` table with detailed JSON breakdowns.
+
+---
+
+## 📈 Week 10 – Day 3: Career Intelligence Report & 6 Engineering Archetypes
+
+### Overview
+Module 7 implements the **Career Intelligence Report & 6 Engineering Archetypes** pipeline. It profiles candidates across six mathematical archetypes (**Builder, Analyst, Leader, Innovator, Specialist, Generalist**), computes an explainable compound **Employability Score** ($0.0 - 100.0$), generates executive AI career narratives via **Groq LLaMA-3.3-70b-versatile** (with deterministic heuristic fallback), and compiles downloadable executive PDF dossiers using **Barryvdh Laravel DomPDF**.
+
+### Compound Employability Score Formula:
+$$\text{Employability Score} = (\text{Primary Archetype} \times 0.25) + (\text{Placement Readiness} \times 0.35) + (\text{Interview Readiness} \times 0.25) + (\text{Skill Average} \times 0.15)$$
+
+- **Primary Archetype (25%):** Dominant engineering persona derived from performance metrics.
+- **Placement Readiness (35%):** Compound score across curriculum projects, quizzes, platform usage, and docs.
+- **Interview Readiness (25%):** Evaluation of viva defenses, code reviews, demo clarity, and git quality.
+- **Skill Profile Average (15%):** Average proficiency score across verified candidate technical skills.
+
+All scores are strictly clamped to $[0.0, 100.0]$ and stored in `candidate_reports` with full audit telemetry in `cia_search_logs`. Official PDF reports are downloadable via `GET /candidate/cia/career/report/{report}/download`.
+
+---
+
+## 🧠 Week 10 – Day 4: CIA Memory Layer (ChromaDB Vector Role Matching)
+
+### Overview
+Module 8 implements the **CIA Memory Layer** using ChromaDB vector persistence (`storage/app/chromadb`). The engine seeds and indexes 20 industry-standard technical role profiles across backend, frontend, full-stack, AI, DevOps, data, security, and QA disciplines.
+
+### Vector Retrieval & Cosine Similarity Formula:
+Candidate validated skill profiles are projected into high-dimensional cosine space (`hnsw:space = "cosine"`). Cosine distances are translated into intuitive percentage match scores:
+
+$$\text{Affinity \%} = \max\left(0.0, \min\left(100.0, \text{round}((1.0 - \text{cosine\_distance}) \times 100, 1)\right)\right)$$
+
+### Key Highlights:
+- **20 Seeded Technical Role Profiles:** Pre-configured with technical domain, required competencies, match criteria, and experience levels.
+- **Top-5 Ranked Role Matches:** Real-time retrieval returning ranked cards with distance metrics and affinity rings.
+- **Competency & Gap Partitioning:** Explicit separation of matching skills (green badges) and missing skill deltas (amber badges).
+- **Audit Persistence:** Automatically logs vector search telemetry to `cia_search_logs` (`query_type: 'memory_role_match'`).
 
 ---
 

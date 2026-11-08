@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CandidateReport;
 use App\Models\CiaSearchLog;
 use App\Models\Job;
+use App\Services\CareerReport\CareerIntelligenceReportService;
 use App\Services\LearningPathGeneratorService;
 use App\Services\Readiness\PlacementReadinessService;
 use App\Services\Resume\ResumeAtsScoringService;
 use App\Services\Resume\ResumeTextExtractor;
 use App\Services\SkillGapAnalysisService;
 use App\Services\Vector\ChromaDbService;
+use App\Services\Vector\CiaMemoryLayerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -23,7 +26,9 @@ class CiaController extends Controller
         protected LearningPathGeneratorService $learningPathService,
         protected ResumeTextExtractor $textExtractor,
         protected ResumeAtsScoringService $atsScoringService,
-        protected PlacementReadinessService $readinessService
+        protected PlacementReadinessService $readinessService,
+        protected CareerIntelligenceReportService $reportService,
+        protected CiaMemoryLayerService $memoryService
     ) {}
 
     /**
@@ -55,6 +60,10 @@ class CiaController extends Controller
 
         $latestReadiness = $user
             ? $this->readinessService->getOrCalculateLatest($user)
+            : null;
+
+        $latestReport = $user
+            ? $user->latestCandidateReport
             : null;
 
         // Calculate initial candidate readiness score if lessons exist
@@ -89,6 +98,17 @@ class CiaController extends Controller
             }
         }
 
+        // Retrieve initial top-5 role memory matches (W10D4)
+        $initialMemoryMatches = [];
+        if ($user) {
+            try {
+                $memResponse = $this->memoryService->searchRoleMatches($user, ['limit' => 5]);
+                $initialMemoryMatches = $memResponse['data'] ?? [];
+            } catch (\Throwable $e) {
+                Log::warning('Failed retrieving initial role memory matches: ' . $e->getMessage());
+            }
+        }
+
         return view('career.index', [
             'candidate' => $user,
             'completedLessons' => $completedLessons,
@@ -101,6 +121,8 @@ class CiaController extends Controller
             'vectorSyncStatus' => $vectorSyncStatus,
             'latestLearningPath' => $latestLearningPath,
             'latestReadiness' => $latestReadiness,
+            'latestReport' => $latestReport,
+            'initialMemoryMatches' => $initialMemoryMatches,
             'recentLogs' => $recentLogs,
         ]);
     }
@@ -546,6 +568,182 @@ class CiaController extends Controller
                 'success' => false,
                 'message' => 'Failed to retrieve candidate readiness score.',
                 'error_code' => 'ERR_READINESS_FETCH_FAILED',
+            ], 500);
+        }
+    }
+
+    /**
+     * POST /candidate/cia/career/report/generate
+     *
+     * Generates and evaluates the 6 archetypes and Career Intelligence Report (W10D3).
+     */
+    public function generateReport(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Candidate is unauthenticated.',
+                'error_code' => 'ERR_UNAUTHENTICATED',
+            ], 401);
+        }
+
+        try {
+            $report = $this->reportService->generateReport($user, $request->all());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Career Intelligence Report generated successfully.',
+                'data' => $report,
+            ], 200);
+        } catch (\Throwable $e) {
+            Log::error('Career intelligence report generation error: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate career intelligence report.',
+                'error_code' => 'ERR_REPORT_GENERATION_FAILED',
+                'details' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * GET /candidate/cia/career/report/latest
+     *
+     * Retrieves the latest Career Intelligence Report or generates one if none exists (W10D3).
+     */
+    public function getLatestReport(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Candidate is unauthenticated.',
+                'error_code' => 'ERR_UNAUTHENTICATED',
+            ], 401);
+        }
+
+        try {
+            $report = $user->latestCandidateReport;
+            if (!$report) {
+                $report = $this->reportService->generateReport($user);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $report,
+            ], 200);
+        } catch (\Throwable $e) {
+            Log::error('Report retrieval error: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve career intelligence report.',
+                'error_code' => 'ERR_REPORT_FETCH_FAILED',
+            ], 500);
+        }
+    }
+
+    /**
+     * GET /candidate/cia/career/report/{report}/download
+     *
+     * Downloads the executive Career Intelligence Report PDF (W10D3).
+     */
+    public function downloadReportPdf(Request $request, CandidateReport $report)
+    {
+        $user = $request->user();
+
+        if (!$user || $user->id !== $report->user_id) {
+            abort(403, 'Unauthorized access to candidate report.');
+        }
+
+        return $this->reportService->downloadPdf($report);
+    }
+
+    /**
+     * GET /candidate/cia/career/memory/match
+     *
+     * Performs vector similarity search against 20 seeded technical role profiles (W10D4).
+     */
+    public function memoryMatch(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Candidate is unauthenticated.',
+                'error_code' => 'ERR_UNAUTHENTICATED',
+            ], 401);
+        }
+
+        try {
+            $limit = (int) $request->query('limit', 5);
+            $result = $this->memoryService->searchRoleMatches($user, ['limit' => $limit]);
+
+            return response()->json([
+                'success' => true,
+                'meta' => $result['meta'] ?? [],
+                'data' => $result['data'] ?? [],
+            ], 200);
+        } catch (\Throwable $e) {
+            Log::error('Memory layer role search error: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to query memory layer role profiles.',
+                'error_code' => 'ERR_MEMORY_SEARCH_FAILED',
+                'details' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * POST /candidate/cia/career/memory/seed
+     *
+     * Seeds or refreshes the 20 technical role profiles into the ChromaDB memory store (W10D4).
+     */
+    public function memorySeed(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Candidate is unauthenticated.',
+                'error_code' => 'ERR_UNAUTHENTICATED',
+            ], 401);
+        }
+
+        try {
+            $result = $this->memoryService->seedRoles();
+
+            return response()->json([
+                'success' => true,
+                'message' => '20 role profiles successfully synchronized to memory layer.',
+                'data' => $result,
+            ], 200);
+        } catch (\Throwable $e) {
+            Log::error('Memory layer seeding error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to seed role profiles into memory layer.',
+                'error_code' => 'ERR_MEMORY_SEED_FAILED',
             ], 500);
         }
     }

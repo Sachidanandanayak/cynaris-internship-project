@@ -32,7 +32,7 @@
                 <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                     <div class="max-w-2xl">
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-indigo-200 border border-white/15 mb-2">
-                            Module 1: LlamaIndex + Groq &bull; Module 2: CrewAI Agent &bull; Module 3: ChromaDB Matching &bull; Module 4: LangGraph 8-Week Path &bull; Module 5: Resume ATS &bull; Module 6: Readiness Scorecard
+                            Module 1: LlamaIndex + Groq &bull; Module 2: CrewAI Agent &bull; Module 3: ChromaDB Matching &bull; Module 4: LangGraph 8-Week Path &bull; Module 5: Resume ATS &bull; Module 6: Readiness Scorecard &bull; Module 7: Career Intelligence &bull; Module 8: CIA Memory Layer
                         </span>
                         <h3 class="text-2xl sm:text-3xl font-black">
                             Career Readiness Cockpit &mdash; {{ $candidate->name }}
@@ -855,6 +855,283 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Module 7: Career Intelligence Report & 6 Engineering Archetypes (W10D3) -->
+            <div id="module7ReportSection" class="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-blue-600 text-white">
+                                Module 7
+                            </span>
+                            <span class="text-xs font-bold text-blue-700">Groq Career Intelligence & DomPDF Export</span>
+                        </div>
+                        <h4 class="text-xl font-black text-gray-900 mt-1">
+                            Career Intelligence Report & 6 Engineering Archetypes
+                        </h4>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Holistic candidate profiling across 6 engineering archetypes, explainable employability score (0-100), AI narrative analysis, and downloadable PDF report.
+                        </p>
+                    </div>
+                    <div class="shrink-0 flex items-center gap-2">
+                        <button type="button" id="generateReportBtn" onclick="generateCareerReport()"
+                            class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition inline-flex items-center gap-2">
+                            <svg id="reportSpinner" class="animate-spin h-3.5 w-3.5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                            <span id="reportBtnText">Generate Full Report &circlearrowright;</span>
+                        </button>
+
+                        <a id="downloadPdfBtn"
+                            href="{{ $latestReport ? route('cia.career.report.download', $latestReport) : '#' }}"
+                            class="px-4 py-2 rounded-xl border border-blue-300 text-blue-700 hover:bg-blue-50 font-bold text-xs transition inline-flex items-center gap-1.5 {{ $latestReport ? '' : 'opacity-50 pointer-events-none' }}"
+                            target="_blank">
+                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <span>Download Official PDF</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Top Employability + Archetype Summary Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Employability Card -->
+                    <div class="p-6 rounded-2xl bg-gradient-to-br from-blue-700 via-indigo-700 to-slate-900 text-white shadow-md flex flex-col justify-between">
+                        <div>
+                            <span class="text-xs uppercase font-extrabold tracking-wider text-blue-200">Compound Employability</span>
+                            <div class="flex items-baseline gap-2 mt-2">
+                                <span id="reportEmployabilityDisplay" class="text-5xl font-black text-white">
+                                    {{ $latestReport ? round($latestReport->employability_score, 1) : 82.5 }}%
+                                </span>
+                            </div>
+                            <span id="reportStatusTierDisplay" class="inline-block px-2.5 py-1 rounded-md text-xs font-black uppercase tracking-wider bg-white/20 text-white mt-2">
+                                {{ $latestReport ? ($latestReport->breakdown['employability']['status_tier'] ?? 'Placement Ready') : 'Placement Ready' }}
+                            </span>
+                            <p class="text-xs text-blue-100/80 mt-3 leading-relaxed">
+                                Weighted synthesis: Primary Archetype (25%) + Placement Readiness (35%) + Interview Readiness (25%) + Skill Verification (15%).
+                            </p>
+                        </div>
+                        <div class="pt-4 border-t border-white/10 mt-4 text-[11px] text-blue-200 font-mono">
+                            Status: <span class="text-emerald-300 font-bold">100% Explainable Metrics</span>
+                        </div>
+                    </div>
+
+                    <!-- Primary Archetype Focus -->
+                    <div class="p-6 rounded-2xl bg-blue-50/60 border border-blue-100 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs uppercase font-bold text-blue-600">Primary Engineering Archetype</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-blue-200 text-blue-800">DOMINANT</span>
+                            </div>
+                            <h5 id="reportPrimaryArchetype" class="text-2xl font-black text-gray-900 mt-2">
+                                {{ $latestReport ? $latestReport->primary_archetype : 'Builder' }}
+                            </h5>
+                            <p id="reportPrimaryTagline" class="text-xs font-semibold text-blue-700 mt-0.5">
+                                Systems Architect & Craftsperson
+                            </p>
+                            <p id="reportPrimaryDesc" class="text-xs text-gray-600 mt-3 leading-relaxed">
+                                Focused on robust system architecture, database schema design, high-throughput APIs, and production engineering.
+                            </p>
+                        </div>
+                        <div class="pt-3 border-t border-blue-100 mt-4 flex items-center justify-between text-xs font-bold text-gray-700">
+                            <span>Score Rating:</span>
+                            <span id="reportPrimaryScore" class="text-blue-700 font-black text-sm">
+                                {{ $latestReport ? ($latestReport->archetype_scores[$latestReport->primary_archetype] ?? 85) : 85 }}%
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Secondary Archetype Focus -->
+                    <div class="p-6 rounded-2xl bg-purple-50/60 border border-purple-100 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs uppercase font-bold text-purple-600">Secondary Archetype</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-purple-200 text-purple-800">COMPLEMENTARY</span>
+                            </div>
+                            <h5 id="reportSecondaryArchetype" class="text-2xl font-black text-gray-900 mt-2">
+                                {{ $latestReport ? ($latestReport->secondary_archetype ?? 'Analyst') : 'Analyst' }}
+                            </h5>
+                            <p id="reportSecondaryTagline" class="text-xs font-semibold text-purple-700 mt-0.5">
+                                Data-Driven & Algorithmic Problem Solver
+                            </p>
+                            <p id="reportSecondaryDesc" class="text-xs text-gray-600 mt-3 leading-relaxed">
+                                Excels in methodical decomposition, automated testing rigor, performance profiling, and structural debugging.
+                            </p>
+                        </div>
+                        <div class="pt-3 border-t border-purple-100 mt-4 flex items-center justify-between text-xs font-bold text-gray-700">
+                            <span>Score Rating:</span>
+                            <span id="reportSecondaryScore" class="text-purple-700 font-black text-sm">
+                                {{ $latestReport ? ($latestReport->archetype_scores[$latestReport->secondary_archetype ?? 'Analyst'] ?? 78) : 78 }}%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6 Archetypes Grid Meters -->
+                <div class="space-y-3">
+                    <h5 class="text-xs uppercase font-black tracking-wider text-gray-500">6 Engineering Archetype Breakdown</h5>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="archetypeCardsContainer">
+                        @php
+                            $scores = $latestReport ? $latestReport->archetype_scores : [
+                                'Builder' => 85.0,
+                                'Analyst' => 78.0,
+                                'Leader' => 72.0,
+                                'Innovator' => 68.0,
+                                'Specialist' => 82.0,
+                                'Generalist' => 75.0,
+                            ];
+                        @endphp
+                        @foreach(['Builder', 'Analyst', 'Leader', 'Innovator', 'Specialist', 'Generalist'] as $arch)
+                            <div class="p-4 rounded-xl border border-gray-100 bg-gray-50/70 space-y-2">
+                                <div class="flex items-center justify-between text-xs font-bold">
+                                    <span class="text-gray-800">{{ $arch }}</span>
+                                    <span id="archScore_{{ $arch }}" class="font-mono text-blue-600">{{ $scores[$arch] ?? 70 }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div id="archBar_{{ $arch }}" class="bg-blue-600 h-2 rounded-full transition-all duration-500" style="width: {{ $scores[$arch] ?? 70 }}%"></div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <!-- AI Executive Narrative Card -->
+                <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs uppercase font-extrabold tracking-wider text-slate-700">Executive Intelligence Narrative</span>
+                        <span id="reportEngineBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-800">
+                            {{ $latestReport ? ($latestReport->metadata['engine'] ?? 'Groq LLaMA-3.3') : 'Groq LLaMA-3.3' }}
+                        </span>
+                    </div>
+                    <p id="reportNarrativeText" class="text-xs text-slate-700 leading-relaxed">
+                        {{ $latestReport ? $latestReport->narrative : 'Generate the report to produce a personalized, LLM-synthesized narrative evaluating your engineering archetypes, benchmark readiness, and recruiter positioning.' }}
+                    </p>
+                </div>
+
+                <!-- Recruiter Hiring Pitch -->
+                <div class="p-4 rounded-xl bg-blue-50/80 border border-blue-200/80 text-xs text-blue-900 space-y-1">
+                    <span class="font-black uppercase tracking-wider text-[10px] text-blue-700 block">Recruiter Pitch:</span>
+                    <p id="reportHiringPitch" class="italic font-medium leading-relaxed">
+                        {{ $latestReport ? ($latestReport->metadata['hiring_pitch'] ?? 'Candidate is a proven engineering talent ready to deliver immediate value.') : 'Candidate is a proven engineering talent ready to deliver immediate value.' }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Module 8: CIA Memory Layer - ChromaDB Vector Role Profile Matching (W10D4) -->
+            <div id="module8MemorySection" class="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-teal-600 text-white">
+                                Module 8
+                            </span>
+                            <span class="text-xs font-bold text-teal-700">ChromaDB Vector Role Memory Layer</span>
+                        </div>
+                        <h4 class="text-xl font-black text-gray-900 mt-1">
+                            CIA Memory Layer &bull; 20 Technical Role Semantic Matching
+                        </h4>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Real-time vector retrieval in high-dimensional cosine space matching candidate skills against 20 persistent technical role profiles with exact affinity percentages and skill gaps.
+                        </p>
+                    </div>
+                    <div class="shrink-0 flex items-center gap-2">
+                        <button type="button" id="queryMemoryBtn" onclick="queryMemoryLayer()"
+                            class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-sm transition inline-flex items-center gap-2">
+                            <svg id="memorySpinner" class="animate-spin h-3.5 w-3.5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                            <span id="memoryBtnText">Query Memory Layer &circlearrowright;</span>
+                        </button>
+
+                        <button type="button" id="seedMemoryBtn" onclick="seedMemoryRoles()"
+                            class="px-3.5 py-2 rounded-xl border border-teal-300 text-teal-700 hover:bg-teal-50 font-bold text-xs transition inline-flex items-center gap-1.5">
+                            <span id="seedBtnText">Sync 20 Roles</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Top 5 Ranked Role Cards -->
+                <div class="space-y-4" id="memoryCardsContainer">
+                    @forelse($initialMemoryMatches as $idx => $match)
+                        <div class="p-5 rounded-2xl border border-gray-100 bg-gradient-to-r from-gray-50/80 to-white hover:border-teal-200 transition shadow-sm space-y-3">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-7 h-7 rounded-lg bg-teal-600 text-white font-black text-xs flex items-center justify-center shrink-0">
+                                        #{{ $idx + 1 }}
+                                    </span>
+                                    <div>
+                                        <h5 class="text-base font-black text-gray-900">{{ $match['role'] }}</h5>
+                                        <div class="flex items-center gap-2 mt-0.5">
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-teal-100 text-teal-800">
+                                                {{ ucfirst($match['domain']) }}
+                                            </span>
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-700">
+                                                {{ $match['experience_level'] }}
+                                            </span>
+                                            <span class="text-[11px] text-gray-400 font-mono">
+                                                Distance: {{ $match['vector_distance'] }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl font-black text-teal-600">
+                                        {{ $match['affinity_percentage'] }}%
+                                    </div>
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-teal-700">Cosine Affinity</span>
+                                </div>
+                            </div>
+
+                            <p class="text-xs text-gray-600 italic">
+                                &ldquo;{{ $match['match_criteria'] }}&rdquo;
+                            </p>
+
+                            <!-- Skills Overlap Grid -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-gray-100 text-xs">
+                                <div>
+                                    <span class="font-bold text-emerald-700 block mb-1">
+                                        &check; Matching Competencies ({{ count($match['matching_skills'] ?? []) }}):
+                                    </span>
+                                    <div class="flex flex-wrap gap-1">
+                                        @forelse($match['matching_skills'] ?? [] as $mSkill)
+                                            <span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-medium">
+                                                {{ $mSkill }}
+                                            </span>
+                                        @empty
+                                            <span class="text-[11px] text-gray-400 italic">No direct keyword overlap yet</span>
+                                        @endforelse
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <span class="font-bold text-amber-700 block mb-1">
+                                        &Delta; Missing Gaps / Next Steps ({{ count($match['missing_skills'] ?? []) }}):
+                                    </span>
+                                    <div class="flex flex-wrap gap-1">
+                                        @forelse($match['missing_skills'] ?? [] as $gap)
+                                            <span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-medium">
+                                                {{ $gap }}
+                                            </span>
+                                        @empty
+                                            <span class="text-[11px] text-emerald-600 font-bold">&starf; 100% Core Competency Match</span>
+                                        @endforelse
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center py-8 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                            <p class="text-xs text-gray-500 font-medium">No memory matches queried yet.</p>
+                            <button type="button" onclick="queryMemoryLayer()" class="mt-2 text-xs text-teal-600 hover:text-teal-700 font-bold">
+                                Click to Query Memory Layer &rarr;
+                            </button>
+                        </div>
+                    @endforelse
                 </div>
             </div>
 
@@ -1695,6 +1972,233 @@
             document.getElementById('mDemoBar').style.width = `${demo}%`;
             document.getElementById('mGitScore').innerText = `${git}%`;
             document.getElementById('mGitBar').style.width = `${git}%`;
+        }
+
+        async function generateCareerReport() {
+            const btn = document.getElementById('generateReportBtn');
+            const spinner = document.getElementById('reportSpinner');
+            const btnText = document.getElementById('reportBtnText');
+
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+            btnText.innerText = 'Analyzing Archetypes...';
+
+            try {
+                const response = await fetch("{{ route('cia.career.report.generate', [], false) }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                    },
+                    body: JSON.stringify({}),
+                });
+
+                const json = await response.json();
+                if (!response.ok || !json.success) {
+                    throw new Error(json.message || 'Failed to generate career report.');
+                }
+
+                renderCareerReport(json.data);
+            } catch (err) {
+                alert('Career Report Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+                btnText.innerText = 'Generate Full Report \u21bb';
+            }
+        }
+
+        function renderCareerReport(report) {
+            const empScore = Math.round(report.employability_score || 0);
+            document.getElementById('reportEmployabilityDisplay').innerText = `${empScore}%`;
+
+            if (report.breakdown?.employability?.status_tier) {
+                document.getElementById('reportStatusTierDisplay').innerText = report.breakdown.employability.status_tier;
+            }
+
+            // Primary & Secondary Archetypes
+            if (report.primary_archetype) {
+                document.getElementById('reportPrimaryArchetype').innerText = report.primary_archetype;
+                const pScore = Math.round(report.archetype_scores?.[report.primary_archetype] || 0);
+                document.getElementById('reportPrimaryScore').innerText = `${pScore}%`;
+            }
+            if (report.secondary_archetype) {
+                document.getElementById('reportSecondaryArchetype').innerText = report.secondary_archetype;
+                const sScore = Math.round(report.archetype_scores?.[report.secondary_archetype] || 0);
+                document.getElementById('reportSecondaryScore').innerText = `${sScore}%`;
+            }
+
+            // 6 Archetype meters
+            if (report.archetype_scores) {
+                for (const [arch, score] of Object.entries(report.archetype_scores)) {
+                    const elScore = document.getElementById(`archScore_${arch}`);
+                    const elBar = document.getElementById(`archBar_${arch}`);
+                    if (elScore) elScore.innerText = `${Math.round(score)}%`;
+                    if (elBar) elBar.style.width = `${Math.round(score)}%`;
+                }
+            }
+
+            // Narrative & Pitch
+            if (report.narrative) {
+                document.getElementById('reportNarrativeText').innerText = report.narrative;
+            }
+            if (report.metadata?.hiring_pitch) {
+                document.getElementById('reportHiringPitch').innerText = report.metadata.hiring_pitch;
+            }
+            if (report.metadata?.engine) {
+                document.getElementById('reportEngineBadge').innerText = report.metadata.engine;
+            }
+
+            // Update PDF download link
+            const downloadBtn = document.getElementById('downloadPdfBtn');
+            if (downloadBtn && report.id) {
+                downloadBtn.href = `/candidate/cia/career/report/${report.id}/download`;
+                downloadBtn.classList.remove('opacity-50', 'pointer-events-none');
+            }
+        }
+
+        async function queryMemoryLayer() {
+            const btn = document.getElementById('queryMemoryBtn');
+            const spinner = document.getElementById('memorySpinner');
+            const btnText = document.getElementById('memoryBtnText');
+
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+            btnText.innerText = 'Searching Vectors...';
+
+            try {
+                const response = await fetch("{{ route('cia.career.memory.match', [], false) }}?limit=5", {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+
+                const json = await response.json();
+                if (!response.ok || !json.success) {
+                    throw new Error(json.message || 'Failed to query memory layer.');
+                }
+
+                renderMemoryCards(json.data);
+            } catch (err) {
+                alert('Memory Layer Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+                btnText.innerText = 'Query Memory Layer \u21bb';
+            }
+        }
+
+        async function seedMemoryRoles() {
+            const btn = document.getElementById('seedMemoryBtn');
+            const text = document.getElementById('seedBtnText');
+
+            btn.disabled = true;
+            text.innerText = 'Syncing...';
+
+            try {
+                const response = await fetch("{{ route('cia.career.memory.seed', [], false) }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                    },
+                    body: JSON.stringify({}),
+                });
+
+                const json = await response.json();
+                if (!response.ok || !json.success) {
+                    throw new Error(json.message || 'Failed to sync roles.');
+                }
+
+                alert('Success: 20 technical role profiles synchronized to ChromaDB memory layer.');
+                queryMemoryLayer();
+            } catch (err) {
+                alert('Seed Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                text.innerText = 'Sync 20 Roles';
+            }
+        }
+
+        function renderMemoryCards(matches) {
+            const container = document.getElementById('memoryCardsContainer');
+            if (!container || !matches || !matches.length) return;
+
+            let html = '';
+            matches.forEach((m, idx) => {
+                const matchingPills = (m.matching_skills || []).map(s => `
+                    <span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-medium">
+                        ${s}
+                    </span>
+                `).join('') || '<span class="text-[11px] text-gray-400 italic">No direct keyword overlap yet</span>';
+
+                const missingPills = (m.missing_skills || []).map(s => `
+                    <span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-medium">
+                        ${s}
+                    </span>
+                `).join('') || '<span class="text-[11px] text-emerald-600 font-bold">&starf; 100% Core Competency Match</span>';
+
+                html += `
+                    <div class="p-5 rounded-2xl border border-gray-100 bg-gradient-to-r from-gray-50/80 to-white hover:border-teal-200 transition shadow-sm space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div class="flex items-center gap-3">
+                                <span class="w-7 h-7 rounded-lg bg-teal-600 text-white font-black text-xs flex items-center justify-center shrink-0">
+                                    #${idx + 1}
+                                </span>
+                                <div>
+                                    <h5 class="text-base font-black text-gray-900">${m.role}</h5>
+                                    <div class="flex items-center gap-2 mt-0.5">
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-teal-100 text-teal-800">
+                                            ${m.domain || 'backend'}
+                                        </span>
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-700">
+                                            ${m.experience_level || 'Mid-Level'}
+                                        </span>
+                                        <span class="text-[11px] text-gray-400 font-mono">
+                                            Distance: ${m.vector_distance}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-black text-teal-600">
+                                    ${m.affinity_percentage}%
+                                </div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-teal-700">Cosine Affinity</span>
+                            </div>
+                        </div>
+
+                        <p class="text-xs text-gray-600 italic">
+                            &ldquo;${m.match_criteria}&rdquo;
+                        </p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-gray-100 text-xs">
+                            <div>
+                                <span class="font-bold text-emerald-700 block mb-1">
+                                    &check; Matching Competencies (${(m.matching_skills || []).length}):
+                                </span>
+                                <div class="flex flex-wrap gap-1">
+                                    ${matchingPills}
+                                </div>
+                            </div>
+
+                            <div>
+                                <span class="font-bold text-amber-700 block mb-1">
+                                    &Delta; Missing Gaps / Next Steps (${(m.missing_skills || []).length}):
+                                </span>
+                                <div class="flex flex-wrap gap-1">
+                                    ${missingPills}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
         }
     </script>
 </x-app-layout>
