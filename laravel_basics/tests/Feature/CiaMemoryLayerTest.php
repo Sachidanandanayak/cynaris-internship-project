@@ -213,5 +213,24 @@ class CiaMemoryLayerTest extends TestCase
         $this->assertEquals('chromadb_fallback_engine', $result['meta']['engine']);
         $this->assertCount(5, $result['data']);
     }
+
+    /**
+     * Test 9: Seeding fallback returns twenty roles when python engine is offline.
+     */
+    public function test_seeding_fallback_when_python_engine_returns_null(): void
+    {
+        $mockService = $this->getMockBuilder(CiaMemoryLayerService::class)
+            ->onlyMethods(['invokePythonEngine'])
+            ->getMock();
+
+        $mockService->method('invokePythonEngine')->willReturn(null);
+
+        $result = $mockService->seedRoles();
+
+        $this->assertTrue($result['success']);
+        $this->assertEquals(20, $result['seeded_count']);
+        $this->assertCount(20, $result['roles']);
+        $this->assertEquals('deterministic_fallback', $result['engine']);
+    }
 }
 

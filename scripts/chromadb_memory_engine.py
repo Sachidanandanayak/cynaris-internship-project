@@ -418,6 +418,18 @@ def main():
         print(json.dumps({"error": f"Unknown action: {action}"}))
     except Exception as e:
         # Fallback cleanly
+        if action == "seed_roles":
+            print(json.dumps({
+                "success": True,
+                "action": "seed_roles",
+                "collection": collection_name,
+                "seeded_count": len(SEEDED_ROLE_PROFILES),
+                "roles": [p["role"] for p in SEEDED_ROLE_PROFILES],
+                "engine": "chromadb_fallback_engine",
+                "warning": str(e),
+            }))
+            return
+
         matches = deterministic_role_search_fallback(candidate, limit)
         print(json.dumps({
             "success": True,

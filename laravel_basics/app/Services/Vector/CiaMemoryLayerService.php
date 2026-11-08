@@ -189,7 +189,7 @@ class CiaMemoryLayerService
 
         try {
             $result = $this->invokePythonEngine($payload);
-            if ($result && !empty($result['success'])) {
+            if ($result && !empty($result['success']) && isset($result['seeded_count'])) {
                 return $result;
             }
         } catch (\Throwable $e) {
