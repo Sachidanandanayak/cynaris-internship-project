@@ -395,3 +395,4 @@ class CiaMemoryLayerService
         return is_array($decoded) ? $decoded : null;
     }
 }
+
