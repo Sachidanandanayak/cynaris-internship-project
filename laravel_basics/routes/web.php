@@ -141,6 +141,11 @@ Route::middleware('auth')->group(function () {
     // Week 10 Day 2: Placement & Interview Readiness Scorecard
     Route::post('/candidate/cia/career/readiness/calculate', [CiaController::class, 'calculateReadiness'])->name('cia.career.readiness.calculate');
     Route::get('/candidate/cia/career/readiness', [CiaController::class, 'getReadiness'])->name('cia.career.readiness.show');
+
+    // Week 10 Day 3: Career Intelligence Report - 6 Archetypes, Groq Narrative & PDF Export
+    Route::post('/candidate/cia/career/report/generate', [CiaController::class, 'generateReport'])->name('cia.career.report.generate');
+    Route::get('/candidate/cia/career/report/latest', [CiaController::class, 'getLatestReport'])->name('cia.career.report.latest');
+    Route::get('/candidate/cia/career/report/{report}/download', [CiaController::class, 'downloadReportPdf'])->name('cia.career.report.download');
 });
 
 // Laravel Breeze Authentication Routes

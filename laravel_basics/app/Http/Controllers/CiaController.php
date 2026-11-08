@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CandidateReport;
 use App\Models\CiaSearchLog;
 use App\Models\Job;
+use App\Services\CareerReport\CareerIntelligenceReportService;
 use App\Services\LearningPathGeneratorService;
 use App\Services\Readiness\PlacementReadinessService;
 use App\Services\Resume\ResumeAtsScoringService;
@@ -23,7 +25,8 @@ class CiaController extends Controller
         protected LearningPathGeneratorService $learningPathService,
         protected ResumeTextExtractor $textExtractor,
         protected ResumeAtsScoringService $atsScoringService,
-        protected PlacementReadinessService $readinessService
+        protected PlacementReadinessService $readinessService,
+        protected CareerIntelligenceReportService $reportService
     ) {}
 
     /**
@@ -55,6 +58,10 @@ class CiaController extends Controller
 
         $latestReadiness = $user
             ? $this->readinessService->getOrCalculateLatest($user)
+            : null;
+
+        $latestReport = $user
+            ? $user->latestCandidateReport
             : null;
 
         // Calculate initial candidate readiness score if lessons exist
@@ -101,6 +108,7 @@ class CiaController extends Controller
             'vectorSyncStatus' => $vectorSyncStatus,
             'latestLearningPath' => $latestLearningPath,
             'latestReadiness' => $latestReadiness,
+            'latestReport' => $latestReport,
             'recentLogs' => $recentLogs,
         ]);
     }
@@ -548,5 +556,102 @@ class CiaController extends Controller
                 'error_code' => 'ERR_READINESS_FETCH_FAILED',
             ], 500);
         }
+    }
+
+    /**
+     * POST /candidate/cia/career/report/generate
+     *
+     * Generates and evaluates the 6 archetypes and Career Intelligence Report (W10D3).
+     */
+    public function generateReport(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Candidate is unauthenticated.',
+                'error_code' => 'ERR_UNAUTHENTICATED',
+            ], 401);
+        }
+
+        try {
+            $report = $this->reportService->generateReport($user, $request->all());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Career Intelligence Report generated successfully.',
+                'data' => $report,
+            ], 200);
+        } catch (\Throwable $e) {
+            Log::error('Career intelligence report generation error: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate career intelligence report.',
+                'error_code' => 'ERR_REPORT_GENERATION_FAILED',
+                'details' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * GET /candidate/cia/career/report/latest
+     *
+     * Retrieves the latest Career Intelligence Report or generates one if none exists (W10D3).
+     */
+    public function getLatestReport(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Candidate is unauthenticated.',
+                'error_code' => 'ERR_UNAUTHENTICATED',
+            ], 401);
+        }
+
+        try {
+            $report = $user->latestCandidateReport;
+            if (!$report) {
+                $report = $this->reportService->generateReport($user);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $report,
+            ], 200);
+        } catch (\Throwable $e) {
+            Log::error('Report retrieval error: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve career intelligence report.',
+                'error_code' => 'ERR_REPORT_FETCH_FAILED',
+            ], 500);
+        }
+    }
+
+    /**
+     * GET /candidate/cia/career/report/{report}/download
+     *
+     * Downloads the executive Career Intelligence Report PDF (W10D3).
+     */
+    public function downloadReportPdf(Request $request, CandidateReport $report)
+    {
+        $user = $request->user();
+
+        if (!$user || $user->id !== $report->user_id) {
+            abort(403, 'Unauthorized access to candidate report.');
+        }
+
+        return $this->reportService->downloadPdf($report);
     }
 }
