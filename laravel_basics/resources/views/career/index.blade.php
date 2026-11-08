@@ -32,7 +32,7 @@
                 <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                     <div class="max-w-2xl">
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-indigo-200 border border-white/15 mb-2">
-                            Module 1: LlamaIndex + Groq &bull; Module 2: CrewAI Agent &bull; Module 3: ChromaDB Matching &bull; Module 4: LangGraph 8-Week Path &bull; Module 5: Resume ATS &bull; Module 6: Readiness Scorecard &bull; Module 7: Career Intelligence Report
+                            Module 1: LlamaIndex + Groq &bull; Module 2: CrewAI Agent &bull; Module 3: ChromaDB Matching &bull; Module 4: LangGraph 8-Week Path &bull; Module 5: Resume ATS &bull; Module 6: Readiness Scorecard &bull; Module 7: Career Intelligence &bull; Module 8: CIA Memory Layer
                         </span>
                         <h3 class="text-2xl sm:text-3xl font-black">
                             Career Readiness Cockpit &mdash; {{ $candidate->name }}
@@ -1021,6 +1021,120 @@
                 </div>
             </div>
 
+            <!-- Module 8: CIA Memory Layer - ChromaDB Vector Role Profile Matching (W10D4) -->
+            <div id="module8MemorySection" class="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-teal-600 text-white">
+                                Module 8
+                            </span>
+                            <span class="text-xs font-bold text-teal-700">ChromaDB Vector Role Memory Layer</span>
+                        </div>
+                        <h4 class="text-xl font-black text-gray-900 mt-1">
+                            CIA Memory Layer &bull; 20 Technical Role Semantic Matching
+                        </h4>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Real-time vector retrieval in high-dimensional cosine space matching candidate skills against 20 persistent technical role profiles with exact affinity percentages and skill gaps.
+                        </p>
+                    </div>
+                    <div class="shrink-0 flex items-center gap-2">
+                        <button type="button" id="queryMemoryBtn" onclick="queryMemoryLayer()"
+                            class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-sm transition inline-flex items-center gap-2">
+                            <svg id="memorySpinner" class="animate-spin h-3.5 w-3.5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                            <span id="memoryBtnText">Query Memory Layer &circlearrowright;</span>
+                        </button>
+
+                        <button type="button" id="seedMemoryBtn" onclick="seedMemoryRoles()"
+                            class="px-3.5 py-2 rounded-xl border border-teal-300 text-teal-700 hover:bg-teal-50 font-bold text-xs transition inline-flex items-center gap-1.5">
+                            <span id="seedBtnText">Sync 20 Roles</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Top 5 Ranked Role Cards -->
+                <div class="space-y-4" id="memoryCardsContainer">
+                    @forelse($initialMemoryMatches as $idx => $match)
+                        <div class="p-5 rounded-2xl border border-gray-100 bg-gradient-to-r from-gray-50/80 to-white hover:border-teal-200 transition shadow-sm space-y-3">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-7 h-7 rounded-lg bg-teal-600 text-white font-black text-xs flex items-center justify-center shrink-0">
+                                        #{{ $idx + 1 }}
+                                    </span>
+                                    <div>
+                                        <h5 class="text-base font-black text-gray-900">{{ $match['role'] }}</h5>
+                                        <div class="flex items-center gap-2 mt-0.5">
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-teal-100 text-teal-800">
+                                                {{ ucfirst($match['domain']) }}
+                                            </span>
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-700">
+                                                {{ $match['experience_level'] }}
+                                            </span>
+                                            <span class="text-[11px] text-gray-400 font-mono">
+                                                Distance: {{ $match['vector_distance'] }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl font-black text-teal-600">
+                                        {{ $match['affinity_percentage'] }}%
+                                    </div>
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-teal-700">Cosine Affinity</span>
+                                </div>
+                            </div>
+
+                            <p class="text-xs text-gray-600 italic">
+                                &ldquo;{{ $match['match_criteria'] }}&rdquo;
+                            </p>
+
+                            <!-- Skills Overlap Grid -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-gray-100 text-xs">
+                                <div>
+                                    <span class="font-bold text-emerald-700 block mb-1">
+                                        &check; Matching Competencies ({{ count($match['matching_skills'] ?? []) }}):
+                                    </span>
+                                    <div class="flex flex-wrap gap-1">
+                                        @forelse($match['matching_skills'] ?? [] as $mSkill)
+                                            <span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-medium">
+                                                {{ $mSkill }}
+                                            </span>
+                                        @empty
+                                            <span class="text-[11px] text-gray-400 italic">No direct keyword overlap yet</span>
+                                        @endforelse
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <span class="font-bold text-amber-700 block mb-1">
+                                        &Delta; Missing Gaps / Next Steps ({{ count($match['missing_skills'] ?? []) }}):
+                                    </span>
+                                    <div class="flex flex-wrap gap-1">
+                                        @forelse($match['missing_skills'] ?? [] as $gap)
+                                            <span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-medium">
+                                                {{ $gap }}
+                                            </span>
+                                        @empty
+                                            <span class="text-[11px] text-emerald-600 font-bold">&starf; 100% Core Competency Match</span>
+                                        @endforelse
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center py-8 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                            <p class="text-xs text-gray-500 font-medium">No memory matches queried yet.</p>
+                            <button type="button" onclick="queryMemoryLayer()" class="mt-2 text-xs text-teal-600 hover:text-teal-700 font-bold">
+                                Click to Query Memory Layer &rarr;
+                            </button>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+
             <!-- Recent Analysis Log History -->
             <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
                 <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-3">
@@ -1942,6 +2056,149 @@
                 downloadBtn.href = `/candidate/cia/career/report/${report.id}/download`;
                 downloadBtn.classList.remove('opacity-50', 'pointer-events-none');
             }
+        }
+
+        async function queryMemoryLayer() {
+            const btn = document.getElementById('queryMemoryBtn');
+            const spinner = document.getElementById('memorySpinner');
+            const btnText = document.getElementById('memoryBtnText');
+
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+            btnText.innerText = 'Searching Vectors...';
+
+            try {
+                const response = await fetch("{{ route('cia.career.memory.match', [], false) }}?limit=5", {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+
+                const json = await response.json();
+                if (!response.ok || !json.success) {
+                    throw new Error(json.message || 'Failed to query memory layer.');
+                }
+
+                renderMemoryCards(json.data);
+            } catch (err) {
+                alert('Memory Layer Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+                btnText.innerText = 'Query Memory Layer \u21bb';
+            }
+        }
+
+        async function seedMemoryRoles() {
+            const btn = document.getElementById('seedMemoryBtn');
+            const text = document.getElementById('seedBtnText');
+
+            btn.disabled = true;
+            text.innerText = 'Syncing...';
+
+            try {
+                const response = await fetch("{{ route('cia.career.memory.seed', [], false) }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                    },
+                    body: JSON.stringify({}),
+                });
+
+                const json = await response.json();
+                if (!response.ok || !json.success) {
+                    throw new Error(json.message || 'Failed to sync roles.');
+                }
+
+                alert('Success: 20 technical role profiles synchronized to ChromaDB memory layer.');
+                queryMemoryLayer();
+            } catch (err) {
+                alert('Seed Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                text.innerText = 'Sync 20 Roles';
+            }
+        }
+
+        function renderMemoryCards(matches) {
+            const container = document.getElementById('memoryCardsContainer');
+            if (!container || !matches || !matches.length) return;
+
+            let html = '';
+            matches.forEach((m, idx) => {
+                const matchingPills = (m.matching_skills || []).map(s => `
+                    <span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-medium">
+                        ${s}
+                    </span>
+                `).join('') || '<span class="text-[11px] text-gray-400 italic">No direct keyword overlap yet</span>';
+
+                const missingPills = (m.missing_skills || []).map(s => `
+                    <span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-medium">
+                        ${s}
+                    </span>
+                `).join('') || '<span class="text-[11px] text-emerald-600 font-bold">&starf; 100% Core Competency Match</span>';
+
+                html += `
+                    <div class="p-5 rounded-2xl border border-gray-100 bg-gradient-to-r from-gray-50/80 to-white hover:border-teal-200 transition shadow-sm space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div class="flex items-center gap-3">
+                                <span class="w-7 h-7 rounded-lg bg-teal-600 text-white font-black text-xs flex items-center justify-center shrink-0">
+                                    #${idx + 1}
+                                </span>
+                                <div>
+                                    <h5 class="text-base font-black text-gray-900">${m.role}</h5>
+                                    <div class="flex items-center gap-2 mt-0.5">
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-teal-100 text-teal-800">
+                                            ${m.domain || 'backend'}
+                                        </span>
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-700">
+                                            ${m.experience_level || 'Mid-Level'}
+                                        </span>
+                                        <span class="text-[11px] text-gray-400 font-mono">
+                                            Distance: ${m.vector_distance}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-black text-teal-600">
+                                    ${m.affinity_percentage}%
+                                </div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-teal-700">Cosine Affinity</span>
+                            </div>
+                        </div>
+
+                        <p class="text-xs text-gray-600 italic">
+                            &ldquo;${m.match_criteria}&rdquo;
+                        </p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-gray-100 text-xs">
+                            <div>
+                                <span class="font-bold text-emerald-700 block mb-1">
+                                    &check; Matching Competencies (${(m.matching_skills || []).length}):
+                                </span>
+                                <div class="flex flex-wrap gap-1">
+                                    ${matchingPills}
+                                </div>
+                            </div>
+
+                            <div>
+                                <span class="font-bold text-amber-700 block mb-1">
+                                    &Delta; Missing Gaps / Next Steps (${(m.missing_skills || []).length}):
+                                </span>
+                                <div class="flex flex-wrap gap-1">
+                                    ${missingPills}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
         }
     </script>
 </x-app-layout>

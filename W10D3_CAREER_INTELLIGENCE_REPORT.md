@@ -134,3 +134,4 @@ Comprehensive feature tests in `tests/Feature/CiaCareerIntelligenceReportTest.ph
 php vendor/phpunit/phpunit/phpunit tests/Feature/CiaCareerIntelligenceReportTest.php --testdox
 OK (10 tests, 56 assertions)
 ```
+
