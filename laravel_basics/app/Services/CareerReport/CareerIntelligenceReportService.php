@@ -329,7 +329,30 @@ class CareerIntelligenceReportService
                     return $groqData;
                 }
             } catch (\Throwable $e) {
-                Log::warning("Groq career report generation failed: {$e->getMessage()}. Invoking deterministic fallback.");
+                Log::warning("Groq career report generation failed: {$e->getMessage()}. Attempting OpenRouter secondary fallback.");
+            }
+        }
+
+        // Secondary fallback: OpenRouter API
+        $openRouterKey = config('services.openrouter.key');
+        if (!empty($openRouterKey)) {
+            try {
+                $openRouterData = $this->queryOpenRouter(
+                    $candidate,
+                    $primaryArchetype,
+                    $secondaryArchetype,
+                    $archetypeScores,
+                    $employabilityScore,
+                    $readiness,
+                    $skillProfile
+                );
+
+                if ($openRouterData !== null && $this->validateNarrativePayload($openRouterData)) {
+                    $openRouterData['engine'] = 'openrouter_llama_3_3_70b';
+                    return $openRouterData;
+                }
+            } catch (\Throwable $e) {
+                Log::warning("OpenRouter career report generation failed: {$e->getMessage()}. Invoking deterministic fallback.");
             }
         }
 
@@ -390,8 +413,89 @@ PROMPT;
             "Verified Skills: " . json_encode(array_slice($skillProfile, 0, 6));
 
         $response = Http::withToken($apiKey)
-            ->timeout(12)
+            ->timeout(10)
+            ->retry(2, 100, throw: false)
             ->post($url, [
+                'model' => $model,
+                'messages' => [
+                    ['role' => 'system', 'content' => $systemPrompt],
+                    ['role' => 'user', 'content' => $userPrompt],
+                ],
+                'temperature' => 0.2,
+                'response_format' => ['type' => 'json_object'],
+            ]);
+
+        if (!$response->successful()) {
+            return null;
+        }
+
+        $body = $response->json();
+        $content = $body['choices'][0]['message']['content'] ?? null;
+        if (empty($content)) {
+            return null;
+        }
+
+        $clean = trim($content);
+        if (str_starts_with($clean, '```')) {
+            $clean = preg_replace('/^```(?:json)?/i', '', $clean);
+            $clean = preg_replace('/```$/', '', $clean);
+            $clean = trim($clean);
+        }
+
+        $decoded = json_decode($clean, true);
+        return is_array($decoded) ? $decoded : null;
+    }
+
+    /**
+     * Query OpenRouter API as resilient secondary provider.
+     */
+    protected function queryOpenRouter(
+        User $candidate,
+        string $primaryArchetype,
+        string $secondaryArchetype,
+        array $archetypeScores,
+        float $employabilityScore,
+        $readiness,
+        array $skillProfile
+    ): ?array {
+        $endpoint = config('services.openrouter.endpoint', 'https://openrouter.ai/api/v1/chat/completions');
+        $model = config('services.openrouter.model', 'meta-llama/llama-3.3-70b-instruct');
+        $apiKey = config('services.openrouter.key');
+        $timeout = (int) config('services.openrouter.timeout', 15);
+
+        $systemPrompt = <<<PROMPT
+You are the Cynaris Intelligence Agent (CIA) Career Analyst.
+Generate an executive Career Intelligence Report for a software engineering candidate.
+You MUST output valid, parseable JSON only. Do not include markdown codeblocks or preamble.
+
+JSON Schema:
+{
+  "executive_summary": "2-3 sentences evaluating overall employability, key strengths, and role fit",
+  "archetype_analysis": "2-3 sentences examining the interplay between primary and secondary archetypes",
+  "strengths": ["string", "string", "string"],
+  "growth_areas": ["string", "string", "string"],
+  "roadmap_90_days": [
+    {"phase": "Month 1 (Days 1-30)", "timeframe": "Days 1-30", "objective": "string", "key_actions": ["string", "string"]},
+    {"phase": "Month 2 (Days 31-60)", "timeframe": "Days 31-60", "objective": "string", "key_actions": ["string", "string"]},
+    {"phase": "Month 3 (Days 61-90)", "timeframe": "Days 61-90", "objective": "string", "key_actions": ["string", "string"]}
+  ],
+  "hiring_pitch": "2-sentence compelling pitch for technical recruiters and hiring managers"
+}
+PROMPT;
+
+        $userPrompt = "Candidate: {$candidate->name}\n" .
+            "Employability Score: {$employabilityScore}%\n" .
+            "Primary Archetype: {$primaryArchetype} ({$archetypeScores[$primaryArchetype]}%)\n" .
+            "Secondary Archetype: {$secondaryArchetype} ({$archetypeScores[$secondaryArchetype]}%)\n" .
+            "Archetype Breakdown: " . json_encode($archetypeScores) . "\n" .
+            "Placement Readiness: {$readiness->placement_readiness_score}%\n" .
+            "Interview Readiness: {$readiness->interview_readiness_score}%\n" .
+            "Verified Skills: " . json_encode(array_slice($skillProfile, 0, 6));
+
+        $response = Http::withToken($apiKey)
+            ->timeout($timeout)
+            ->retry(2, 100, throw: false)
+            ->post($endpoint, [
                 'model' => $model,
                 'messages' => [
                     ['role' => 'system', 'content' => $systemPrompt],
