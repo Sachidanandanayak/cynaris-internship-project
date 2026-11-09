@@ -37,9 +37,17 @@ class CiaController extends Controller
     public function index(Request $request): View
     {
         $user = $request->user();
-        $completedLessons = $user ? $user->candidateLessons()->where('is_completed', true)->latest()->get() : collect();
-        $quizScores = $user ? $user->quizScores()->latest()->get() : collect();
-        $skillProfile = $user ? $user->buildSkillProfile() : [];
+        if ($user) {
+            $completedLessons = $user->candidateLessons()->where('is_completed', true)->latest()->get();
+            $quizScores = $user->quizScores()->latest()->get();
+            $user->setRelation('candidateLessons', $completedLessons);
+            $user->setRelation('quizScores', $quizScores);
+            $skillProfile = $user->buildSkillProfile();
+        } else {
+            $completedLessons = collect();
+            $quizScores = collect();
+            $skillProfile = [];
+        }
 
         $defaultRole = 'Junior Backend Laravel Engineer';
         $benchmark = $this->gapService->resolveBenchmark($defaultRole);

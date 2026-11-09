@@ -224,11 +224,16 @@ class ChromaDbMatchingEngine:
             })
 
         if ids:
-            self.jobs_collection.upsert(
-                ids=ids,
-                documents=documents,
-                metadatas=metadatas
-            )
+            batch_size = int(os.environ.get("CHROMA_BATCH_SIZE", 100))
+            for i in range(0, len(ids), batch_size):
+                chunk_ids = ids[i:i + batch_size]
+                chunk_docs = documents[i:i + batch_size]
+                chunk_meta = metadatas[i:i + batch_size]
+                self.jobs_collection.upsert(
+                    ids=chunk_ids,
+                    documents=chunk_docs,
+                    metadatas=chunk_meta
+                )
 
         return {
             "success": True,
