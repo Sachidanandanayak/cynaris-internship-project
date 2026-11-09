@@ -20,7 +20,9 @@ class ChromaDbService
     public function syncProfile(User $user, array $options = []): array
     {
         $skillProfile = $user->buildSkillProfile();
-        $completedLessonsCount = $user->candidateLessons()->where('is_completed', true)->count();
+        $completedLessonsCount = $user->relationLoaded('candidateLessons')
+            ? $user->candidateLessons->where('is_completed', true)->count()
+            : $user->candidateLessons()->where('is_completed', true)->count();
         $compositeScore = $this->calculateCompositeScore($skillProfile);
         $verifiedSkillsCount = count(array_filter($skillProfile, fn ($s) => !empty($s['verified'])));
         $primaryDomain = $this->inferPrimaryDomain($skillProfile);
@@ -84,7 +86,9 @@ class ChromaDbService
         $limit = isset($filters['limit']) ? min(20, max(1, (int) $filters['limit'])) : 5;
 
         $skillProfile = $user->buildSkillProfile();
-        $completedLessonsCount = $user->candidateLessons()->where('is_completed', true)->count();
+        $completedLessonsCount = $user->relationLoaded('candidateLessons')
+            ? $user->candidateLessons->where('is_completed', true)->count()
+            : $user->candidateLessons()->where('is_completed', true)->count();
         $compositeScore = $this->calculateCompositeScore($skillProfile);
         $verifiedSkillsCount = count(array_filter($skillProfile, fn ($s) => !empty($s['verified'])));
         $primaryDomain = $this->inferPrimaryDomain($skillProfile);

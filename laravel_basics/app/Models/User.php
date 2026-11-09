@@ -116,17 +116,31 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * In-memory cache for candidate skill profile during request lifecycle.
+     *
+     * @var array|null
+     */
+    protected ?array $memoizedSkillProfile = null;
+
+    /**
      * Build candidate validated skill-profile array from completed lessons and quiz scores.
      *
+     * @param bool $refresh
      * @return array<int, array{skill: string, proficiency_score: float, proficiency_level: string, lessons_completed: int, quiz_average: float, verified: bool}>
      */
-    public function buildSkillProfile(): array
+    public function buildSkillProfile(bool $refresh = false): array
     {
-        $completedLessons = $this->candidateLessons()
-            ->where('is_completed', true)
-            ->get();
+        if ($this->memoizedSkillProfile !== null && !$refresh) {
+            return $this->memoizedSkillProfile;
+        }
 
-        $quizScores = $this->quizScores()->get();
+        $completedLessons = $this->relationLoaded('candidateLessons')
+            ? $this->candidateLessons->where('is_completed', true)
+            : $this->candidateLessons()->where('is_completed', true)->get();
+
+        $quizScores = $this->relationLoaded('quizScores')
+            ? $this->quizScores
+            : $this->quizScores()->get();
 
         // Unique skills present across lessons and quizzes
         $lessonSkills = $completedLessons->pluck('skill')->filter()->unique();
@@ -175,6 +189,7 @@ class User extends Authenticatable implements MustVerifyEmail
         // Sort descending by proficiency score
         usort($profile, fn ($a, $b) => $b['proficiency_score'] <=> $a['proficiency_score']);
 
+        $this->memoizedSkillProfile = $profile;
         return $profile;
     }
 }

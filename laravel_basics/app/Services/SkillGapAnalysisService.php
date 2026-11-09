@@ -91,14 +91,31 @@ class SkillGapAnalysisService
                     return $groqResult;
                 }
             } catch (\Throwable $e) {
-                Log::warning('Groq skill gap query failed, engaging deterministic fallback: ' . $e->getMessage(), [
+                Log::warning('Groq skill gap query failed, attempting OpenRouter secondary fallback: ' . $e->getMessage(), [
                     'candidate_id' => $candidate->id,
                     'target_role' => $targetRole,
                 ]);
             }
         }
 
-        // Deterministic heuristic fallback
+        // Try OpenRouter API secondary fallback if configured
+        $openRouterKey = config('services.openrouter.key');
+        if (!empty($openRouterKey)) {
+            try {
+                $openRouterResult = $this->queryOpenRouter($skillProfile, $targetRole, $benchmark);
+                if ($openRouterResult !== null) {
+                    $openRouterResult['benchmark_comparison'] = $this->buildBenchmarkComparison($candidateMap, $benchmark);
+                    return $openRouterResult;
+                }
+            } catch (\Throwable $e) {
+                Log::warning('OpenRouter skill gap query failed, engaging deterministic fallback: ' . $e->getMessage(), [
+                    'candidate_id' => $candidate->id,
+                    'target_role' => $targetRole,
+                ]);
+            }
+        }
+
+        // Final fallback: Deterministic heuristic engine
         return $this->deterministicAnalysis($candidateMap, $benchmark, $targetRole);
     }
 
@@ -150,6 +167,7 @@ class SkillGapAnalysisService
 
         $response = Http::withToken($apiKey)
             ->timeout($timeout)
+            ->retry(2, 100, throw: false)
             ->post($endpoint, [
                 'model' => $model,
                 'messages' => [
@@ -173,12 +191,71 @@ class SkillGapAnalysisService
             return null;
         }
 
+        return $this->parseAiContent($content, $targetRole, 'groq_ai');
+    }
+
+    /**
+     * Query OpenRouter API as resilient secondary provider.
+     */
+    protected function queryOpenRouter(array $skillProfile, string $targetRole, array $benchmark): ?array
+    {
+        $apiKey = config('services.openrouter.key');
+        $model = config('services.openrouter.model', 'meta-llama/llama-3.3-70b-instruct');
+        $endpoint = config('services.openrouter.endpoint', 'https://openrouter.ai/api/v1/chat/completions');
+        $timeout = (int) config('services.openrouter.timeout', 15);
+
+        $systemPrompt = "You are CIA Career Advisor, an enterprise AI career intelligence coach for Cynaris Solutions interns. " .
+            "Analyze the candidate's skill profile against the required competencies for the target role. " .
+            "Calculate an overall readiness score (0-100), identify specific skill gaps with severity impact (High/Medium/Low), " .
+            "and suggest priority learning modules to close those gaps. " .
+            "Return ONLY a valid JSON object matching this schema: " .
+            '{"score": number, "gaps": [{"skill": string, "candidate_level": string, "required_level": string, "impact": "High"|"Medium"|"Low", "description": string}], "priority_learning": [{"module": string, "priority": "High"|"Medium"|"Low", "estimated_hours": number, "actionable_steps": string}]}';
+
+        $userPayload = [
+            'target_role' => $targetRole,
+            'target_benchmarks' => $benchmark,
+            'candidate_profile' => $skillProfile,
+        ];
+
+        $response = Http::withToken($apiKey)
+            ->timeout($timeout)
+            ->retry(2, 100, throw: false)
+            ->post($endpoint, [
+                'model' => $model,
+                'messages' => [
+                    ['role' => 'system', 'content' => $systemPrompt],
+                    ['role' => 'user', 'content' => json_encode($userPayload, JSON_PRETTY_PRINT)],
+                ],
+                'temperature' => 0.2,
+                'response_format' => ['type' => 'json_object'],
+            ]);
+
+        if (!$response->successful()) {
+            Log::warning('OpenRouter API returned HTTP status ' . $response->status(), [
+                'body' => $response->body(),
+            ]);
+            return null;
+        }
+
+        $body = $response->json();
+        $content = $body['choices'][0]['message']['content'] ?? null;
+        if (empty($content)) {
+            return null;
+        }
+
+        return $this->parseAiContent($content, $targetRole, 'openrouter_llama_3_3_70b');
+    }
+
+    /**
+     * Parse and sanitize AI JSON response payload.
+     */
+    protected function parseAiContent(string $content, string $targetRole, string $engine): ?array
+    {
         $parsed = json_decode($content, true);
         if (!is_array($parsed) || !isset($parsed['score']) || !isset($parsed['gaps'])) {
             return null;
         }
 
-        // Validate and sanitize parsed output
         $score = max(0.0, min(100.0, (float) $parsed['score']));
         $gaps = [];
         if (is_array($parsed['gaps'])) {
@@ -214,7 +291,7 @@ class SkillGapAnalysisService
             'score' => round($score, 1),
             'gaps' => $gaps,
             'priority_learning' => $priorityLearning,
-            'engine' => 'groq_ai',
+            'engine' => $engine,
         ];
     }
 

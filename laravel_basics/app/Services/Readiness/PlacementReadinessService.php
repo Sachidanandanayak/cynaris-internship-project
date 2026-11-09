@@ -218,7 +218,9 @@ class PlacementReadinessService
      */
     protected function deriveProjectCompletionScore(User $user): float
     {
-        $completedLessons = $user->candidateLessons()->where('is_completed', true)->get();
+        $completedLessons = $user->relationLoaded('candidateLessons')
+            ? $user->candidateLessons->where('is_completed', true)
+            : $user->candidateLessons()->where('is_completed', true)->get();
         $count = $completedLessons->count();
 
         if ($count === 0) {
@@ -237,7 +239,9 @@ class PlacementReadinessService
      */
     protected function deriveAssessmentScore(User $user): float
     {
-        $quizScores = $user->quizScores()->get();
+        $quizScores = $user->relationLoaded('quizScores')
+            ? $user->quizScores
+            : $user->quizScores()->get();
         if ($quizScores->isEmpty()) {
             return 65.0;
         }
@@ -250,7 +254,9 @@ class PlacementReadinessService
      */
     protected function deriveCiaUsageScore(User $user): float
     {
-        $logCount = $user->ciaSearchLogs()->count();
+        $logCount = $user->relationLoaded('ciaSearchLogs')
+            ? $user->ciaSearchLogs->count()
+            : $user->ciaSearchLogs()->count();
         if ($logCount === 0) {
             return 50.0;
         }
