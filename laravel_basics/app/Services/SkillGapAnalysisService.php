@@ -3,11 +3,21 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Services\Ai\ResilientAiGateway;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class SkillGapAnalysisService
 {
+    /**
+     * Resilient AI Gateway for Groq -> OpenRouter -> Fallback orchestration.
+     */
+    protected ResilientAiGateway $aiGateway;
+
+    public function __construct(?ResilientAiGateway $aiGateway = null)
+    {
+        $this->aiGateway = $aiGateway ?? app(ResilientAiGateway::class);
+    }
     /**
      * Standard role benchmarks: skill -> minimum target proficiency (0-100)
      */
@@ -81,37 +91,42 @@ class SkillGapAnalysisService
         // Resolve benchmark for target role
         $benchmark = $this->resolveBenchmark($targetRole);
 
-        // Try Groq API first if key configured
-        $apiKey = config('services.groq.key');
-        if (!empty($apiKey)) {
-            try {
-                $groqResult = $this->queryGroq($skillProfile, $targetRole, $benchmark);
-                if ($groqResult !== null) {
-                    $groqResult['benchmark_comparison'] = $this->buildBenchmarkComparison($candidateMap, $benchmark);
-                    return $groqResult;
-                }
-            } catch (\Throwable $e) {
-                Log::warning('Groq skill gap query failed, attempting OpenRouter secondary fallback: ' . $e->getMessage(), [
-                    'candidate_id' => $candidate->id,
-                    'target_role' => $targetRole,
-                ]);
-            }
-        }
+        $systemPrompt = "You are CIA Career Advisor, an enterprise AI career intelligence coach for Cynaris Solutions interns. " .
+            "Analyze the candidate's skill profile against the required competencies for the target role. " .
+            "Calculate an overall readiness score (0-100), identify specific skill gaps with severity impact (High/Medium/Low), " .
+            "and suggest priority learning modules to close those gaps. " .
+            "Return ONLY a valid JSON object matching this schema: " .
+            '{"score": number, "gaps": [{"skill": string, "candidate_level": string, "required_level": string, "impact": "High"|"Medium"|"Low", "description": string}], "priority_learning": [{"module": string, "priority": "High"|"Medium"|"Low", "estimated_hours": number, "actionable_steps": string}]}';
 
-        // Try OpenRouter API secondary fallback if configured
-        $openRouterKey = config('services.openrouter.key');
-        if (!empty($openRouterKey)) {
-            try {
-                $openRouterResult = $this->queryOpenRouter($skillProfile, $targetRole, $benchmark);
-                if ($openRouterResult !== null) {
-                    $openRouterResult['benchmark_comparison'] = $this->buildBenchmarkComparison($candidateMap, $benchmark);
-                    return $openRouterResult;
-                }
-            } catch (\Throwable $e) {
-                Log::warning('OpenRouter skill gap query failed, engaging deterministic fallback: ' . $e->getMessage(), [
+        $userPayload = [
+            'target_role' => $targetRole,
+            'target_benchmarks' => $benchmark,
+            'candidate_profile' => $skillProfile,
+        ];
+
+        // Execute chat across 3-tier resilient gateway: Groq -> OpenRouter -> Deterministic
+        $aiResponse = $this->aiGateway->executeChat(
+            systemPrompt: $systemPrompt,
+            userPrompt: json_encode($userPayload, JSON_PRETTY_PRINT),
+            options: [
+                'temperature' => 0.2,
+                'response_format' => ['type' => 'json_object'],
+                'groq_engine_name' => 'groq_ai',
+                'openrouter_engine_name' => 'openrouter_llama_3_3_70b',
+                'fallback_engine_name' => 'deterministic_pipeline',
+                'validator' => fn (?array $data) => is_array($data) && isset($data['score']) && isset($data['gaps']),
+                'context' => [
                     'candidate_id' => $candidate->id,
                     'target_role' => $targetRole,
-                ]);
+                ],
+            ]
+        );
+
+        if ($aiResponse->isSuccess()) {
+            $groqResult = $this->parseAiContent($aiResponse->getData(), $targetRole, $aiResponse->getEngine());
+            if ($groqResult !== null) {
+                $groqResult['benchmark_comparison'] = $this->buildBenchmarkComparison($candidateMap, $benchmark);
+                return $groqResult;
             }
         }
 
@@ -248,10 +263,18 @@ class SkillGapAnalysisService
 
     /**
      * Parse and sanitize AI JSON response payload.
+     *
+     * @param array|string $content
      */
-    protected function parseAiContent(string $content, string $targetRole, string $engine): ?array
+    public function parseAiContent(array|string $content, string $targetRole, string $engine): ?array
     {
-        $parsed = json_decode($content, true);
+        if (is_string($content)) {
+            $clean = $this->aiGateway->stripMarkdownFences($content);
+            $parsed = json_decode($clean, true);
+        } else {
+            $parsed = $content;
+        }
+
         if (!is_array($parsed) || !isset($parsed['score']) || !isset($parsed['gaps'])) {
             return null;
         }

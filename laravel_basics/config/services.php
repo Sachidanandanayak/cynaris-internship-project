@@ -39,6 +39,7 @@ return [
         'key' => env('GROQ_API_KEY'),
         'model' => env('GROQ_MODEL', 'llama-3.3-70b-versatile'),
         'endpoint' => env('GROQ_ENDPOINT', 'https://api.groq.com/openai/v1/chat/completions'),
+        'url' => env('GROQ_URL', env('GROQ_ENDPOINT', 'https://api.groq.com/openai/v1/chat/completions')),
         'timeout' => (int) env('GROQ_TIMEOUT', 10),
     ],
 
@@ -46,6 +47,7 @@ return [
         'key' => env('OPENROUTER_API_KEY'),
         'model' => env('OPENROUTER_MODEL', 'meta-llama/llama-3.3-70b-instruct'),
         'endpoint' => env('OPENROUTER_ENDPOINT', 'https://openrouter.ai/api/v1/chat/completions'),
+        'url' => env('OPENROUTER_URL', env('OPENROUTER_ENDPOINT', 'https://openrouter.ai/api/v1/chat/completions')),
         'timeout' => (int) env('OPENROUTER_TIMEOUT', 15),
     ],
 

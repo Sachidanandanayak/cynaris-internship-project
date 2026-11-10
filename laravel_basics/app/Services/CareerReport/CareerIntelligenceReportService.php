@@ -5,6 +5,7 @@ namespace App\Services\CareerReport;
 use App\Models\CandidateReport;
 use App\Models\CiaSearchLog;
 use App\Models\User;
+use App\Services\Ai\ResilientAiGateway;
 use App\Services\Readiness\PlacementReadinessService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Http;
@@ -69,9 +70,17 @@ class CareerIntelligenceReportService
         'skill_average' => 0.15,
     ];
 
+    /**
+     * Resilient AI Gateway for Groq -> OpenRouter -> Fallback orchestration.
+     */
+    protected ResilientAiGateway $aiGateway;
+
     public function __construct(
-        protected PlacementReadinessService $readinessService
-    ) {}
+        protected PlacementReadinessService $readinessService,
+        ?ResilientAiGateway $aiGateway = null
+    ) {
+        $this->aiGateway = $aiGateway ?? app(ResilientAiGateway::class);
+    }
 
     /**
      * Generate, score, and persist a complete Career Intelligence Report for candidate.
@@ -310,50 +319,57 @@ class CareerIntelligenceReportService
         $readiness,
         array $skillProfile
     ): array {
-        $apiKey = config('services.groq.key');
+        $systemPrompt = <<<PROMPT
+You are the Cynaris Intelligence Agent (CIA) Career Analyst.
+Generate an executive Career Intelligence Report for a software engineering candidate.
+You MUST output valid, parseable JSON only. Do not include markdown codeblocks or preamble.
 
-        if (!empty($apiKey)) {
-            try {
-                $groqData = $this->queryGroq(
-                    $candidate,
-                    $primaryArchetype,
-                    $secondaryArchetype,
-                    $archetypeScores,
-                    $employabilityScore,
-                    $readiness,
-                    $skillProfile
-                );
+JSON Schema:
+{
+  "executive_summary": "2-3 sentences evaluating overall employability, key strengths, and role fit",
+  "archetype_analysis": "2-3 sentences examining the interplay between primary and secondary archetypes",
+  "strengths": ["string", "string", "string"],
+  "growth_areas": ["string", "string", "string"],
+  "roadmap_90_days": [
+    {"phase": "Month 1 (Days 1-30)", "timeframe": "Days 1-30", "objective": "string", "key_actions": ["string", "string"]},
+    {"phase": "Month 2 (Days 31-60)", "timeframe": "Days 31-60", "objective": "string", "key_actions": ["string", "string"]},
+    {"phase": "Month 3 (Days 61-90)", "timeframe": "Days 61-90", "objective": "string", "key_actions": ["string", "string"]}
+  ],
+  "hiring_pitch": "2-sentence compelling pitch for technical recruiters and hiring managers"
+}
+PROMPT;
 
-                if ($groqData !== null && $this->validateNarrativePayload($groqData)) {
-                    $groqData['engine'] = 'groq_llama_3_3_70b';
-                    return $groqData;
-                }
-            } catch (\Throwable $e) {
-                Log::warning("Groq career report generation failed: {$e->getMessage()}. Attempting OpenRouter secondary fallback.");
-            }
-        }
+        $userPrompt = "Candidate: {$candidate->name}\n" .
+            "Employability Score: {$employabilityScore}%\n" .
+            "Primary Archetype: {$primaryArchetype} ({$archetypeScores[$primaryArchetype]}%)\n" .
+            "Secondary Archetype: {$secondaryArchetype} ({$archetypeScores[$secondaryArchetype]}%)\n" .
+            "Archetype Breakdown: " . json_encode($archetypeScores) . "\n" .
+            "Placement Readiness: {$readiness->placement_readiness_score}%\n" .
+            "Interview Readiness: {$readiness->interview_readiness_score}%\n" .
+            "Verified Skills: " . json_encode(array_slice($skillProfile, 0, 6));
 
-        // Secondary fallback: OpenRouter API
-        $openRouterKey = config('services.openrouter.key');
-        if (!empty($openRouterKey)) {
-            try {
-                $openRouterData = $this->queryOpenRouter(
-                    $candidate,
-                    $primaryArchetype,
-                    $secondaryArchetype,
-                    $archetypeScores,
-                    $employabilityScore,
-                    $readiness,
-                    $skillProfile
-                );
+        // Execute 3-tier resilient AI chat completion
+        $aiResponse = $this->aiGateway->executeChat(
+            systemPrompt: $systemPrompt,
+            userPrompt: $userPrompt,
+            options: [
+                'temperature' => 0.2,
+                'response_format' => ['type' => 'json_object'],
+                'groq_engine_name' => 'groq_llama_3_3_70b',
+                'openrouter_engine_name' => 'openrouter_llama_3_3_70b',
+                'fallback_engine_name' => 'deterministic_heuristic_engine',
+                'validator' => [$this, 'validateNarrativePayload'],
+                'context' => [
+                    'candidate_id' => $candidate->id,
+                    'primary_archetype' => $primaryArchetype,
+                ],
+            ]
+        );
 
-                if ($openRouterData !== null && $this->validateNarrativePayload($openRouterData)) {
-                    $openRouterData['engine'] = 'openrouter_llama_3_3_70b';
-                    return $openRouterData;
-                }
-            } catch (\Throwable $e) {
-                Log::warning("OpenRouter career report generation failed: {$e->getMessage()}. Invoking deterministic fallback.");
-            }
+        if ($aiResponse->isSuccess()) {
+            $data = $aiResponse->getData();
+            $data['engine'] = $aiResponse->getEngine();
+            return $data;
         }
 
         return $this->deterministicNarrativeFallback(
@@ -529,8 +545,12 @@ PROMPT;
     /**
      * Validate the structure of the narrative payload.
      */
-    protected function validateNarrativePayload(array $payload): bool
+    public function validateNarrativePayload(?array $payload): bool
     {
+        if (!is_array($payload)) {
+            return false;
+        }
+
         return !empty($payload['executive_summary'])
             && !empty($payload['archetype_analysis'])
             && isset($payload['strengths']) && is_array($payload['strengths'])

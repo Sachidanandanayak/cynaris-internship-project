@@ -5,11 +5,21 @@ namespace App\Services\Resume;
 use App\Models\CiaSearchLog;
 use App\Models\Job;
 use App\Models\User;
+use App\Services\Ai\ResilientAiGateway;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class ResumeAtsScoringService
 {
+    /**
+     * Resilient AI Gateway for Groq -> OpenRouter -> Fallback orchestration.
+     */
+    protected ResilientAiGateway $aiGateway;
+
+    public function __construct(?ResilientAiGateway $aiGateway = null)
+    {
+        $this->aiGateway = $aiGateway ?? app(ResilientAiGateway::class);
+    }
     /**
      * Standard keyword taxonomy for technical roles.
      */
@@ -52,20 +62,38 @@ class ResumeAtsScoringService
         $targetRole = trim($targetRole) ?: ($job?->title ?? 'Junior Backend Laravel Engineer');
         $jobContext = $job ? "Title: {$job->title}\nCompany: {$job->company}\nRequirements: {$job->requirements}\nDescription: {$job->description}" : "Target Role: {$targetRole}";
 
-        // Attempt Groq API analysis if configured
-        $apiKey = config('services.groq.key');
-        if (!empty($apiKey)) {
-            try {
-                $groqResult = $this->queryGroq($resumeText, $targetRole, $jobContext);
-                if ($groqResult !== null && $this->validateAtsPayload($groqResult)) {
-                    return $this->finalizeAndPersist($candidate, $targetRole, $job, $groqResult, 'groq_llama3');
-                }
-            } catch (\Throwable $e) {
-                Log::warning('Groq ATS scoring failed, falling back to deterministic engine: ' . $e->getMessage(), [
+        $systemPrompt = "You are CIA ATS Resume Intelligence, an enterprise Applicant Tracking System scoring engine for Cynaris Solutions. " .
+            "Analyze the candidate resume against the target role and job description. " .
+            "Calculate 4 category scores strictly from 0 to 100: " .
+            "1. keyword_matching: Percentage of required skills/technologies explicitly present. " .
+            "2. formatting: Professional layout, clear section headings, bulleted action statements, standard fonts, no tables/graphics. " .
+            "3. work_experience: Demonstrated project execution, internship tenure, quantified outcomes, and problem-solving impact. " .
+            "4. technical_skills: Depth of modern programming languages, frameworks, databases, and testing tools. " .
+            "Calculate overall_ats_score using: (keyword_matching * 0.35) + (technical_skills * 0.35) + (work_experience * 0.20) + (formatting * 0.10). " .
+            "Identify matched_keywords, missing_keywords, 3-5 constructive improvement_suggestions, and 2-3 section_rewrites showing current weaknesses and enhanced bullet points. " .
+            "CRITICAL: Return ONLY valid JSON. Do not include markdown codeblocks, preambles, or conversational text.";
+
+        $userPrompt = "Target Role & Job Description:\n{$jobContext}\n\nCandidate Extracted Resume Text:\n" . substr($resumeText, 0, 4000);
+
+        $aiResponse = $this->aiGateway->executeChat(
+            systemPrompt: $systemPrompt,
+            userPrompt: $userPrompt,
+            options: [
+                'temperature' => 0.2,
+                'response_format' => ['type' => 'json_object'],
+                'groq_engine_name' => 'groq_llama3',
+                'openrouter_engine_name' => 'openrouter_llama_3_3_70b',
+                'fallback_engine_name' => 'deterministic_ats_fallback',
+                'validator' => [$this, 'validateAtsPayload'],
+                'context' => [
                     'candidate_id' => $candidate->id,
                     'target_role' => $targetRole,
-                ]);
-            }
+                ],
+            ]
+        );
+
+        if ($aiResponse->isSuccess()) {
+            return $this->finalizeAndPersist($candidate, $targetRole, $job, $aiResponse->getData(), $aiResponse->getEngine());
         }
 
         // Deterministic Fallback ATS Scoring Engine
@@ -266,11 +294,11 @@ class ResumeAtsScoringService
     }
 
     /**
-     * Validate payload returned from Groq.
+     * Validate payload returned from AI providers.
      */
-    protected function validateAtsPayload(array $payload): bool
+    public function validateAtsPayload(?array $payload): bool
     {
-        if (!isset($payload['overall_ats_score']) && !isset($payload['scores'])) {
+        if (!is_array($payload) || (!isset($payload['overall_ats_score']) && !isset($payload['scores']))) {
             return false;
         }
 
