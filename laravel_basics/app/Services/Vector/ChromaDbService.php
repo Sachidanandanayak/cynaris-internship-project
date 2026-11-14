@@ -5,10 +5,41 @@ namespace App\Services\Vector;
 use App\Models\CiaSearchLog;
 use App\Models\Job;
 use App\Models\User;
+use App\Services\Alerting\CiaAlertManager;
+use App\Services\Logging\CiaLogger;
+use App\Services\Monitoring\CiaMetricsService;
 use Illuminate\Support\Facades\Log;
 
 class ChromaDbService
 {
+    protected ?CiaMetricsService $metricsService = null;
+    protected ?CiaAlertManager $alertManager = null;
+    protected ?CiaLogger $logger = null;
+
+    public function __construct(
+        ?CiaMetricsService $metricsService = null,
+        ?CiaAlertManager $alertManager = null,
+        ?CiaLogger $logger = null
+    ) {
+        $this->metricsService = $metricsService ?? app(CiaMetricsService::class);
+        $this->alertManager = $alertManager ?? app(CiaAlertManager::class);
+        $this->logger = $logger ?? app(CiaLogger::class);
+    }
+
+    protected function metrics(): CiaMetricsService
+    {
+        return $this->metricsService ??= app(CiaMetricsService::class);
+    }
+
+    protected function alerts(): CiaAlertManager
+    {
+        return $this->alertManager ??= app(CiaAlertManager::class);
+    }
+
+    protected function logger(): CiaLogger
+    {
+        return $this->logger ??= app(CiaLogger::class);
+    }
     /**
      * Synchronize candidate profile to ChromaDB vector store.
      * Enforces strict pseudonymization and zero PII.
@@ -42,9 +73,12 @@ class ChromaDbService
             'chroma_path' => storage_path('app/chromadb'),
         ];
 
+        $startTime = microtime(true);
         try {
             $result = $this->invokePythonEngine($payload);
             if ($result && !empty($result['success'])) {
+                $duration = round((microtime(true) - $startTime) * 1000, 2);
+                $this->metrics()->recordChromaCall('sync_profile', true, $duration);
                 return [
                     'success' => true,
                     'candidate_id' => $pseudonymousCandidateId,
@@ -53,8 +87,17 @@ class ChromaDbService
                     'last_synced_at' => $result['last_synced_at'] ?? now()->toIso8601String(),
                     'engine' => $result['engine'] ?? 'chromadb',
                 ];
+            } else {
+                $duration = round((microtime(true) - $startTime) * 1000, 2);
+                $this->metrics()->recordChromaCall('sync_profile', false, $duration, 'Empty sync response', isFallback: true);
+                $state = $this->metrics()->getHealthMetrics();
+                $this->alerts()->checkChromaFailureAlert($state['chromadb']['consecutive_failures'] ?? 1);
             }
         } catch (\Throwable $e) {
+            $duration = round((microtime(true) - $startTime) * 1000, 2);
+            $this->metrics()->recordChromaCall('sync_profile', false, $duration, $e->getMessage(), isFallback: true);
+            $state = $this->metrics()->getHealthMetrics();
+            $this->alerts()->checkChromaFailureAlert($state['chromadb']['consecutive_failures'] ?? 1);
             Log::warning('ChromaDB vector sync failed, falling back to local acknowledgment: ' . $e->getMessage(), [
                 'user_id' => $user->id,
             ]);
@@ -134,13 +177,25 @@ class ChromaDbService
 
         $rawMatches = null;
         $engine = 'chromadb';
+        $startTime = microtime(true);
 
         try {
             $rawMatches = $this->invokePythonEngine($payload);
             if ($rawMatches && isset($rawMatches['matches'])) {
+                $duration = round((microtime(true) - $startTime) * 1000, 2);
+                $this->metrics()->recordChromaCall('match_internships', true, $duration);
                 $engine = $rawMatches['engine'] ?? 'chromadb';
+            } else {
+                $duration = round((microtime(true) - $startTime) * 1000, 2);
+                $this->metrics()->recordChromaCall('match_internships', false, $duration, 'Empty match response', isFallback: true);
+                $state = $this->metrics()->getHealthMetrics();
+                $this->alerts()->checkChromaFailureAlert($state['chromadb']['consecutive_failures'] ?? 1);
             }
         } catch (\Throwable $e) {
+            $duration = round((microtime(true) - $startTime) * 1000, 2);
+            $this->metrics()->recordChromaCall('match_internships', false, $duration, $e->getMessage(), isFallback: true);
+            $state = $this->metrics()->getHealthMetrics();
+            $this->alerts()->checkChromaFailureAlert($state['chromadb']['consecutive_failures'] ?? 1);
             Log::warning('ChromaDB matching invocation failed, engaging local fallback: ' . $e->getMessage(), [
                 'user_id' => $user->id,
             ]);

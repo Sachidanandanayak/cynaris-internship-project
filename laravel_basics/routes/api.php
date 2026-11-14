@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthApiController;
 use App\Http\Controllers\Api\JobApiController;
 use App\Http\Controllers\Api\PostApiController;
+use App\Http\Controllers\CiaController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -73,4 +74,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Capstone Job Applications Endpoints
     Route::post('/jobs/{job}/apply', [JobApiController::class, 'apply'])->name('api.jobs.apply');
     Route::get('/user/applications', [JobApiController::class, 'userApplications'])->name('api.user.applications');
+
+    // Week 11 Day 4: CIA Health Monitoring
+    Route::get('/cia/monitoring/health', [CiaController::class, 'metrics'])->name('api.cia.monitoring.health');
 });

@@ -150,6 +150,9 @@ Route::middleware('auth')->group(function () {
     // Week 10 Day 4: CIA Memory Layer - Vector Role Profile Matching
     Route::get('/candidate/cia/career/memory/match', [CiaController::class, 'memoryMatch'])->middleware('throttle:cia-general')->name('cia.career.memory.match');
     Route::post('/candidate/cia/career/memory/seed', [CiaController::class, 'memorySeed'])->middleware('throttle:cia-ai')->name('cia.career.memory.seed');
+
+    // Week 11 Day 4: CIA Monitoring & Health Metrics
+    Route::get('/candidate/cia/career/monitoring/metrics', [CiaController::class, 'metrics'])->middleware('throttle:cia-general')->name('cia.career.monitoring.metrics');
 });
 
 // Laravel Breeze Authentication Routes

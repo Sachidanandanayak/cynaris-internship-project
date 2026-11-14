@@ -4,10 +4,41 @@ namespace App\Services\Vector;
 
 use App\Models\CiaSearchLog;
 use App\Models\User;
+use App\Services\Alerting\CiaAlertManager;
+use App\Services\Logging\CiaLogger;
+use App\Services\Monitoring\CiaMetricsService;
 use Illuminate\Support\Facades\Log;
 
 class CiaMemoryLayerService
 {
+    protected ?CiaMetricsService $metricsService = null;
+    protected ?CiaAlertManager $alertManager = null;
+    protected ?CiaLogger $logger = null;
+
+    public function __construct(
+        ?CiaMetricsService $metricsService = null,
+        ?CiaAlertManager $alertManager = null,
+        ?CiaLogger $logger = null
+    ) {
+        $this->metricsService = $metricsService ?? app(CiaMetricsService::class);
+        $this->alertManager = $alertManager ?? app(CiaAlertManager::class);
+        $this->logger = $logger ?? app(CiaLogger::class);
+    }
+
+    protected function metrics(): CiaMetricsService
+    {
+        return $this->metricsService ??= app(CiaMetricsService::class);
+    }
+
+    protected function alerts(): CiaAlertManager
+    {
+        return $this->alertManager ??= app(CiaAlertManager::class);
+    }
+
+    protected function logger(): CiaLogger
+    {
+        return $this->logger ??= app(CiaLogger::class);
+    }
     /**
      * Curated 20 Technical Role Profiles fallback dataset.
      */
@@ -187,12 +218,24 @@ class CiaMemoryLayerService
             'collection_name' => 'cynaris_role_memory',
         ];
 
+        $startTime = microtime(true);
         try {
             $result = $this->invokePythonEngine($payload);
             if ($result && !empty($result['success']) && isset($result['seeded_count'])) {
+                $duration = round((microtime(true) - $startTime) * 1000, 2);
+                $this->metrics()->recordChromaCall('seed_roles', true, $duration);
                 return $result;
+            } else {
+                $duration = round((microtime(true) - $startTime) * 1000, 2);
+                $this->metrics()->recordChromaCall('seed_roles', false, $duration, 'Empty seed response', isFallback: true);
+                $state = $this->metrics()->getHealthMetrics();
+                $this->alerts()->checkChromaFailureAlert($state['chromadb']['consecutive_failures'] ?? 1);
             }
         } catch (\Throwable $e) {
+            $duration = round((microtime(true) - $startTime) * 1000, 2);
+            $this->metrics()->recordChromaCall('seed_roles', false, $duration, $e->getMessage(), isFallback: true);
+            $state = $this->metrics()->getHealthMetrics();
+            $this->alerts()->checkChromaFailureAlert($state['chromadb']['consecutive_failures'] ?? 1);
             Log::warning("ChromaDB role memory seeding fallback: {$e->getMessage()}");
         }
 
@@ -231,14 +274,26 @@ class CiaMemoryLayerService
 
         $matches = [];
         $engine = 'chromadb_fallback_engine';
+        $startTime = microtime(true);
 
         try {
             $result = $this->invokePythonEngine($payload);
             if ($result && !empty($result['success']) && !empty($result['matches'])) {
+                $duration = round((microtime(true) - $startTime) * 1000, 2);
+                $this->metrics()->recordChromaCall('search_roles', true, $duration);
                 $matches = $result['matches'];
                 $engine = $result['engine'] ?? 'chromadb_memory_vector';
+            } else {
+                $duration = round((microtime(true) - $startTime) * 1000, 2);
+                $this->metrics()->recordChromaCall('search_roles', false, $duration, 'Empty memory search matches', isFallback: true);
+                $state = $this->metrics()->getHealthMetrics();
+                $this->alerts()->checkChromaFailureAlert($state['chromadb']['consecutive_failures'] ?? 1);
             }
         } catch (\Throwable $e) {
+            $duration = round((microtime(true) - $startTime) * 1000, 2);
+            $this->metrics()->recordChromaCall('search_roles', false, $duration, $e->getMessage(), isFallback: true);
+            $state = $this->metrics()->getHealthMetrics();
+            $this->alerts()->checkChromaFailureAlert($state['chromadb']['consecutive_failures'] ?? 1);
             Log::warning("ChromaDB memory search failed: {$e->getMessage()}. Using deterministic fallback.");
         }
 
