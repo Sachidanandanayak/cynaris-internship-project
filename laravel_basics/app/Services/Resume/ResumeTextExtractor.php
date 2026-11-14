@@ -19,6 +19,17 @@ class ResumeTextExtractor
             throw new \RuntimeException("PDF file not found or unreadable at path: {$filePath}");
         }
 
+        // Validate PDF binary header magic bytes (%PDF)
+        $handle = @fopen($filePath, 'rb');
+        $header = $handle ? fread($handle, 4) : '';
+        if ($handle) {
+            fclose($handle);
+        }
+
+        if ($header !== '%PDF') {
+            throw new \InvalidArgumentException("Invalid PDF document: missing %PDF binary signature.");
+        }
+
         // Tier 1: Try Python extractor (pdfplumber / pdfminer)
         $pythonText = $this->extractViaPython($filePath);
         if (!empty(trim($pythonText))) {

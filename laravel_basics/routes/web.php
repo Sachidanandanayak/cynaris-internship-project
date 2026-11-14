@@ -128,28 +128,28 @@ Route::get('/debug-demo', [DebuggingDemoController::class, 'index'])->name('debu
 // Week 9: CIA Career Mode & Skill Gap Intelligence
 // ==========================================
 Route::middleware('auth')->group(function () {
-    Route::get('/candidate/cia/career', [CiaController::class, 'index'])->name('cia.career.index');
-    Route::post('/candidate/cia/career/skill-gap', [CiaController::class, 'skillGap'])->name('cia.career.skill-gap');
-    Route::post('/candidate/cia/career/recommendations', [CiaController::class, 'recommendations'])->name('cia.career.recommendations');
-    Route::post('/candidate/cia/career/profile/sync', [CiaController::class, 'syncProfile'])->name('cia.career.profile.sync');
-    Route::get('/candidate/cia/career/matches', [CiaController::class, 'matches'])->name('cia.career.matches');
-    Route::post('/candidate/cia/career/learning-path', [CiaController::class, 'learningPath'])->name('cia.career.learning-path');
+    Route::get('/candidate/cia/career', [CiaController::class, 'index'])->middleware('throttle:cia-general')->name('cia.career.index');
+    Route::post('/candidate/cia/career/skill-gap', [CiaController::class, 'skillGap'])->middleware('throttle:cia-ai')->name('cia.career.skill-gap');
+    Route::post('/candidate/cia/career/recommendations', [CiaController::class, 'recommendations'])->middleware('throttle:cia-ai')->name('cia.career.recommendations');
+    Route::post('/candidate/cia/career/profile/sync', [CiaController::class, 'syncProfile'])->middleware('throttle:cia-ai')->name('cia.career.profile.sync');
+    Route::get('/candidate/cia/career/matches', [CiaController::class, 'matches'])->middleware('throttle:cia-general')->name('cia.career.matches');
+    Route::post('/candidate/cia/career/learning-path', [CiaController::class, 'learningPath'])->middleware('throttle:cia-ai')->name('cia.career.learning-path');
 
     // Week 10 Day 1: Resume Intelligence - PDF Upload & Groq ATS Scoring
-    Route::post('/candidate/cia/career/resume/scan', [CiaController::class, 'scanResume'])->name('cia.career.resume.scan');
+    Route::post('/candidate/cia/career/resume/scan', [CiaController::class, 'scanResume'])->middleware('throttle:cia-ai')->name('cia.career.resume.scan');
 
     // Week 10 Day 2: Placement & Interview Readiness Scorecard
-    Route::post('/candidate/cia/career/readiness/calculate', [CiaController::class, 'calculateReadiness'])->name('cia.career.readiness.calculate');
-    Route::get('/candidate/cia/career/readiness', [CiaController::class, 'getReadiness'])->name('cia.career.readiness.show');
+    Route::post('/candidate/cia/career/readiness/calculate', [CiaController::class, 'calculateReadiness'])->middleware('throttle:cia-ai')->name('cia.career.readiness.calculate');
+    Route::get('/candidate/cia/career/readiness', [CiaController::class, 'getReadiness'])->middleware('throttle:cia-general')->name('cia.career.readiness.show');
 
     // Week 10 Day 3: Career Intelligence Report - 6 Archetypes, Groq Narrative & PDF Export
-    Route::post('/candidate/cia/career/report/generate', [CiaController::class, 'generateReport'])->name('cia.career.report.generate');
-    Route::get('/candidate/cia/career/report/latest', [CiaController::class, 'getLatestReport'])->name('cia.career.report.latest');
-    Route::get('/candidate/cia/career/report/{report}/download', [CiaController::class, 'downloadReportPdf'])->name('cia.career.report.download');
+    Route::post('/candidate/cia/career/report/generate', [CiaController::class, 'generateReport'])->middleware('throttle:cia-ai')->name('cia.career.report.generate');
+    Route::get('/candidate/cia/career/report/latest', [CiaController::class, 'getLatestReport'])->middleware('throttle:cia-general')->name('cia.career.report.latest');
+    Route::get('/candidate/cia/career/report/{report}/download', [CiaController::class, 'downloadReportPdf'])->middleware('throttle:cia-general')->name('cia.career.report.download');
 
     // Week 10 Day 4: CIA Memory Layer - Vector Role Profile Matching
-    Route::get('/candidate/cia/career/memory/match', [CiaController::class, 'memoryMatch'])->name('cia.career.memory.match');
-    Route::post('/candidate/cia/career/memory/seed', [CiaController::class, 'memorySeed'])->name('cia.career.memory.seed');
+    Route::get('/candidate/cia/career/memory/match', [CiaController::class, 'memoryMatch'])->middleware('throttle:cia-general')->name('cia.career.memory.match');
+    Route::post('/candidate/cia/career/memory/seed', [CiaController::class, 'memorySeed'])->middleware('throttle:cia-ai')->name('cia.career.memory.seed');
 });
 
 // Laravel Breeze Authentication Routes

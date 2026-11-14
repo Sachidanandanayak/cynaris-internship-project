@@ -227,7 +227,7 @@ class CiaController extends Controller
         }
 
         $validated = $request->validate([
-            'target_role' => ['nullable', 'string', 'max:150'],
+            'target_role' => ['nullable', 'string', 'min:2', 'max:150'],
         ]);
 
         $targetRole = trim($validated['target_role'] ?? 'Junior Backend Laravel Engineer') ?: 'Junior Backend Laravel Engineer';
@@ -398,7 +398,7 @@ class CiaController extends Controller
         }
 
         $validated = $request->validate([
-            'target_role' => ['nullable', 'string', 'max:150'],
+            'target_role' => ['nullable', 'string', 'min:2', 'max:150'],
             'target_job_id' => ['nullable', 'integer', 'exists:jobs,id'],
         ]);
 
@@ -443,19 +443,34 @@ class CiaController extends Controller
             ], 401);
         }
 
-        $request->validate([
+        $validated = $request->validate([
             'resume' => ['required', 'file', 'mimes:pdf', 'max:10240'], // 10MB limit
-            'target_role' => ['nullable', 'string', 'max:150'],
+            'target_role' => ['nullable', 'string', 'min:2', 'max:150'],
             'job_id' => ['nullable', 'integer', 'exists:jobs,id'],
         ]);
 
         $file = $request->file('resume');
-        $targetRole = trim((string) $request->input('target_role', 'Junior Backend Laravel Engineer')) ?: 'Junior Backend Laravel Engineer';
-        $jobId = $request->input('job_id') ? (int) $request->input('job_id') : null;
+        $targetRole = trim((string) ($validated['target_role'] ?? 'Junior Backend Laravel Engineer')) ?: 'Junior Backend Laravel Engineer';
+        $jobId = !empty($validated['job_id']) ? (int) $validated['job_id'] : null;
         $job = $jobId ? Job::find($jobId) : null;
 
+        // OWASP A08: Binary header magic bytes inspection (%PDF)
+        $realPath = $file->getRealPath();
+        $handle = @fopen($realPath, 'rb');
+        $header = $handle ? fread($handle, 4) : '';
+        if ($handle) {
+            fclose($handle);
+        }
+
+        if ($header !== '%PDF') {
+            return response()->json([
+                'success' => false,
+                'message' => 'The uploaded file does not contain a valid PDF binary signature (%PDF).',
+                'error_code' => 'ERR_INVALID_PDF_HEADER',
+            ], 422);
+        }
+
         try {
-            $realPath = $file->getRealPath();
             $extractedText = $this->textExtractor->extract($realPath);
 
             if (empty(trim($extractedText))) {
@@ -483,7 +498,7 @@ class CiaController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred during resume ATS scoring: ' . $e->getMessage(),
+                'message' => 'An error occurred during resume ATS scoring. Please verify the resume format.',
                 'error_code' => 'ERR_RESUME_SCAN_FAILED',
                 'details' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
@@ -597,8 +612,13 @@ class CiaController extends Controller
             ], 401);
         }
 
+        $validated = $request->validate([
+            'target_role' => ['nullable', 'string', 'min:2', 'max:150'],
+            'force_regenerate' => ['nullable', 'boolean'],
+        ]);
+
         try {
-            $report = $this->reportService->generateReport($user, $request->all());
+            $report = $this->reportService->generateReport($user, $validated);
 
             return response()->json([
                 'success' => true,
@@ -694,8 +714,12 @@ class CiaController extends Controller
             ], 401);
         }
 
+        $validated = $request->validate([
+            'limit' => ['nullable', 'integer', 'min:1', 'max:20'],
+        ]);
+
         try {
-            $limit = (int) $request->query('limit', 5);
+            $limit = (int) ($validated['limit'] ?? 5);
             $result = $this->memoryService->searchRoleMatches($user, ['limit' => $limit]);
 
             return response()->json([
