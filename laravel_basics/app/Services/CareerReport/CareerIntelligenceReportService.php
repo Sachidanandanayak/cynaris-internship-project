@@ -679,7 +679,8 @@ PROMPT;
             'generatedDate' => $report->created_at->format('F j, Y - H:i T'),
         ])->setPaper('a4', 'portrait');
 
-        $fileName = 'CIA_Career_Report_' . str_replace(' ', '_', $candidate->name) . '_' . $report->id . '.pdf';
+        $safeName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $candidate->name ?? 'Candidate');
+        $fileName = 'CIA_Career_Report_' . $safeName . '_' . $report->id . '.pdf';
         return $pdf->download($fileName);
     }
 
