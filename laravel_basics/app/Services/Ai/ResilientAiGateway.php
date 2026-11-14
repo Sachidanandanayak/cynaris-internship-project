@@ -2,6 +2,9 @@
 
 namespace App\Services\Ai;
 
+use App\Services\Alerting\CiaAlertManager;
+use App\Services\Logging\CiaLogger;
+use App\Services\Monitoring\CiaMetricsService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
@@ -9,6 +12,15 @@ use Illuminate\Support\Facades\Log;
 
 class ResilientAiGateway
 {
+    public function __construct(
+        protected ?CiaMetricsService $metricsService = null,
+        protected ?CiaAlertManager $alertManager = null,
+        protected ?CiaLogger $logger = null
+    ) {
+        $this->metricsService = $metricsService ?? app(CiaMetricsService::class);
+        $this->alertManager = $alertManager ?? app(CiaAlertManager::class);
+        $this->logger = $logger ?? app(CiaLogger::class);
+    }
     /**
      * Execute chat completion across a 3-tier resilient provider pipeline:
      * Tier 1: Groq API
@@ -44,6 +56,7 @@ class ResilientAiGateway
             $groqEndpoint = config('services.groq.endpoint') ?: config('services.groq.url') ?: 'https://api.groq.com/openai/v1/chat/completions';
             $groqModel = $options['groq_model'] ?? config('services.groq.model', 'llama-3.3-70b-versatile');
             $groqTimeout = (int) ($options['groq_timeout'] ?? config('services.groq.timeout', 10));
+            $startTime = microtime(true);
 
             try {
                 $result = $this->queryProvider(
@@ -58,16 +71,29 @@ class ResilientAiGateway
                 );
 
                 if ($result !== null) {
+                    $duration = round((microtime(true) - $startTime) * 1000, 2);
+                    $this->metricsService->recordAiCall('groq', true, $duration);
                     $engineName = $options['groq_engine_name'] ?? 'groq_ai';
                     return ResilientAiResponse::success(
                         data: $result['data'],
                         rawContent: $result['raw'],
                         provider: 'groq',
                         engine: $engineName,
-                        metadata: ['model' => $groqModel, 'provider' => 'groq']
+                        metadata: ['model' => $groqModel, 'provider' => 'groq', 'duration_ms' => $duration]
                     );
+                } else {
+                    $duration = round((microtime(true) - $startTime) * 1000, 2);
+                    $this->metricsService->recordAiCall('groq', false, $duration, 'Empty or invalid response from Groq');
+                    $state = $this->metricsService->getHealthMetrics();
+                    $consecutive = $state['ai_providers']['groq']['consecutive_failures'] ?? 1;
+                    $this->alertManager->checkAiFailureAlert('groq', $consecutive);
                 }
             } catch (\Throwable $e) {
+                $duration = round((microtime(true) - $startTime) * 1000, 2);
+                $this->metricsService->recordAiCall('groq', false, $duration, $e->getMessage());
+                $state = $this->metricsService->getHealthMetrics();
+                $consecutive = $state['ai_providers']['groq']['consecutive_failures'] ?? 1;
+                $this->alertManager->checkAiFailureAlert('groq', $consecutive);
                 $this->logWarning('Groq API error, attempting OpenRouter fallback: ' . $e->getMessage(), $context);
             }
         } else {
@@ -82,6 +108,7 @@ class ResilientAiGateway
             $openRouterEndpoint = config('services.openrouter.endpoint') ?: config('services.openrouter.url') ?: 'https://openrouter.ai/api/v1/chat/completions';
             $openRouterModel = $options['openrouter_model'] ?? config('services.openrouter.model', 'meta-llama/llama-3.3-70b-instruct');
             $openRouterTimeout = (int) ($options['openrouter_timeout'] ?? config('services.openrouter.timeout', 15));
+            $startTime = microtime(true);
 
             try {
                 $result = $this->queryProvider(
@@ -96,16 +123,29 @@ class ResilientAiGateway
                 );
 
                 if ($result !== null) {
+                    $duration = round((microtime(true) - $startTime) * 1000, 2);
+                    $this->metricsService->recordAiCall('openrouter', true, $duration);
                     $engineName = $options['openrouter_engine_name'] ?? 'openrouter_llama_3_3_70b';
                     return ResilientAiResponse::success(
                         data: $result['data'],
                         rawContent: $result['raw'],
                         provider: 'openrouter',
                         engine: $engineName,
-                        metadata: ['model' => $openRouterModel, 'provider' => 'openrouter']
+                        metadata: ['model' => $openRouterModel, 'provider' => 'openrouter', 'duration_ms' => $duration]
                     );
+                } else {
+                    $duration = round((microtime(true) - $startTime) * 1000, 2);
+                    $this->metricsService->recordAiCall('openrouter', false, $duration, 'Empty or invalid response from OpenRouter', isFallback: true);
+                    $state = $this->metricsService->getHealthMetrics();
+                    $consecutive = $state['ai_providers']['openrouter']['consecutive_failures'] ?? 1;
+                    $this->alertManager->checkAiFailureAlert('openrouter', $consecutive);
                 }
             } catch (\Throwable $e) {
+                $duration = round((microtime(true) - $startTime) * 1000, 2);
+                $this->metricsService->recordAiCall('openrouter', false, $duration, $e->getMessage(), isFallback: true);
+                $state = $this->metricsService->getHealthMetrics();
+                $consecutive = $state['ai_providers']['openrouter']['consecutive_failures'] ?? 1;
+                $this->alertManager->checkAiFailureAlert('openrouter', $consecutive);
                 $this->logWarning('OpenRouter fallback error, engaging deterministic engine: ' . $e->getMessage(), $context);
             }
         } else {
@@ -115,6 +155,16 @@ class ResilientAiGateway
         // ----------------------------------------------------
         // Tier 3: Deterministic Fallback Signal
         // ----------------------------------------------------
+        $this->metricsService->recordDualAiFailure();
+        $this->alertManager->trigger(
+            CiaAlertManager::ALERT_AI_DUAL_FAILURE,
+            'Both primary (Groq) and secondary (OpenRouter) AI providers failed. Deterministic heuristic fallback engaged.',
+            [
+                'groq_configured' => !empty($groqKey),
+                'openrouter_configured' => !empty($openRouterKey),
+            ]
+        );
+
         $fallbackEngine = $options['fallback_engine_name'] ?? 'deterministic_fallback';
         return ResilientAiResponse::fallback(
             engine: $fallbackEngine,

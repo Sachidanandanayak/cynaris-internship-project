@@ -5,8 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\CandidateReport;
 use App\Models\CiaSearchLog;
 use App\Models\Job;
+use App\Services\Alerting\CiaAlertManager;
 use App\Services\CareerReport\CareerIntelligenceReportService;
 use App\Services\LearningPathGeneratorService;
+use App\Services\Logging\CiaLogger;
+use App\Services\Monitoring\CiaMetricsService;
 use App\Services\Readiness\PlacementReadinessService;
 use App\Services\Resume\ResumeAtsScoringService;
 use App\Services\Resume\ResumeTextExtractor;
@@ -20,6 +23,10 @@ use Illuminate\View\View;
 
 class CiaController extends Controller
 {
+    protected ?CiaLogger $logger = null;
+    protected ?CiaMetricsService $metricsService = null;
+    protected ?CiaAlertManager $alertManager = null;
+
     public function __construct(
         protected SkillGapAnalysisService $gapService,
         protected ChromaDbService $chromaService,
@@ -28,8 +35,15 @@ class CiaController extends Controller
         protected ResumeAtsScoringService $atsScoringService,
         protected PlacementReadinessService $readinessService,
         protected CareerIntelligenceReportService $reportService,
-        protected CiaMemoryLayerService $memoryService
-    ) {}
+        protected CiaMemoryLayerService $memoryService,
+        ?CiaLogger $logger = null,
+        ?CiaMetricsService $metricsService = null,
+        ?CiaAlertManager $alertManager = null
+    ) {
+        $this->logger = $logger ?? app(CiaLogger::class);
+        $this->metricsService = $metricsService ?? app(CiaMetricsService::class);
+        $this->alertManager = $alertManager ?? app(CiaAlertManager::class);
+    }
 
     /**
      * Display the CIA Career Intelligence Cockpit tab.
@@ -142,9 +156,12 @@ class CiaController extends Controller
      */
     public function skillGap(Request $request): JsonResponse
     {
+        $startTime = microtime(true);
         $user = $request->user();
 
         if (!$user) {
+            $duration = round((microtime(true) - $startTime) * 1000, 2);
+            $this->metricsService->recordRequest('/candidate/cia/career/skill-gap', 401, $duration);
             return response()->json([
                 'success' => false,
                 'message' => 'Candidate is unauthenticated.',
@@ -157,6 +174,10 @@ class CiaController extends Controller
         ]);
 
         $targetRole = trim($validated['target_role']);
+        $this->logger->info('skill_gap', "Initiated skill gap analysis for target role '{$targetRole}'", [
+            'user_id' => $user->id,
+            'target_role' => $targetRole,
+        ]);
 
         try {
             // Retrieve candidate's completed lessons & quiz scores
@@ -182,6 +203,16 @@ class CiaController extends Controller
                 ],
             ]);
 
+            $duration = round((microtime(true) - $startTime) * 1000, 2);
+            $this->metricsService->recordRequest('/candidate/cia/career/skill-gap', 200, $duration);
+            $this->logger->info('skill_gap', "Skill gap analysis completed successfully in {$duration}ms", [
+                'user_id' => $user->id,
+                'target_role' => $analysis['target_role'],
+                'score' => $analysis['score'],
+                'engine' => $analysis['engine'],
+                'duration_ms' => $duration,
+            ]);
+
             return response()->json([
                 'success' => true,
                 'target_role' => $analysis['target_role'],
@@ -194,11 +225,19 @@ class CiaController extends Controller
                 'log_id' => $log->id,
             ], 200);
         } catch (\Throwable $e) {
-            Log::error('Skill gap analysis error: ' . $e->getMessage(), [
+            $duration = round((microtime(true) - $startTime) * 1000, 2);
+            $this->metricsService->recordRequest('/candidate/cia/career/skill-gap', 500, $duration);
+            $this->metricsService->recordException('skill_gap', $e);
+            $this->logger->error('skill_gap', 'Skill gap analysis error: ' . $e->getMessage(), [
                 'user_id' => $user->id,
                 'target_role' => $targetRole,
-                'trace' => $e->getTraceAsString(),
+                'duration_ms' => $duration,
             ]);
+            $this->alertManager->trigger(
+                CiaAlertManager::ALERT_CRITICAL_EXCEPTION,
+                'Unexpected error during skill gap analysis: ' . $e->getMessage(),
+                ['operation' => 'skill_gap', 'user_id' => $user->id]
+            );
 
             return response()->json([
                 'success' => false,
@@ -433,9 +472,12 @@ class CiaController extends Controller
      */
     public function scanResume(Request $request): JsonResponse
     {
+        $startTime = microtime(true);
         $user = $request->user();
 
         if (!$user) {
+            $duration = round((microtime(true) - $startTime) * 1000, 2);
+            $this->metricsService->recordRequest('/candidate/cia/career/resume/scan', 401, $duration);
             return response()->json([
                 'success' => false,
                 'message' => 'Candidate is unauthenticated.',
@@ -463,6 +505,13 @@ class CiaController extends Controller
         }
 
         if ($header !== '%PDF') {
+            $duration = round((microtime(true) - $startTime) * 1000, 2);
+            $this->metricsService->recordRequest('/candidate/cia/career/resume/scan', 422, $duration);
+            $this->logger->warning('resume_scan', 'Uploaded resume failed binary magic bytes verification (%PDF)', [
+                'user_id' => $user->id,
+                'file_name' => $file->getClientOriginalName(),
+                'file_size' => $file->getSize(),
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'The uploaded file does not contain a valid PDF binary signature (%PDF).',
@@ -470,10 +519,19 @@ class CiaController extends Controller
             ], 422);
         }
 
+        $this->logger->info('resume_scan', 'Starting resume ATS analysis for candidate', [
+            'user_id' => $user->id,
+            'file_name' => $file->getClientOriginalName(),
+            'file_size' => $file->getSize(),
+            'target_role' => $targetRole,
+        ]);
+
         try {
             $extractedText = $this->textExtractor->extract($realPath);
 
             if (empty(trim($extractedText))) {
+                $duration = round((microtime(true) - $startTime) * 1000, 2);
+                $this->metricsService->recordRequest('/candidate/cia/career/resume/scan', 422, $duration);
                 return response()->json([
                     'success' => false,
                     'message' => 'Unable to extract text from the provided PDF resume. Ensure the PDF contains readable text streams and is not an image scan or encrypted.',
@@ -482,6 +540,14 @@ class CiaController extends Controller
             }
 
             $scoringResult = $this->atsScoringService->scoreResume($user, $extractedText, $targetRole, $job);
+            $duration = round((microtime(true) - $startTime) * 1000, 2);
+            $this->metricsService->recordRequest('/candidate/cia/career/resume/scan', 200, $duration);
+            $this->logger->info('resume_scan', "Resume ATS scoring completed in {$duration}ms", [
+                'user_id' => $user->id,
+                'overall_ats_score' => $scoringResult['overall_ats_score'] ?? null,
+                'character_count' => strlen($extractedText),
+                'duration_ms' => $duration,
+            ]);
 
             return response()->json(array_merge([
                 'success' => true,
@@ -490,10 +556,13 @@ class CiaController extends Controller
                 'word_count' => str_word_count($extractedText),
             ], $scoringResult), 200);
         } catch (\Throwable $e) {
-            Log::error('Resume ATS scanning failure: ' . $e->getMessage(), [
+            $duration = round((microtime(true) - $startTime) * 1000, 2);
+            $this->metricsService->recordRequest('/candidate/cia/career/resume/scan', 500, $duration);
+            $this->metricsService->recordException('resume_scan', $e);
+            $this->logger->error('resume_scan', 'Resume ATS scanning failure: ' . $e->getMessage(), [
                 'user_id' => $user->id,
                 'target_role' => $targetRole,
-                'trace' => $e->getTraceAsString(),
+                'duration_ms' => $duration,
             ]);
 
             return response()->json([
@@ -778,5 +847,34 @@ class CiaController extends Controller
                 'error_code' => 'ERR_MEMORY_SEED_FAILED',
             ], 500);
         }
+    }
+
+    /**
+     * GET /candidate/cia/career/monitoring/metrics
+     *
+     * Retrieves health metrics, telemetry counters, and latency percentiles (W11D4).
+     */
+    public function metrics(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Candidate is unauthenticated.',
+                'error_code' => 'ERR_UNAUTHENTICATED',
+            ], 401);
+        }
+
+        $metrics = $this->metricsService->getHealthMetrics();
+        $correlationId = $request->attributes->get('correlation_id');
+
+        return response()->json([
+            'success' => true,
+            'status' => $metrics['status'],
+            'timestamp' => now()->toIso8601String(),
+            'correlation_id' => $correlationId,
+            'metrics' => $metrics,
+        ], 200);
     }
 }
